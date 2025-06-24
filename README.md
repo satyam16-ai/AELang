@@ -434,7 +434,6 @@ Division (a / b): 5
 
 ## 📄 License
 
-[Specify your license here - MIT, GPL, etc.]
 
 ## �‍💻 Creator
 
