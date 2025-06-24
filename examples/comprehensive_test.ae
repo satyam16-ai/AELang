@@ -9,7 +9,7 @@ func main(): void {
     // Integer operations
     print_int(int1 + int2);  // 125
     print_int(int1 - int2);  // 75
-    print_int(int1 * int2);  // 2500 (might overflow but let's see)
+    print_int(int1 * int2);  // 2500 
     print_int(int1 / int2);  // 4
     
     // Float operations

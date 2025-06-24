@@ -20,6 +20,8 @@ BIN_FILE=$BUILD/hello
 C_PRINT_OBJ=$BUILD/print.o
 C_PRINT_FLOAT_OBJ=$BUILD/print_float.o
 C_PRINT_INT_OBJ=$BUILD/print_int.o
+C_READ_INT_OBJ=$BUILD/read_int.o
+C_READ_FLOAT_OBJ=$BUILD/read_float.o
 
 # Step 1: Build compiler if not present
 if [ ! -f $COMPILER/build/aelang ]; then
@@ -32,6 +34,8 @@ echo "[1/4] Compiling C stubs..."
 gcc -m32 -c $CLIBS/print.c -o $C_PRINT_OBJ
 gcc -m32 -c $CLIBS/print_int.c -o $C_PRINT_INT_OBJ
 gcc -m32 -c $CLIBS/print_float.c -o $C_PRINT_FLOAT_OBJ
+gcc -m32 -c $CLIBS/read_int.c -o $C_READ_INT_OBJ
+gcc -m32 -c $CLIBS/read_float.c -o $C_READ_FLOAT_OBJ
 
 # Step 3: Compile ÆLang source to NASM
 echo "[2/4] Compiling $AE_FILE to $ASM_FILE..."
@@ -43,7 +47,7 @@ nasm -f elf $ASM_FILE -o $OBJ_FILE
 
 # Step 5: Link final binary
 echo "[4/4] Linking final binary..."
-gcc -m32 -o $BIN_FILE $OBJ_FILE $C_PRINT_OBJ $C_PRINT_INT_OBJ
+gcc -m32 -o $BIN_FILE $OBJ_FILE $C_PRINT_OBJ $C_PRINT_INT_OBJ $C_READ_INT_OBJ $C_READ_FLOAT_OBJ
 
 # Run the result
 echo -e "\n✅ Build complete. Running ÆLang program:\n"

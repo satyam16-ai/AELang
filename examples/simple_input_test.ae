@@ -1,0 +1,14 @@
+extern print_int(val: i32);
+extern read_int();
+
+func main(): void {
+    print("Enter a number: ");
+    let a: i32 = read_int();
+    
+    print("You entered: ");
+    print_int(a);
+    
+    let doubled: i32 = a * 2;
+    print("Doubled: ");
+    print_int(doubled);
+}

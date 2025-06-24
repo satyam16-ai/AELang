@@ -10,6 +10,9 @@
 static size_t current = 0;
 static TokenList *tokens;
 
+// Forward declarations
+static ASTNode *parse_expression();
+
 static Token peek() {
     return tokens->tokens[current];
 }
@@ -80,9 +83,26 @@ static ASTNode *parse_primary_expr() {
         return parse_literal(tok);
     } else if (tok.type == TOKEN_IDENT) {
         advance();
-        ASTNode *id = make_node(AST_IDENTIFIER, tok.line);
-        id->as.ident = strdup(tok.text);
-        return id;
+        // Check if this is a function call
+        if (peek().type == TOKEN_LPAREN) {
+            // This is a function call
+            ASTNode *node = make_node(AST_FUNC_CALL, tok.line);
+            node->as.func_call.name = strdup(tok.text);
+            expect(TOKEN_LPAREN, "(");
+            node->as.func_call.args = calloc(8, sizeof(ASTNode *));
+            node->as.func_call.arg_count = 0;
+            while (peek().type != TOKEN_RPAREN) {
+                node->as.func_call.args[node->as.func_call.arg_count++] = parse_expression();
+                match(TOKEN_COMMA);
+            }
+            expect(TOKEN_RPAREN, ")");
+            return node;
+        } else {
+            // This is just an identifier
+            ASTNode *id = make_node(AST_IDENTIFIER, tok.line);
+            id->as.ident = strdup(tok.text);
+            return id;
+        }
     }
     return NULL;
 }

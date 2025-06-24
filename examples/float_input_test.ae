@@ -1,0 +1,27 @@
+extern read_float(): f32;
+
+func main(): void {
+    print("Enter first float number: ");
+    let x: f32 = read_float();
+    
+    print("Enter second float number: ");
+    let y: f32 = read_float();
+    
+    let sum: f32 = x + y;
+    let diff: f32 = x - y;
+    let product: f32 = x * y;
+    let quotient: f32 = x / y;
+    
+    print("Float Results:");
+    print("Sum: ");
+    print_float(sum);
+    
+    print("Difference: ");
+    print_float(diff);
+    
+    print("Product: ");
+    print_float(product);
+    
+    print("Quotient: ");
+    print_float(quotient);
+}

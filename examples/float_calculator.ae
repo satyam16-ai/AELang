@@ -1,0 +1,37 @@
+extern read_float();
+
+func main(): void {
+    print("=== ÆLang Float Calculator ===");
+    
+    print("Enter first float number: ");
+    let x: f32 = read_float();
+    
+    print("Enter second float number: ");
+    let y: f32 = read_float();
+    
+    print("Your numbers are:");
+    print("First: ");
+    print_float(x);
+    print("Second: ");
+    print_float(y);
+    
+    print("--- Float Results ---");
+    
+    let sum: f32 = x + y;
+    print("Addition (x + y): ");
+    print_float(sum);
+    
+    let diff: f32 = x - y;
+    print("Subtraction (x - y): ");
+    print_float(diff);
+    
+    let product: f32 = x * y;
+    print("Multiplication (x * y): ");
+    print_float(product);
+    
+    let quotient: f32 = x / y;
+    print("Division (x / y): ");
+    print_float(quotient);
+    
+    print("=== Float Calculation Complete! ===");
+}

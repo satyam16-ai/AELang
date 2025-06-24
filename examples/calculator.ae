@@ -1,0 +1,38 @@
+extern print_int(val: i32);
+extern read_int();
+
+func main(): void {
+    print("=== ÆLang Arithmetic Calculator ===");
+    
+    print("Enter first number: ");
+    let a: i32 = read_int();
+    
+    print("Enter second number: ");
+    let b: i32 = read_int();
+    
+    print("Your numbers are:");
+    print("First: ");
+    print_int(a);
+    print("Second: ");
+    print_int(b);
+    
+    print("--- Results ---");
+    
+    let sum: i32 = a + b;
+    print("Addition (a + b): ");
+    print_int(sum);
+    
+    let diff: i32 = a - b;
+    print("Subtraction (a - b): ");
+    print_int(diff);
+    
+    let product: i32 = a * b;
+    print("Multiplication (a * b): ");
+    print_int(product);
+    
+    let quotient: i32 = a / b;
+    print("Division (a / b): ");
+    print_int(quotient);
+    
+    print("=== Calculation Complete! ===");
+}

@@ -67,6 +67,14 @@ static void emit_expr(ASTNode *expr, FILE *out) {
             fprintf(out, " %s ", expr->as.bin_op.op);
             emit_expr(expr->as.bin_op.right, out);
             break;
+        case AST_FUNC_CALL:
+            fprintf(out, "%s(", expr->as.func_call.name);
+            for (size_t i = 0; i < expr->as.func_call.arg_count; i++) {
+                if (i > 0) fprintf(out, ", ");
+                emit_expr(expr->as.func_call.args[i], out);
+            }
+            fprintf(out, ")");
+            break;
         default:
             fprintf(out, "<EXPR_UNHANDLED>");
             break;
@@ -427,6 +435,14 @@ static void emit_node(ASTNode *node, FILE *out) {
                 fprintf(out, "    call printf\n");
                 fprintf(out, "    add esp, 12\n");         // Clean up (4 + 8)
                 break;
+            } else if (strcmp(node->as.func_call.name, "read_int") == 0 && node->as.func_call.arg_count == 0) {
+                // Call read_int function (returns result in eax)
+                fprintf(out, "    call read_int\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "read_float") == 0 && node->as.func_call.arg_count == 0) {
+                // Call read_float function (returns result on FPU stack)
+                fprintf(out, "    call read_float\n");
+                break;
             }
 
             // Handle other function calls
@@ -545,7 +561,10 @@ void generate_code(AST *ast, FILE *out) {
     // Emit text section with main
     fprintf(out, "section .text\n");
     fprintf(out, "    global main\n");
-    fprintf(out, "    extern printf\n\n");
+    fprintf(out, "    extern printf\n");
+    fprintf(out, "    extern print\n");
+    fprintf(out, "    extern read_int\n");
+    fprintf(out, "    extern read_float\n\n");
 
     // First emit all externs and function definitions
     for (size_t i = 0; i < ast->count; ++i) {
