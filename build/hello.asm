@@ -11,10 +11,15 @@ main:
     mov eax, 20
 ; let y:i32 = 20
     mov eax, 20
-; let res:i32 = x + y
+; let res:i32 = x + y + 80
 ; Unhandled node type AST_IDENTIFIER
     push eax
 ; Unhandled node type AST_IDENTIFIER
+    mov ebx, eax
+    pop eax
+    add eax, ebx
+    push eax
+    mov eax, 80
     mov ebx, eax
     pop eax
     add eax, ebx
