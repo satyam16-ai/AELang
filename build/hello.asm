@@ -1,5 +1,5 @@
 section .data
-msg_0 db "Hello world satyam",0
+msg_0 db "Hello, World!\n",0
 ; Generated NASM by ÆLang Compiler
 section .text
     global _start
