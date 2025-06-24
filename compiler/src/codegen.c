@@ -121,13 +121,55 @@ static void emit_node(ASTNode *node, FILE *out) {
             fprintf(out, "; let %s:%s = ", node->as.var_decl.name, node->as.var_decl.type_name);
             emit_expr(node->as.var_decl.value, out);
             fprintf(out, "\n");
+            emit_node(node->as.var_decl.value, out);  // Generate actual code
             break;
 
         case AST_ASSIGN:
             fprintf(out, "; %s = ", node->as.assign.target);
             emit_expr(node->as.assign.value, out);
             fprintf(out, "\n");
+            emit_node(node->as.assign.value, out);  // Generate actual code
             break;
+
+        case AST_LITERAL:
+            if (node->as.literal.type == VALUE_INT) {
+                fprintf(out, "    mov eax, %d\n", node->as.literal.as.int_val);
+            } else if (node->as.literal.type == VALUE_BOOL) {
+                fprintf(out, "    mov eax, %d\n", node->as.literal.as.bool_val);
+            }
+            break;
+
+        case AST_BIN_OP: {
+            ASTNode *left = node->as.bin_op.left;
+            ASTNode *right = node->as.bin_op.right;
+            const char *op = node->as.bin_op.op;
+
+            // Evaluate left operand
+            emit_node(left, out);
+            fprintf(out, "    push eax\n");
+
+            // Evaluate right operand
+            emit_node(right, out);
+
+            // Pop left operand to ebx
+            fprintf(out, "    mov ebx, eax\n");
+            fprintf(out, "    pop eax\n");
+
+            if (strcmp(op, "+") == 0) {
+                fprintf(out, "    add eax, ebx\n");
+            } else if (strcmp(op, "-") == 0) {
+                fprintf(out, "    sub eax, ebx\n");
+            } else if (strcmp(op, "*") == 0) {
+                fprintf(out, "    imul eax, ebx\n");
+            } else if (strcmp(op, "/") == 0) {
+                fprintf(out, "    xor edx, edx\n");       // Clear remainder
+                fprintf(out, "    mov ecx, ebx\n");
+                fprintf(out, "    div ecx\n");            // eax / ecx → eax
+            } else {
+                fprintf(out, "; Unsupported binary operator: %s\n", op);
+            }
+            break;
+        }
 
         case AST_HALT:
             fprintf(out, "    mov eax, 1\n    int 0x80 ; halt\n");
@@ -157,8 +199,16 @@ static void emit_node(ASTNode *node, FILE *out) {
                     fprintf(out, "    add esp, 4\n");
                     break;
                 }
+            } else if (strcmp(node->as.func_call.name, "print_int") == 0 && node->as.func_call.arg_count == 1) {
+                // Evaluate the argument and put result in eax
+                emit_node(node->as.func_call.args[0], out);
+                fprintf(out, "    push eax\n");
+                fprintf(out, "    call print_int\n");
+                fprintf(out, "    add esp, 4\n");
+                break;
             }
 
+            // Handle other function calls
             for (size_t i = 0; i < node->as.func_call.arg_count; ++i)
                 emit_node(node->as.func_call.args[i], out);
 
@@ -194,28 +244,30 @@ static void emit_node(ASTNode *node, FILE *out) {
 void generate_code(AST *ast, FILE *out) {
     string_literal_count = 0;
 
+    // First pass: collect strings
     for (size_t i = 0; i < ast->count; ++i)
         collect_strings(ast->nodes[i]);
 
-    // Emit .data for string literals
+    fprintf(out, "; Generated NASM by ÆLang Compiler\n");
+
+    // Emit data section if we have strings
     if (string_literal_count > 0) {
         fprintf(out, "section .data\n");
         for (int i = 0; i < string_literal_count; ++i)
             fprintf(out, "msg_%d db \"%s\",0\n", i, string_literals[i]);
+        fprintf(out, "\n");
     }
 
-    fprintf(out, "; Generated NASM by ÆLang Compiler\n");
-    fprintf(out, "section .text\n    global _start\n\n_start:\n");
-    fprintf(out, "    call main\n");
-    fprintf(out, "    mov eax, 1\n    int 0x80 ; exit\n\n");
+    // Emit text section with main
+    fprintf(out, "section .text\n");
+    fprintf(out, "    global main\n\n");
 
-    // Emit externs + functions
-    for (size_t i = 0; i < ast->count; ++i)
-        if (ast->nodes[i]->type == AST_EXTERN_FUNC || ast->nodes[i]->type == AST_FUNC_DEF)
+    // First emit all externs and function definitions
+    for (size_t i = 0; i < ast->count; ++i) {
+        if (ast->nodes[i]->type == AST_EXTERN_FUNC || ast->nodes[i]->type == AST_FUNC_DEF) {
             emit_node(ast->nodes[i], out);
+        }
+    }
 
-    // Top-level statements (main(); etc.)
-    for (size_t i = 0; i < ast->count; ++i)
-        if (ast->nodes[i]->type != AST_EXTERN_FUNC && ast->nodes[i]->type != AST_FUNC_DEF)
-            emit_node(ast->nodes[i], out);
+    // Top-level statements are emitted in the function bodies
 }

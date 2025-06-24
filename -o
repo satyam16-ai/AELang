@@ -2,22 +2,24 @@
 section .text
     global main
 
+extern print
 extern print_int
 ; CODEGEN TEST MARKER: emitting function main
 main:
     push ebp
     mov ebp, esp
-; let x:i32 = 20
+; let x:i32 = 20 + 22 * 2
     mov eax, 20
-; let y:i32 = 20
-    mov eax, 20
-; let res:i32 = x + y
-; Unhandled node type AST_IDENTIFIER
     push eax
-; Unhandled node type AST_IDENTIFIER
+    mov eax, 22
     mov ebx, eax
     pop eax
     add eax, ebx
+    push eax
+    mov eax, 2
+    mov ebx, eax
+    pop eax
+    imul eax, ebx
 ; Unhandled node type AST_IDENTIFIER
     push eax
     call print_int

@@ -70,7 +70,7 @@ static ASTNode *parse_literal(Token tok) {
     return node;
 }
 
-static ASTNode *parse_expression() {
+static ASTNode *parse_primary_expr() {
     Token tok = peek();
     if (tok.type == TOKEN_INT || tok.type == TOKEN_STRING || tok.type == TOKEN_BOOL) {
         advance();
@@ -82,6 +82,30 @@ static ASTNode *parse_expression() {
         return id;
     }
     return NULL;
+}
+
+static ASTNode *parse_binary_expr() {
+    ASTNode *left = parse_primary_expr();
+
+    while (peek().type == TOKEN_PLUS || peek().type == TOKEN_MINUS ||
+           peek().type == TOKEN_MUL || peek().type == TOKEN_DIV) {
+        Token op = advance();
+        ASTNode *right = parse_primary_expr();
+
+        ASTNode *bin = make_node(AST_BIN_OP, op.line);
+        strncpy(bin->as.bin_op.op, op.text, 2);
+        bin->as.bin_op.op[2] = '\0';  // Ensure null termination
+        bin->as.bin_op.left = left;
+        bin->as.bin_op.right = right;
+
+        left = bin;
+    }
+
+    return left;
+}
+
+static ASTNode *parse_expression() {
+    return parse_binary_expr();
 }
 
 static ASTNode *parse_statement();

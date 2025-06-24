@@ -17,7 +17,8 @@ AE_FILE=$EXAMPLES/hello.ae
 ASM_FILE=$BUILD/hello.asm
 OBJ_FILE=$BUILD/hello.o
 BIN_FILE=$BUILD/hello
-C_STUB_OBJ=$BUILD/print.o
+C_PRINT_OBJ=$BUILD/print.o
+C_PRINT_INT_OBJ=$BUILD/print_int.o
 
 # Step 1: Build compiler if not present
 if [ ! -f $COMPILER/build/aelang ]; then
@@ -25,9 +26,10 @@ if [ ! -f $COMPILER/build/aelang ]; then
   make -C $COMPILER
 fi
 
-# Step 2: Compile print.c stub
-echo "[1/4] Compiling C print stub..."
-gcc -m32 -c $CLIBS/print.c -o $C_STUB_OBJ
+# Step 2: Compile C stubs
+echo "[1/4] Compiling C stubs..."
+gcc -m32 -c $CLIBS/print.c -o $C_PRINT_OBJ
+gcc -m32 -c $CLIBS/print_int.c -o $C_PRINT_INT_OBJ
 
 # Step 3: Compile ÆLang source to NASM
 echo "[2/4] Compiling $AE_FILE to $ASM_FILE..."
@@ -38,8 +40,8 @@ echo "[3/4] Assembling NASM to ELF object..."
 nasm -f elf $ASM_FILE -o $OBJ_FILE
 
 # Step 5: Link final binary
-# Use ld with -lc and -dynamic-linker for C library support
-ld -m elf_i386 -dynamic-linker /lib/ld-linux.so.2 -o $BIN_FILE $OBJ_FILE $C_STUB_OBJ -lc
+echo "[4/4] Linking final binary..."
+gcc -m32 -o $BIN_FILE $OBJ_FILE $C_PRINT_OBJ $C_PRINT_INT_OBJ
 
 # Run the result
 echo -e "\n✅ Build complete. Running ÆLang program:\n"

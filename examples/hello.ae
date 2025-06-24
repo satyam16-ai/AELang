@@ -1,5 +1,9 @@
-extern print(msg: str);
+extern print_int(val: i32);
 
 func main(): void {
-    print("Hello, World!\n");
+    let x: i32 = 20;
+    let y: i32 = 20;
+    let res: i32 = x + y;
+    print_int(res);
+    halt;
 }
