@@ -1,0 +1,20 @@
+func main(): void {
+    let a: f32 = 8.5;
+    let b: f32 = 2.5;
+    
+    // Test float addition
+    let add_result: f32 = a + b;
+    print_float(add_result);
+    
+    // Test float subtraction
+    let sub_result: f32 = a - b;
+    print_float(sub_result);
+    
+    // Test float multiplication
+    let mul_result: f32 = a * b;
+    print_float(mul_result);
+    
+    // Test float division
+    let div_result: f32 = a / b;
+    print_float(div_result);
+}

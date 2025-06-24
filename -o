@@ -2,29 +2,29 @@
 section .text
     global main
 
-extern print
-extern print_int
+extern print_float
 ; CODEGEN TEST MARKER: emitting function main
 main:
     push ebp
     mov ebp, esp
-; let x:i32 = 20 + 22 * 2
-    mov eax, 20
+; let pi:f32 = 3.500000
+    section .data
+    float_0: dq 3.500000
+    section .text
+    fld qword [float_0]
+; let radius:f32 = 5.300000
+    section .data
+    float_1: dq 5.300000
+    section .text
+    fld qword [float_1]
+; let res:f32 = pi + radius
+; Unhandled node type AST_IDENTIFIER
     push eax
-    mov eax, 22
+; Unhandled node type AST_IDENTIFIER
     mov ebx, eax
     pop eax
     add eax, ebx
-    push eax
-    mov eax, 2
-    mov ebx, eax
-    pop eax
-    imul eax, ebx
 ; Unhandled node type AST_IDENTIFIER
-    push eax
-    call print_int
-    add esp, 4
-    mov eax, 1
-    int 0x80 ; halt
+    call print_float
     pop ebp
     ret

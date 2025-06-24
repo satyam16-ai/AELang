@@ -1,0 +1,22 @@
+func main(): void {
+    // Test float edge cases
+    let zero: f32 = 0.0;
+    let one: f32 = 1.0;
+    let small: f32 = 0.1;
+    let large: f32 = 999.9;
+    
+    // Test with small decimals
+    let decimal_add: f32 = small + small;
+    print_float(decimal_add);  // Should be 0.2
+    
+    // Test zero operations
+    let zero_add: f32 = zero + large;
+    print_float(zero_add);     // Should be 999.9
+    
+    let zero_mul: f32 = zero * large;
+    print_float(zero_mul);     // Should be 0.0
+    
+    // Test division by decimal
+    let div_result: f32 = one / small;
+    print_float(div_result);   // Should be 10.0
+}

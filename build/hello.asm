@@ -1,33 +1,49 @@
 ; Generated NASM by ÆLang Compiler
+section .rodata
+    align 4
+float_0: dd 0x40600000  ; 3.5
+float_1: dd 0x40b9999a  ; 5.80000019
+fmt_float: db "%f", 10, 0
+
+section .bss
+    align 4
+    float_var_0: resd 1  ; pi
+    float_var_1: resd 1  ; radius
+    float_var_2: resd 1  ; res
+    int_var_0: resd 1  ; x
+
 section .text
     global main
+    extern printf
 
 extern print_int
 ; CODEGEN TEST MARKER: emitting function main
 main:
     push ebp
     mov ebp, esp
-; let x:i32 = 20
-    mov eax, 20
-; let y:i32 = 20
-    mov eax, 20
-; let res:i32 = x + y + 80
-; Unhandled node type AST_IDENTIFIER
-    push eax
-; Unhandled node type AST_IDENTIFIER
-    mov ebx, eax
-    pop eax
-    add eax, ebx
-    push eax
-    mov eax, 80
-    mov ebx, eax
-    pop eax
-    add eax, ebx
-; Unhandled node type AST_IDENTIFIER
+; let pi:f32 = 3.500000
+    fld dword [float_0]
+    fstp dword [float_var_0]  ; store pi
+; let x:i32 = 5
+    mov eax, 5
+    mov [int_var_0], eax  ; store x
+; let radius:f32 = 5.800000
+    fld dword [float_1]
+    fstp dword [float_var_1]  ; store radius
+; let res:f32 = pi + radius
+    fld dword [float_var_0]  ; load pi
+    fld dword [float_var_1]  ; load radius
+    faddp
+    fstp dword [float_var_2]  ; store res
+    fld dword [float_var_2]  ; load res
+    sub esp, 8
+    fstp qword [esp]
+    push fmt_float
+    call printf
+    add esp, 12
+    mov eax, [int_var_0]  ; load x
     push eax
     call print_int
     add esp, 4
-    mov eax, 1
-    int 0x80 ; halt
     pop ebp
     ret

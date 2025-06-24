@@ -1,0 +1,19 @@
+extern print_int(val: i32);
+func main(): void {
+    // Test simple precedence: should be 15 + (3 * 3) - (15 / 3) = 15 + 9 - 5 = 19
+    let a: i32 = 15;
+    let b: i32 = 3;
+    
+    // Break down the complex expression
+    let mul: i32 = b * b;
+    print_int(mul);  // Should be 9
+    
+    let div: i32 = a / b;
+    print_int(div);  // Should be 5
+    
+    let step1: i32 = a + mul;
+    print_int(step1);  // Should be 24
+    
+    let final: i32 = step1 - div;
+    print_int(final);  // Should be 19
+}

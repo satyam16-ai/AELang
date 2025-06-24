@@ -18,6 +18,7 @@ ASM_FILE=$BUILD/hello.asm
 OBJ_FILE=$BUILD/hello.o
 BIN_FILE=$BUILD/hello
 C_PRINT_OBJ=$BUILD/print.o
+C_PRINT_FLOAT_OBJ=$BUILD/print_float.o
 C_PRINT_INT_OBJ=$BUILD/print_int.o
 
 # Step 1: Build compiler if not present
@@ -30,6 +31,7 @@ fi
 echo "[1/4] Compiling C stubs..."
 gcc -m32 -c $CLIBS/print.c -o $C_PRINT_OBJ
 gcc -m32 -c $CLIBS/print_int.c -o $C_PRINT_INT_OBJ
+gcc -m32 -c $CLIBS/print_float.c -o $C_PRINT_FLOAT_OBJ
 
 # Step 3: Compile ÆLang source to NASM
 echo "[2/4] Compiling $AE_FILE to $ASM_FILE..."

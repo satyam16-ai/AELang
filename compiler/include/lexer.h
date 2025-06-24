@@ -44,6 +44,12 @@ typedef enum {
     TOKEN_SHL,
     TOKEN_SHR,
 
+    // Literals
+    TOKEN_FLOAT,
+    
+    // Type tokens
+    TOKEN_TYPE_F32,  // float type
+
     // Comparisons
     TOKEN_EQ,
     TOKEN_NEQ,

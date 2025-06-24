@@ -1,0 +1,20 @@
+extern print_int(val: i32);
+func main(): void {
+    // Comprehensive arithmetic test
+    let int1: i32 = 100;
+    let int2: i32 = 25;
+    let float1: f32 = 3.14;
+    let float2: f32 = 2.0;
+    
+    // Integer operations
+    print_int(int1 + int2);  // 125
+    print_int(int1 - int2);  // 75
+    print_int(int1 * int2);  // 2500 (might overflow but let's see)
+    print_int(int1 / int2);  // 4
+    
+    // Float operations
+    print_float(float1 + float2);  // 5.14
+    print_float(float1 - float2);  // 1.14
+    print_float(float1 * float2);  // 6.28
+    print_float(float1 / float2);  // 1.57
+}

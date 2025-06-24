@@ -1,9 +1,10 @@
 extern print_int(val: i32);
-
 func main(): void {
-    let x: i32 = 20;
-    let y: i32 = 20;
-    let res: i32 = x + y + 80;
-    print_int(res);
-    halt;
+    let pi: f32 = 3.5;
+    let x: i32 = 5;
+    let radius: f32 = 5.8;
+    let res: f32 = pi + radius;
+    print_float(res);
+    print_int(x);
+
 }

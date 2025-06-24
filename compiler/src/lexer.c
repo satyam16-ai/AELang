@@ -35,6 +35,7 @@ static int match_keyword(const char *word) {
         {"load", TOKEN_LOAD}, {"store", TOKEN_STORE},
         {"u8", TOKEN_TYPE_U8}, {"u16", TOKEN_TYPE_U16}, {"u32", TOKEN_TYPE_U32},
         {"i8", TOKEN_TYPE_I8}, {"i16", TOKEN_TYPE_I16}, {"i32", TOKEN_TYPE_I32},
+        {"f32", TOKEN_TYPE_F32},
         {"ptr", TOKEN_TYPE_PTR}, {"str", TOKEN_TYPE_STR}, {"bool", TOKEN_TYPE_BOOL},
         {"true", TOKEN_BOOL}, {"false", TOKEN_BOOL},
         {"@debug", TOKEN_DEBUG}, {"@trace", TOKEN_TRACE},
@@ -80,8 +81,15 @@ TokenList *lex(const char *source) {
         }
 
         if (isdigit(*source)) {
+            int is_float = 0;
             while (isdigit(*source)) source++;
-            add_token(list, make_token(TOKEN_INT, strndup(token_start, source - token_start), line));
+            if (*source == '.') {
+                is_float = 1;
+                source++;
+                while (isdigit(*source)) source++;
+            }
+            add_token(list, make_token(is_float ? TOKEN_FLOAT : TOKEN_INT, 
+                                     strndup(token_start, source - token_start), line));
             continue;
         }
 
@@ -162,9 +170,10 @@ const char *token_type_to_str(TokenType type) {
         CASE(TOKEN_PLUS); CASE(TOKEN_MINUS); CASE(TOKEN_MUL); CASE(TOKEN_DIV); CASE(TOKEN_MOD);
         CASE(TOKEN_AND); CASE(TOKEN_OR); CASE(TOKEN_XOR); CASE(TOKEN_SHL); CASE(TOKEN_SHR);
         CASE(TOKEN_EQ); CASE(TOKEN_NEQ); CASE(TOKEN_LT); CASE(TOKEN_GT); CASE(TOKEN_LEQ); CASE(TOKEN_GEQ);
-        CASE(TOKEN_IDENT); CASE(TOKEN_INT); CASE(TOKEN_STRING); CASE(TOKEN_BOOL);
+        CASE(TOKEN_IDENT); CASE(TOKEN_INT); CASE(TOKEN_STRING); CASE(TOKEN_BOOL); CASE(TOKEN_FLOAT);
         CASE(TOKEN_TYPE_U8); CASE(TOKEN_TYPE_U16); CASE(TOKEN_TYPE_U32);
         CASE(TOKEN_TYPE_I8); CASE(TOKEN_TYPE_I16); CASE(TOKEN_TYPE_I32);
+        CASE(TOKEN_TYPE_F32); CASE(TOKEN_TYPE_VOID);
         CASE(TOKEN_TYPE_PTR); CASE(TOKEN_TYPE_STR); CASE(TOKEN_TYPE_BOOL);
         CASE(TOKEN_DEBUG); CASE(TOKEN_TRACE);
     }

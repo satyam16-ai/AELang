@@ -1,0 +1,21 @@
+extern print_int(val: i32);
+func main(): void {
+    let int_a: i32 = 15;
+    let int_b: i32 = 3;
+    let float_a: f32 = 7.5;
+    let float_b: f32 = 2.0;
+    
+    // Mixed integer operations
+    let int_complex: i32 = int_a + int_b * int_b - int_a / int_b;
+    print_int(int_complex);
+    
+    // Mixed float operations
+    let float_complex: f32 = float_a * float_b + float_a - float_b;
+    print_float(float_complex);
+    
+    // Test with different values
+    let x: i32 = 100;
+    let y: i32 = 7;
+    let remainder_test: i32 = x - y * 14;  // Should be like x % y
+    print_int(remainder_test);
+}

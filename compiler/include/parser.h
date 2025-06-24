@@ -34,7 +34,8 @@ typedef enum {
 typedef enum {
     VALUE_INT,
     VALUE_STRING,
-    VALUE_BOOL
+    VALUE_BOOL,
+    VALUE_FLOAT
 } ValueType;
 
 // AST Literal Value
@@ -44,6 +45,7 @@ typedef struct {
         int int_val;
         char *str_val;
         int bool_val;
+        double float_val;  // Using double for better precision
     } as;
 } LiteralValue;
 
