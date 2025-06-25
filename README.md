@@ -110,6 +110,10 @@ ae/
    ./build.sh
    ```
 
+5. **Install the official ÆLang syntax highlighter**
+   - Visit: https://github.com/satyam16-ai/aelang-syntax-highlighter
+   - Follow installation instructions for VS Code
+
 ### Build Dependencies
 ```bash
 # Ubuntu/Debian
@@ -363,6 +367,26 @@ Float Tests (inputs: 8.5, 2.5):
 - **Memory footprint**: Minimal runtime overhead
 - **Code size**: Compact assembly output suitable for embedded systems
 
+## 🎨 Developer Tools
+
+### Syntax Highlighter
+**ÆLang** now has official syntax highlighting support for VS Code!
+
+🔗 **[Install the ÆLang Syntax Highlighter](https://github.com/satyam16-ai/aelang-syntax-highlighter)**
+
+**Features:**
+- **Keyword highlighting**: `let`, `func`, `extern`, `i32`, `f32`, etc.
+- **Operator highlighting**: Arithmetic and assignment operators
+- **String literal highlighting**: Proper string and comment formatting
+- **Function call highlighting**: Distinguished function calls and declarations
+- **Type annotations**: Clear type highlighting for better code readability
+
+**Installation:**
+1. Open VS Code
+2. Go to Extensions (Ctrl+Shift+X)
+3. Search for "ÆLang"
+4. Install the official ÆLang syntax highlighter
+
 ## 🔮 Future Roadmap
 
 ### Planned Features
@@ -381,7 +405,7 @@ Float Tests (inputs: 8.5, 2.5):
 - **Volatile Variables**: Hardware-mapped memory support
 
 ### Tooling
-- **Syntax Highlighter**: VS Code extension for ÆLang
+- **✅ Syntax Highlighter**: [VS Code extension for ÆLang](https://github.com/satyam16-ai/aelang-syntax-highlighter) - **Now Available!**
 - **Debugger Support**: GDB integration
 - **Cross-platform**: Windows and macOS support
 - **Standard Library**: Expanded runtime functions
