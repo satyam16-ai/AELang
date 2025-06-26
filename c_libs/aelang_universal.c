@@ -271,3 +271,91 @@ float read_float() {
     }
     return 0.0f;
 }
+
+// -----------------------------------------------------------------------------
+// BOOLEAN TYPE FUNCTIONS
+// -----------------------------------------------------------------------------
+
+// Print boolean value with different formats
+void print_bool(int value) {
+    printf("%s\n", value ? "true" : "false");
+    fflush(stdout);
+}
+
+// Print boolean as 1/0
+void print_bool_numeric(int value) {
+    printf("%d\n", value);
+    fflush(stdout);
+}
+
+// Print boolean without newline
+void print_bool_clean(int value) {
+    printf("%s", value ? "true" : "false");
+    fflush(stdout);
+}
+
+// Read boolean value (accepts true/false, 1/0, yes/no)
+int read_bool() {
+    char buffer[10];
+    if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
+        // Remove newline
+        buffer[strcspn(buffer, "\n")] = 0;
+        
+        // Convert to lowercase for comparison
+        for (int i = 0; buffer[i]; i++) {
+            buffer[i] = tolower(buffer[i]);
+        }
+        
+        // Check various representations
+        if (strcmp(buffer, "true") == 0 || strcmp(buffer, "1") == 0 || 
+            strcmp(buffer, "yes") == 0 || strcmp(buffer, "y") == 0) {
+            return 1;
+        } else if (strcmp(buffer, "false") == 0 || strcmp(buffer, "0") == 0 || 
+                   strcmp(buffer, "no") == 0 || strcmp(buffer, "n") == 0) {
+            return 0;
+        }
+    }
+    return 0; // Default to false
+}
+
+// Safe boolean input with validation
+int read_bool_safe() {
+    char buffer[256];
+    int valid = 0;
+    int result = 0;
+    
+    while (!valid) {
+        if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
+            // Remove newline
+            buffer[strcspn(buffer, "\n")] = 0;
+            
+            // Check for empty input
+            if (strlen(buffer) == 0) {
+                printf("Error: Empty input. Please enter true/false, 1/0, or yes/no: ");
+                continue;
+            }
+            
+            // Convert to lowercase for comparison
+            for (int i = 0; buffer[i]; i++) {
+                buffer[i] = tolower(buffer[i]);
+            }
+            
+            // Check various representations
+            if (strcmp(buffer, "true") == 0 || strcmp(buffer, "1") == 0 || 
+                strcmp(buffer, "yes") == 0 || strcmp(buffer, "y") == 0) {
+                result = 1;
+                valid = 1;
+            } else if (strcmp(buffer, "false") == 0 || strcmp(buffer, "0") == 0 || 
+                       strcmp(buffer, "no") == 0 || strcmp(buffer, "n") == 0) {
+                result = 0;
+                valid = 1;
+            } else {
+                printf("Error: Invalid input '%s'. Please enter true/false, 1/0, or yes/no: ", buffer);
+            }
+        } else {
+            printf("Error: Failed to read input. Please try again: ");
+        }
+    }
+    
+    return result;
+}

@@ -289,6 +289,9 @@ static void collect_floats(ASTNode *node) {
             } else if (strstr(node->as.var_decl.type_name, "num")) {
                 // num type can be either int or float, start as float for flexibility
                 store_float_var(node->as.var_decl.name);
+            } else if (strstr(node->as.var_decl.type_name, "bool")) {
+                // Boolean type stored as integer (0/1)
+                store_int_var(node->as.var_decl.name);
             } else if (strstr(node->as.var_decl.type_name, "i32")) {
                 store_int_var(node->as.var_decl.name);
             }
@@ -363,6 +366,21 @@ static void emit_node(ASTNode *node, FILE *out) {
                     fprintf(out, "    fild dword [temp_int]  ; convert int to float\n");
                     fprintf(out, "    fstp dword [float_var_%d]  ; store %s as num (converted from int)\n", var_idx, node->as.var_decl.name);
                 }
+            } else if (strstr(node->as.var_decl.type_name, "bool")) {
+                // Boolean type - treat as integer (0/1)
+                int var_idx = -1;
+                for (int i = 0; i < var_map_count; i++) {
+                    if (strcmp(var_names[i], node->as.var_decl.name) == 0 && var_types[i] == 0) {
+                        var_idx = var_indices[i];
+                        break;
+                    }
+                }
+                if (var_idx < 0) {
+                    fprintf(stderr, "Error: bool variable %s not found in mapping\n", node->as.var_decl.name);
+                    var_idx = 0; // fallback
+                }
+                emit_node(node->as.var_decl.value, out);  // This will load value to eax
+                fprintf(out, "    mov [int_var_%d], eax  ; store %s (bool)\n", var_idx, node->as.var_decl.name);
             } else if (strstr(node->as.var_decl.type_name, "i32")) {
                 // Find integer variable index
                 int var_idx = -1;
@@ -549,6 +567,31 @@ static void emit_node(ASTNode *node, FILE *out) {
                         fprintf(out, "    add esp, 4\n");
                     }
                 }
+                break;
+            } else if (strcmp(node->as.func_call.name, "print_bool") == 0 && node->as.func_call.arg_count == 1) {
+                // Evaluate the argument and put result in eax
+                emit_node(node->as.func_call.args[0], out);
+                fprintf(out, "    push eax\n");
+                fprintf(out, "    call print_bool\n");
+                fprintf(out, "    add esp, 4\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "print_bool_clean") == 0 && node->as.func_call.arg_count == 1) {
+                // Evaluate the argument and put result in eax
+                emit_node(node->as.func_call.args[0], out);
+                fprintf(out, "    push eax\n");
+                fprintf(out, "    call print_bool_clean\n");
+                fprintf(out, "    add esp, 4\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "print_bool_numeric") == 0 && node->as.func_call.arg_count == 1) {
+                // Evaluate the argument and put result in eax
+                emit_node(node->as.func_call.args[0], out);
+                fprintf(out, "    push eax\n");
+                fprintf(out, "    call print_bool_numeric\n");
+                fprintf(out, "    add esp, 4\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "read_bool_safe") == 0 && node->as.func_call.arg_count == 0) {
+                // Call read_bool_safe function (returns result in eax)
+                fprintf(out, "    call read_bool_safe\n");
                 break;
             }
 

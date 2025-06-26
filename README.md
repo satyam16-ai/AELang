@@ -17,12 +17,12 @@
 ## 🚀 Features
 
 ### Core Language Support
-- **Mixed Type System**: Native support for `i32` (32-bit integers) and `f32` (32-bit floats)
-- **Interactive I/O**: Built-in functions for user input and formatted output (`read_int`, `read_float`, `print`, `print_int`, `print_float`)
-- **Arithmetic Operations**: Complete implementation of `+`, `-`, `*`, `/` for both integer and float types
+- **Advanced Type System**: Native support for `i32` (32-bit integers), `f32` (32-bit floats), `bool` (boolean), and `num` (universal type)
+- **Interactive I/O**: Built-in functions for user input and formatted output (`read_int`, `read_float`, `read_bool_safe`, `print`, `print_int`, `print_float`, `print_bool`)
+- **Arithmetic Operations**: Complete implementation of `+`, `-`, `*`, `/` for all numeric types including boolean arithmetic
 - **String Literals**: Support for custom messages and prompts
 - **Function Calls**: Both statement-level and expression-level function calls
-- **Variable Declarations**: Type-safe variable storage and retrieval
+- **Variable Declarations**: Type-safe variable storage and retrieval with full boolean support
 
 ### OS Development Focus
 - **Direct Assembly Generation**: Pure NASM output with no runtime overhead
@@ -136,7 +136,8 @@ sudo pacman -S gcc lib32-glibc nasm make
 ```aelang
 let name: i32 = 42;           // Integer variable
 let pi: f32 = 3.14;           // Float variable
-let result: i32 = a + b;      // Expression assignment
+let flag: bool = true;        // Boolean variable
+let result: num = a + b;      // Universal type expression assignment
 ```
 
 ### Function Declarations
@@ -161,8 +162,10 @@ let quotient: i32 = a / b;    // Division
 ```aelang
 print("Enter a number: ");    // String output
 let num: i32 = read_int();    // Integer input (expression-level)
+let flag: bool = read_bool_safe(); // Boolean input with validation
 print_int(num);               // Integer output
 print_float(3.14);            // Float output
+print_bool(flag);             // Boolean output (true/false)
 ```
 
 ## 🧪 Example Programs

@@ -50,8 +50,20 @@ msg_45 db "✓ Unit conversions",0
 msg_46 db "✓ Real-world problem solving",0
 msg_47 db "num type enables universal calculations!",0
 msg_48 db "No need to worry about int vs float types!",0
-float_0: dd 0x4051f948  ; 3.28083992
-float_1: dd 0x400d187e  ; 2.20461988
+float_0: dd 0x41cc0000  ; 25.5
+float_1: dd 0x40866666  ; 4.19999981
+float_2: dd 0x40b00000  ; 5.5
+float_3: dd 0x40490fd0  ; 3.14159012
+float_4: dd 0x40b00000  ; 5.5
+float_5: dd 0x42c90000  ; 100.5
+float_6: dd 0x4051f948  ; 3.28083992
+float_7: dd 0x42966666  ; 75.1999969
+float_8: dd 0x400d187e  ; 2.20461988
+float_9: dd 0x41480000  ; 12.5
+float_10: dd 0x40980000  ; 4.75
+float_11: dd 0x41780000  ; 15.5
+float_12: dd 0x41ce0000  ; 25.75
+float_13: dd 0x41080000  ; 8.5
 fmt_float: db "%f", 10, 0
 
 section .bss
@@ -105,6 +117,20 @@ section .text
     extern print
     extern read_int
     extern read_float
+    extern read_num
+    extern read_num_safe
+    extern print_num
+    extern print_clean
+    extern print_num_precision
+    extern print_num_scientific
+    extern print_currency
+    extern print_percentage
+    extern print_num_engineering
+    extern print_hex
+    extern read_num_validated
+    extern read_num_with_prompt
+    extern read_positive_num
+    extern read_integer_only
 
 extern print_int
 extern print_float
@@ -130,36 +156,28 @@ main:
     fild dword [temp_int]  ; convert int to float
     fstp dword [float_var_0]  ; store a as num (converted from int)
 ; let b:num = 25.500000
-; Error: num float constant not found
+    fld dword [float_0]
     fstp dword [float_var_1]  ; store b as num (float)
 ; let addition:num = a + b
     fld dword [float_var_0]  ; load a
     fld dword [float_var_1]  ; load b
     faddp
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_2]  ; store addition as num (converted from int)
+    fstp dword [float_var_2]  ; store addition as num (float)
 ; let subtraction:num = a - b
     fld dword [float_var_0]  ; load a
     fld dword [float_var_1]  ; load b
     fsubp
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_3]  ; store subtraction as num (converted from int)
+    fstp dword [float_var_3]  ; store subtraction as num (float)
 ; let multiplication:num = a * b
     fld dword [float_var_0]  ; load a
     fld dword [float_var_1]  ; load b
     fmulp
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_4]  ; store multiplication as num (converted from int)
+    fstp dword [float_var_4]  ; store multiplication as num (float)
 ; let division:num = a / b
     fld dword [float_var_0]  ; load a
     fld dword [float_var_1]  ; load b
     fdivp
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_5]  ; store division as num (converted from int)
+    fstp dword [float_var_5]  ; store division as num (float)
     push msg_4
     call print
     add esp, 4
@@ -187,7 +205,7 @@ main:
     fild dword [temp_int]  ; convert int to float
     fstp dword [float_var_6]  ; store x as num (converted from int)
 ; let y:num = 4.200000
-; Error: num float constant not found
+    fld dword [float_1]
     fstp dword [float_var_7]  ; store y as num (float)
 ; let z:num = 3
     mov eax, 3
@@ -200,32 +218,23 @@ main:
     faddp
     fld dword [float_var_8]  ; load z
     fmulp
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_9]  ; store complex1 as num (converted from int)
+    fstp dword [float_var_9]  ; store complex1 as num (float)
 ; let complex2:num = x / y - z
     fld dword [float_var_6]  ; load x
     fld dword [float_var_7]  ; load y
     fld dword [float_var_8]  ; load z
     fsubp
     fdivp
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_10]  ; store complex2 as num (converted from int)
+    fstp dword [float_var_10]  ; store complex2 as num (float)
 ; let complex3:num = x * y + z * z
     fld dword [float_var_6]  ; load x
     fld dword [float_var_7]  ; load y
     fmulp
-    push eax
     fld dword [float_var_8]  ; load z
     fld dword [float_var_8]  ; load z
     fmulp
-    mov ebx, eax
-    pop eax
-    add eax, ebx
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_11]  ; store complex3 as num (converted from int)
+    faddp
+    fstp dword [float_var_11]  ; store complex3 as num (float)
     push msg_10
     call print
     add esp, 4
@@ -245,10 +254,10 @@ main:
     call print
     add esp, 4
 ; let radius:num = 5.500000
-; Error: num float constant not found
+    fld dword [float_2]
     fstp dword [float_var_12]  ; store radius as num (float)
 ; let pi:num = 3.141590
-; Error: num float constant not found
+    fld dword [float_3]
     fstp dword [float_var_13]  ; store pi as num (float)
 ; let circumference:num = 2 * pi * radius
     mov eax, 2
@@ -256,18 +265,14 @@ main:
     fmulp
     fld dword [float_var_12]  ; load radius
     fmulp
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_14]  ; store circumference as num (converted from int)
+    fstp dword [float_var_14]  ; store circumference as num (float)
 ; let area:num = pi * radius * radius
     fld dword [float_var_13]  ; load pi
     fld dword [float_var_12]  ; load radius
     fmulp
     fld dword [float_var_12]  ; load radius
     fmulp
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_15]  ; store area as num (converted from int)
+    fstp dword [float_var_15]  ; store area as num (float)
     push msg_15
     call print
     add esp, 4
@@ -292,7 +297,7 @@ main:
     fild dword [temp_int]  ; convert int to float
     fstp dword [float_var_16]  ; store principal as num (converted from int)
 ; let rate:num = 5.500000
-; Error: num float constant not found
+    fld dword [float_2]
     fstp dword [float_var_17]  ; store rate as num (float)
 ; let time:num = 2
     mov eax, 2
@@ -305,23 +310,14 @@ main:
     fmulp
     fld dword [float_var_18]  ; load time
     fmulp
-    push eax
     mov eax, 100
-    mov ebx, eax
-    pop eax
-    xor edx, edx
-    mov ecx, ebx
-    div ecx
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_19]  ; store simple_interest as num (converted from int)
+    fdivp
+    fstp dword [float_var_19]  ; store simple_interest as num (float)
 ; let amount:num = principal + simple_interest
     fld dword [float_var_16]  ; load principal
     fld dword [float_var_19]  ; load simple_interest
     faddp
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_20]  ; store amount as num (converted from int)
+    fstp dword [float_var_20]  ; store amount as num (float)
     push msg_20
     call print
     add esp, 4
@@ -349,41 +345,27 @@ main:
     fld dword [float_var_21]  ; load celsius
     mov eax, 9
     fmulp
-    push eax
     mov eax, 5
-    mov ebx, eax
-    pop eax
-    xor edx, edx
-    mov ecx, ebx
-    div ecx
-    push eax
+    fdivp
     mov eax, 32
-    mov ebx, eax
-    pop eax
-    add eax, ebx
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_22]  ; store fahrenheit as num (converted from int)
+    faddp
+    fstp dword [float_var_22]  ; store fahrenheit as num (float)
 ; let meters:num = 100.500000
-; Error: num float constant not found
+    fld dword [float_5]
     fstp dword [float_var_23]  ; store meters as num (float)
 ; let feet:num = meters * 3.280840
     fld dword [float_var_23]  ; load meters
-    fld dword [float_0]
+    fld dword [float_6]
     fmulp
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_24]  ; store feet as num (converted from int)
+    fstp dword [float_var_24]  ; store feet as num (float)
 ; let kilograms:num = 75.200000
-; Error: num float constant not found
+    fld dword [float_7]
     fstp dword [float_var_25]  ; store kilograms as num (float)
 ; let pounds:num = kilograms * 2.204620
     fld dword [float_var_25]  ; load kilograms
-    fld dword [float_1]
+    fld dword [float_8]
     fmulp
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_26]  ; store pounds as num (converted from int)
+    fstp dword [float_var_26]  ; store pounds as num (float)
     push msg_25
     call print
     add esp, 4
@@ -400,7 +382,7 @@ main:
     call print
     add esp, 4
 ; let val1:num = 12.500000
-; Error: num float constant not found
+    fld dword [float_9]
     fstp dword [float_var_27]  ; store val1 as num (float)
 ; let val2:num = 8
     mov eax, 8
@@ -408,7 +390,7 @@ main:
     fild dword [temp_int]  ; convert int to float
     fstp dword [float_var_28]  ; store val2 as num (converted from int)
 ; let val3:num = 4.750000
-; Error: num float constant not found
+    fld dword [float_10]
     fstp dword [float_var_29]  ; store val3 as num (float)
 ; let advanced1:num = val1 + val2 * val3 - val1 / val2
     fld dword [float_var_27]  ; load val1
@@ -416,55 +398,37 @@ main:
     faddp
     fld dword [float_var_29]  ; load val3
     fmulp
-    push eax
     fld dword [float_var_27]  ; load val1
     fld dword [float_var_28]  ; load val2
     fdivp
-    mov ebx, eax
-    pop eax
-    sub eax, ebx
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_30]  ; store advanced1 as num (converted from int)
+    fsubp
+    fstp dword [float_var_30]  ; store advanced1 as num (float)
 ; let advanced2:num = val1 * val1 + val2 * val2 + val3 * val3
     fld dword [float_var_27]  ; load val1
     fld dword [float_var_27]  ; load val1
     fmulp
-    push eax
     fld dword [float_var_28]  ; load val2
     fld dword [float_var_28]  ; load val2
     fmulp
-    mov ebx, eax
-    pop eax
-    add eax, ebx
-    push eax
+    faddp
     fld dword [float_var_29]  ; load val3
     fld dword [float_var_29]  ; load val3
     fmulp
-    mov ebx, eax
-    pop eax
-    add eax, ebx
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_31]  ; store advanced2 as num (converted from int)
+    faddp
+    fstp dword [float_var_31]  ; store advanced2 as num (float)
 ; let advanced3:num = val1 - val2 / val3 + val2 + val3 * val1
     fld dword [float_var_27]  ; load val1
     fld dword [float_var_28]  ; load val2
     fsubp
     fld dword [float_var_29]  ; load val3
     fdivp
-    push eax
     fld dword [float_var_28]  ; load val2
     fld dword [float_var_29]  ; load val3
     faddp
     fld dword [float_var_27]  ; load val1
     fmulp
-    mov ebx, eax
-    pop eax
-    add eax, ebx
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_32]  ; store advanced3 as num (converted from int)
+    faddp
+    fstp dword [float_var_32]  ; store advanced3 as num (float)
     push msg_29
     call print
     add esp, 4
@@ -484,7 +448,7 @@ main:
     call print
     add esp, 4
 ; let length:num = 15.500000
-; Error: num float constant not found
+    fld dword [float_11]
     fstp dword [float_var_33]  ; store length as num (float)
 ; let width:num = 10
     mov eax, 10
@@ -495,43 +459,30 @@ main:
     fld dword [float_var_33]  ; load length
     fld dword [float_var_34]  ; load width
     fmulp
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_35]  ; store room_area as num (converted from int)
+    fstp dword [float_var_35]  ; store room_area as num (float)
 ; let cost_per_sqm:num = 25.750000
-; Error: num float constant not found
+    fld dword [float_12]
     fstp dword [float_var_36]  ; store cost_per_sqm as num (float)
 ; let total_cost:num = room_area * cost_per_sqm
     fld dword [float_var_35]  ; load room_area
     fld dword [float_var_36]  ; load cost_per_sqm
     fmulp
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_37]  ; store total_cost as num (converted from int)
+    fstp dword [float_var_37]  ; store total_cost as num (float)
 ; let tax_rate:num = 8.500000
-; Error: num float constant not found
+    fld dword [float_13]
     fstp dword [float_var_38]  ; store tax_rate as num (float)
 ; let tax_amount:num = total_cost * tax_rate / 100
     fld dword [float_var_37]  ; load total_cost
     fld dword [float_var_38]  ; load tax_rate
     fmulp
-    push eax
     mov eax, 100
-    mov ebx, eax
-    pop eax
-    xor edx, edx
-    mov ecx, ebx
-    div ecx
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_39]  ; store tax_amount as num (converted from int)
+    fdivp
+    fstp dword [float_var_39]  ; store tax_amount as num (float)
 ; let final_cost:num = total_cost + tax_amount
     fld dword [float_var_37]  ; load total_cost
     fld dword [float_var_39]  ; load tax_amount
     faddp
-    mov [temp_int], eax
-    fild dword [temp_int]  ; convert int to float
-    fstp dword [float_var_40]  ; store final_cost as num (converted from int)
+    fstp dword [float_var_40]  ; store final_cost as num (float)
     push msg_34
     call print
     add esp, 4
