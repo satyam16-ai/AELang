@@ -1,0 +1,117 @@
+// Even/Odd Checker - Testing modulo and conditionals in ÆLang
+extern print_int(val: i32);
+
+func main(): void {
+    print("═══════════════════════════════════");
+    print("    ÆLANG EVEN/ODD CHECKER");
+    print("      Modulo & Conditionals");
+    print("═══════════════════════════════════");
+    print("");
+    
+    // Test even/odd checking with modulo operator
+    print("🔹 Testing even/odd detection:");
+    print("");
+    
+    // Test 1: Even number
+    let num1: i32 = 4;
+    let remainder1: i32 = num1 % 2;
+    
+    print("Test 1 - Number: ");
+    print_int(num1);
+    print("");
+    print("Remainder when divided by 2: ");
+    print_int(remainder1);
+    print("");
+    
+    if remainder1 == 0 {
+        print("✅ EVEN number");
+    } else {
+        print("❌ ODD number");
+    }
+    print("");
+    
+    // Test 2: Odd number
+    let num2: i32 = 7;
+    let remainder2: i32 = num2 % 2;
+    
+    print("Test 2 - Number: ");
+    print_int(num2);
+    print("");
+    print("Remainder when divided by 2: ");
+    print_int(remainder2);
+    print("");
+    
+    if remainder2 == 0 {
+        print("❌ EVEN number");
+    } else {
+        print("✅ ODD number");
+    }
+    print("");
+    
+    // Test 3: Zero (special case)
+    let num3: i32 = 0;
+    let remainder3: i32 = num3 % 2;
+    
+    print("Test 3 - Number: ");
+    print_int(num3);
+    print("");
+    print("Remainder when divided by 2: ");
+    print_int(remainder3);
+    print("");
+    
+    if remainder3 == 0 {
+        print("✅ EVEN number (zero is even)");
+    } else {
+        print("❌ ODD number");
+    }
+    print("");
+    
+    // Test 4: Larger even number
+    let num4: i32 = 20;
+    let remainder4: i32 = num4 % 2;
+    
+    print("Test 4 - Number: ");
+    print_int(num4);
+    print("");
+    print("Remainder when divided by 2: ");
+    print_int(remainder4);
+    print("");
+    
+    if remainder4 == 0 {
+        print("✅ EVEN number");
+    } else {
+        print("❌ ODD number");
+    }
+    print("");
+    
+    // Test 5: Larger odd number
+    let num5: i32 = 15;
+    let remainder5: i32 = num5 % 2;
+    
+    print("Test 5 - Number: ");
+    print_int(num5);
+    print("");
+    print("Remainder when divided by 2: ");
+    print_int(remainder5);
+    print("");
+    
+    if remainder5 == 0 {
+        print("❌ EVEN number");
+    } else {
+        print("✅ ODD number");
+    }
+    print("");
+    
+    print("╔═══════════════════════════════════╗");
+    print("║        FEATURES DEMONSTRATED     ║");
+    print("╠═══════════════════════════════════╣");
+    print("║ ✅ Modulo operator (%)           ║");
+    print("║ ✅ If/else conditional logic     ║");
+    print("║ ✅ Comparison operators (==)     ║");
+    print("║ ✅ Even/odd number detection     ║");
+    print("║ ✅ Variable assignments          ║");
+    print("║ ✅ Integer arithmetic            ║");
+    print("╚═══════════════════════════════════╝");
+    print("");
+    print("🏆 ÆLang: Even/Odd checker working!");
+}

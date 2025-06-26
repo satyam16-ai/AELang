@@ -1,0 +1,15 @@
+// Simple if-elif test
+extern print(msg: i32);
+
+func main(): void {
+    let x: bool = true;
+    let y: bool = false;
+    
+    if x {
+        print("x is true");
+    } elif y {
+        print("y is true");
+    } else {
+        print("both false");
+    }
+}

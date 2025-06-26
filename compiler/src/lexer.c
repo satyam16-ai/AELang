@@ -30,7 +30,7 @@ static int match_keyword(const char *word) {
     struct { const char *word; TokenType type; } keywords[] = {
         {"let", TOKEN_LET}, {"const", TOKEN_CONST}, {"func", TOKEN_FUNC},
         {"extern", TOKEN_EXTERN}, {"return", TOKEN_RETURN},
-        {"if", TOKEN_IF}, {"goto", TOKEN_GOTO}, {"asm", TOKEN_ASM},
+        {"if", TOKEN_IF}, {"else", TOKEN_ELSE}, {"elif", TOKEN_ELIF}, {"goto", TOKEN_GOTO}, {"asm", TOKEN_ASM},
         {"halt", TOKEN_HALT}, {"in", TOKEN_IN}, {"out", TOKEN_OUT},
         {"load", TOKEN_LOAD}, {"store", TOKEN_STORE},
         {"u8", TOKEN_TYPE_U8}, {"u16", TOKEN_TYPE_U16}, {"u32", TOKEN_TYPE_U32},
@@ -170,7 +170,7 @@ const char *token_type_to_str(TokenType type) {
     #define CASE(t) case t: return #t
     switch (type) {
         CASE(TOKEN_EOF); CASE(TOKEN_LET); CASE(TOKEN_CONST); CASE(TOKEN_FUNC); CASE(TOKEN_EXTERN);
-        CASE(TOKEN_RETURN); CASE(TOKEN_IF); CASE(TOKEN_GOTO); CASE(TOKEN_ASM); CASE(TOKEN_HALT);
+        CASE(TOKEN_RETURN); CASE(TOKEN_IF); CASE(TOKEN_ELSE); CASE(TOKEN_ELIF); CASE(TOKEN_GOTO); CASE(TOKEN_ASM); CASE(TOKEN_HALT);
         CASE(TOKEN_IN); CASE(TOKEN_OUT); CASE(TOKEN_LOAD); CASE(TOKEN_STORE);
         CASE(TOKEN_COLON); CASE(TOKEN_SEMICOLON); CASE(TOKEN_COMMA);
         CASE(TOKEN_LPAREN); CASE(TOKEN_RPAREN); CASE(TOKEN_LBRACE); CASE(TOKEN_RBRACE);

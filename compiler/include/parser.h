@@ -17,6 +17,7 @@ typedef enum {
     AST_FUNC_CALL,
     AST_EXTERN_FUNC,
     AST_FUNC_DEF,
+    AST_IF_STMT,
     AST_IF_GOTO,
     AST_LABEL,
     AST_GOTO,
@@ -108,6 +109,15 @@ struct ASTNode {
 
         // If Goto
         struct { ASTNode *condition; char *label; } if_goto;
+
+        // If Statement
+        struct { 
+            ASTNode *condition; 
+            ASTNode **then_body; 
+            size_t then_count;
+            ASTNode **else_body; 
+            size_t else_count;
+        } if_stmt;
 
         // IO
         struct { int port; char *var; int is_in; } io;

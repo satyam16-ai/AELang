@@ -1,0 +1,16 @@
+// Test case where wrong parsing gives wrong result
+extern print_int(val: i32);
+
+func main(): void {
+    let x: i32 = 1;
+    let y: i32 = 2;
+    
+    print("x = 1, y = 2");
+    print("Testing x > y (should be false):");
+    
+    if x > y {
+        print("TRUE: x > y (WRONG - this should not print)");
+    } else {
+        print("FALSE: x <= y (CORRECT - this should print)");
+    }
+}

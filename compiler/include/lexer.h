@@ -12,6 +12,8 @@ typedef enum {
     TOKEN_EXTERN,
     TOKEN_RETURN,
     TOKEN_IF,
+    TOKEN_ELSE,
+    TOKEN_ELIF,
     TOKEN_GOTO,
     TOKEN_ASM,
     TOKEN_HALT,

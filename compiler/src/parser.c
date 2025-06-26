@@ -12,6 +12,10 @@ static TokenList *tokens;
 
 // Forward declarations
 static ASTNode *parse_expression();
+static ASTNode *parse_statement();
+static ASTNode *parse_if_statement(int line);
+static ASTNode *parse_if_statement_with_condition(int line, ASTNode *condition);
+static ASTNode *make_node(ASTNodeType type, int line);
 static void free_ast_node(ASTNode *node);
 
 static Token peek() {
@@ -50,6 +54,132 @@ static Token expect(TokenType type, const char *msg) {
         exit(1);
     }
     return tokens->tokens[current - 1];
+}
+
+// Helper functions for if statement parsing
+static int check(TokenType type) {
+    if (current >= tokens->count) return 0;
+    return tokens->tokens[current].type == type;
+}
+
+static int is_at_end() {
+    return current >= tokens->count;
+}
+
+static ASTNode *parse_if_statement_with_condition(int line, ASTNode *condition) {
+    // Parse if statement with already-parsed condition
+    ASTNode *node = make_node(AST_IF_STMT, line);
+    node->as.if_stmt.condition = condition;
+    
+    // Parse then block
+    expect(TOKEN_LBRACE, "{");
+    node->as.if_stmt.then_body = NULL;
+    node->as.if_stmt.then_count = 0;
+    size_t then_capacity = 0;
+    
+    while (!check(TOKEN_RBRACE) && !is_at_end()) {
+        if (node->as.if_stmt.then_count >= then_capacity) {
+            then_capacity = then_capacity == 0 ? 8 : then_capacity * 2;
+            node->as.if_stmt.then_body = realloc(node->as.if_stmt.then_body, 
+                                               then_capacity * sizeof(ASTNode*));
+        }
+        ASTNode *stmt = parse_statement();
+        if (stmt) {
+            node->as.if_stmt.then_body[node->as.if_stmt.then_count++] = stmt;
+        }
+    }
+    expect(TOKEN_RBRACE, "}");
+    
+    // Initialize else body
+    node->as.if_stmt.else_body = NULL;
+    node->as.if_stmt.else_count = 0;
+    
+    // Check for else or elif
+    if (check(TOKEN_ELIF)) {
+        // Create nested if for elif
+        advance(); // consume TOKEN_ELIF
+        size_t else_capacity = 1;
+        node->as.if_stmt.else_body = malloc(else_capacity * sizeof(ASTNode*));
+        node->as.if_stmt.else_body[0] = parse_if_statement(peek().line); // Recursively parse elif as if
+        node->as.if_stmt.else_count = 1;
+    } else if (check(TOKEN_ELSE)) {
+        advance(); // consume TOKEN_ELSE
+        expect(TOKEN_LBRACE, "{");
+        size_t else_capacity = 0;
+        
+        while (!check(TOKEN_RBRACE) && !is_at_end()) {
+            if (node->as.if_stmt.else_count >= else_capacity) {
+                else_capacity = else_capacity == 0 ? 8 : else_capacity * 2;
+                node->as.if_stmt.else_body = realloc(node->as.if_stmt.else_body, 
+                                                   else_capacity * sizeof(ASTNode*));
+            }
+            ASTNode *stmt = parse_statement();
+            if (stmt) {
+                node->as.if_stmt.else_body[node->as.if_stmt.else_count++] = stmt;
+            }
+        }
+        expect(TOKEN_RBRACE, "}");
+    }
+    
+    return node;
+}
+
+static ASTNode *parse_if_statement(int line) {
+    // Parse if condition
+    ASTNode *node = make_node(AST_IF_STMT, line);
+    node->as.if_stmt.condition = parse_expression();
+    
+    // Parse then block
+    expect(TOKEN_LBRACE, "{");
+    node->as.if_stmt.then_body = NULL;
+    node->as.if_stmt.then_count = 0;
+    size_t then_capacity = 0;
+    
+    while (!check(TOKEN_RBRACE) && !is_at_end()) {
+        if (node->as.if_stmt.then_count >= then_capacity) {
+            then_capacity = then_capacity == 0 ? 8 : then_capacity * 2;
+            node->as.if_stmt.then_body = realloc(node->as.if_stmt.then_body, 
+                                               then_capacity * sizeof(ASTNode*));
+        }
+        ASTNode *stmt = parse_statement();
+        if (stmt) {
+            node->as.if_stmt.then_body[node->as.if_stmt.then_count++] = stmt;
+        }
+    }
+    expect(TOKEN_RBRACE, "}");
+    
+    // Initialize else body
+    node->as.if_stmt.else_body = NULL;
+    node->as.if_stmt.else_count = 0;
+    
+    // Check for else or elif
+    if (check(TOKEN_ELIF)) {
+        // Create nested if for elif
+        advance(); // consume TOKEN_ELIF
+        size_t else_capacity = 1;
+        node->as.if_stmt.else_body = malloc(else_capacity * sizeof(ASTNode*));
+        node->as.if_stmt.else_body[0] = parse_if_statement(peek().line); // Recursively parse elif as if
+        node->as.if_stmt.else_count = 1;
+    } else if (check(TOKEN_ELSE)) {
+        advance(); // consume TOKEN_ELSE
+        expect(TOKEN_LBRACE, "{");
+        size_t else_capacity = 0;
+        
+        while (!check(TOKEN_RBRACE) && !is_at_end()) {
+            if (node->as.if_stmt.else_count >= else_capacity) {
+                else_capacity = else_capacity == 0 ? 8 : else_capacity * 2;
+                node->as.if_stmt.else_body = realloc(node->as.if_stmt.else_body, 
+                                                   else_capacity * sizeof(ASTNode*));
+            }
+            ASTNode *stmt = parse_statement();
+            if (stmt) {
+                node->as.if_stmt.else_body[node->as.if_stmt.else_count++] = stmt;
+            }
+        }
+        expect(TOKEN_RBRACE, "}");
+    }
+    
+    return node;
 }
 
 // Safe node creation with error handling
@@ -162,7 +292,10 @@ static ASTNode *parse_binary_expr() {
     }
 
     while (peek().type == TOKEN_PLUS || peek().type == TOKEN_MINUS ||
-           peek().type == TOKEN_MUL || peek().type == TOKEN_DIV) {
+           peek().type == TOKEN_MUL || peek().type == TOKEN_DIV || peek().type == TOKEN_MOD ||
+           peek().type == TOKEN_EQ || peek().type == TOKEN_NEQ ||
+           peek().type == TOKEN_LT || peek().type == TOKEN_GT ||
+           peek().type == TOKEN_LEQ || peek().type == TOKEN_GEQ) {
         Token op = advance();
         ASTNode *right = parse_primary_expr();
         
@@ -180,8 +313,14 @@ static ASTNode *parse_binary_expr() {
             return NULL;
         }
         
-        strncpy(bin->as.bin_op.op, op.text, 2);
-        bin->as.bin_op.op[2] = '\0';  // Ensure null termination
+        // Handle operator text (can be 1 or 2 characters)
+        int op_len = strlen(op.text);
+        if (op_len < 3) {
+            strcpy(bin->as.bin_op.op, op.text);
+        } else {
+            strncpy(bin->as.bin_op.op, op.text, 2);
+            bin->as.bin_op.op[2] = '\0';
+        }
         bin->as.bin_op.left = left;
         bin->as.bin_op.right = right;
 
@@ -296,14 +435,26 @@ static ASTNode *parse_statement() {
             return id;
         }
     } else if (match(TOKEN_IF)) {
-        ASTNode *node = make_node(AST_IF_GOTO, tok.line);
+        // Look ahead to see if this is "if <condition> goto <label>" or "if <condition> { ... }"
         ASTNode *cond = parse_expression();
-        expect(TOKEN_GOTO, "goto");
-        Token label = expect(TOKEN_IDENT, "label name");
-        match(TOKEN_SEMICOLON);
-        node->as.if_goto.condition = cond;
-        node->as.if_goto.label = strdup(label.text);
-        return node;
+        
+        if (peek().type == TOKEN_GOTO) {
+            // This is an if-goto statement
+            ASTNode *node = make_node(AST_IF_GOTO, tok.line);
+            advance(); // consume TOKEN_GOTO
+            Token label = expect(TOKEN_IDENT, "label name");
+            match(TOKEN_SEMICOLON);
+            node->as.if_goto.condition = cond;
+            node->as.if_goto.label = strdup(label.text);
+            return node;
+        } else if (peek().type == TOKEN_LBRACE) {
+            // This is a regular if statement - use helper with pre-parsed condition
+            return parse_if_statement_with_condition(tok.line, cond);
+        } else {
+            fprintf(stderr, "Error: Expected 'goto' or '{' after if condition\n");
+            free_ast_node(cond);
+            return NULL;
+        }
     } else if (match(TOKEN_GOTO)) {
         ASTNode *node = make_node(AST_GOTO, tok.line);
         Token label = expect(TOKEN_IDENT, "label name");
@@ -560,6 +711,32 @@ static void free_ast_node(ASTNode *node) {
             if (node->as.if_goto.label) {
                 free(node->as.if_goto.label);
                 node->as.if_goto.label = NULL;
+            }
+            break;
+        case AST_IF_STMT:
+            if (node->as.if_stmt.condition && node->as.if_stmt.condition->type != -1) {
+                free_ast_node(node->as.if_stmt.condition);
+                node->as.if_stmt.condition = NULL;
+            }
+            // Free then body
+            if (node->as.if_stmt.then_body) {
+                for (size_t i = 0; i < node->as.if_stmt.then_count; i++) {
+                    if (node->as.if_stmt.then_body[i]) {
+                        free_ast_node(node->as.if_stmt.then_body[i]);
+                    }
+                }
+                free(node->as.if_stmt.then_body);
+                node->as.if_stmt.then_body = NULL;
+            }
+            // Free else body
+            if (node->as.if_stmt.else_body) {
+                for (size_t i = 0; i < node->as.if_stmt.else_count; i++) {
+                    if (node->as.if_stmt.else_body[i]) {
+                        free_ast_node(node->as.if_stmt.else_body[i]);
+                    }
+                }
+                free(node->as.if_stmt.else_body);
+                node->as.if_stmt.else_body = NULL;
             }
             break;
         case AST_GOTO:

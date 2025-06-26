@@ -248,6 +248,23 @@ static void collect_strings(ASTNode *node) {
         case AST_ASSIGN:
             collect_strings(node->as.assign.value);
             break;
+        case AST_IF_STMT:
+            collect_strings(node->as.if_stmt.condition);
+            for (size_t i = 0; i < node->as.if_stmt.then_count; ++i)
+                collect_strings(node->as.if_stmt.then_body[i]);
+            for (size_t i = 0; i < node->as.if_stmt.else_count; ++i)
+                collect_strings(node->as.if_stmt.else_body[i]);
+            break;
+        case AST_IF_GOTO:
+            collect_strings(node->as.if_goto.condition);
+            break;
+        case AST_BIN_OP:
+            collect_strings(node->as.bin_op.left);
+            collect_strings(node->as.bin_op.right);
+            break;
+        case AST_UNARY_OP:
+            collect_strings(node->as.unary_op.expr);
+            break;
         default: break;
     }
 }
@@ -302,6 +319,19 @@ static void collect_floats(ASTNode *node) {
         case AST_BIN_OP:
             collect_floats(node->as.bin_op.left);
             collect_floats(node->as.bin_op.right);
+            break;
+        case AST_IF_STMT:
+            collect_floats(node->as.if_stmt.condition);
+            for (size_t i = 0; i < node->as.if_stmt.then_count; ++i)
+                collect_floats(node->as.if_stmt.then_body[i]);
+            for (size_t i = 0; i < node->as.if_stmt.else_count; ++i)
+                collect_floats(node->as.if_stmt.else_body[i]);
+            break;
+        case AST_IF_GOTO:
+            collect_floats(node->as.if_goto.condition);
+            break;
+        case AST_UNARY_OP:
+            collect_floats(node->as.unary_op.expr);
             break;
         default: break;
     }
@@ -460,8 +490,31 @@ static void emit_node(ASTNode *node, FILE *out) {
                     fprintf(out, "    fmulp\n");        // Multiply ST0 with ST1, pop
                 } else if (strcmp(op, "/") == 0) {
                     fprintf(out, "    fdivp\n");        // Divide ST1 by ST0, pop
+                } else if (strcmp(op, "==") == 0 || strcmp(op, "!=") == 0 ||
+                          strcmp(op, "<") == 0 || strcmp(op, ">") == 0 ||
+                          strcmp(op, "<=") == 0 || strcmp(op, ">=") == 0) {
+                    // Float comparison
+                    fprintf(out, "    fcompp\n");       // Compare ST0 and ST1, pop both
+                    fprintf(out, "    fstsw ax\n");     // Store status word to AX
+                    fprintf(out, "    sahf\n");         // Store AH into flags register
+                    
+                    // Set result based on comparison
+                    if (strcmp(op, "==") == 0) {
+                        fprintf(out, "    sete al\n");      // Set AL if equal
+                    } else if (strcmp(op, "!=") == 0) {
+                        fprintf(out, "    setne al\n");     // Set AL if not equal
+                    } else if (strcmp(op, "<") == 0) {
+                        fprintf(out, "    setb al\n");      // Set AL if below (less than)
+                    } else if (strcmp(op, ">") == 0) {
+                        fprintf(out, "    seta al\n");      // Set AL if above (greater than)
+                    } else if (strcmp(op, "<=") == 0) {
+                        fprintf(out, "    setbe al\n");     // Set AL if below or equal
+                    } else if (strcmp(op, ">=") == 0) {
+                        fprintf(out, "    setae al\n");     // Set AL if above or equal
+                    }
+                    fprintf(out, "    movzx eax, al\n"); // Zero-extend AL to EAX (0 or 1)
                 }
-                // Result is now in ST0
+                // Result is now in ST0 for arithmetic, or EAX for comparisons
             } else {
                 // Integer operations
                 emit_node(left, out);
@@ -481,6 +534,35 @@ static void emit_node(ASTNode *node, FILE *out) {
                     fprintf(out, "    xor edx, edx\n");
                     fprintf(out, "    mov ecx, ebx\n");
                     fprintf(out, "    div ecx\n");
+                } else if (strcmp(op, "%") == 0) {
+                    fprintf(out, "    xor edx, edx\n");  // Clear EDX for division
+                    fprintf(out, "    mov ecx, ebx\n");  // Move divisor to ECX
+                    fprintf(out, "    div ecx\n");       // Divide EAX by ECX, remainder in EDX
+                    fprintf(out, "    mov eax, edx\n");  // Move remainder to EAX
+                } else if (strcmp(op, "==") == 0) {
+                    fprintf(out, "    cmp eax, ebx\n");
+                    fprintf(out, "    sete al\n");      // Set AL if equal
+                    fprintf(out, "    movzx eax, al\n"); // Zero-extend AL to EAX (0 or 1)
+                } else if (strcmp(op, "!=") == 0) {
+                    fprintf(out, "    cmp eax, ebx\n");
+                    fprintf(out, "    setne al\n");     // Set AL if not equal
+                    fprintf(out, "    movzx eax, al\n");
+                } else if (strcmp(op, "<") == 0) {
+                    fprintf(out, "    cmp eax, ebx\n");
+                    fprintf(out, "    setl al\n");      // Set AL if less than (signed)
+                    fprintf(out, "    movzx eax, al\n");
+                } else if (strcmp(op, ">") == 0) {
+                    fprintf(out, "    cmp eax, ebx\n");
+                    fprintf(out, "    setg al\n");      // Set AL if greater than (signed)
+                    fprintf(out, "    movzx eax, al\n");
+                } else if (strcmp(op, "<=") == 0) {
+                    fprintf(out, "    cmp eax, ebx\n");
+                    fprintf(out, "    setle al\n");     // Set AL if less than or equal (signed)
+                    fprintf(out, "    movzx eax, al\n");
+                } else if (strcmp(op, ">=") == 0) {
+                    fprintf(out, "    cmp eax, ebx\n");
+                    fprintf(out, "    setge al\n");     // Set AL if greater than or equal (signed)
+                    fprintf(out, "    movzx eax, al\n");
                 } else {
                     fprintf(out, "; Unsupported binary operator: %s\n", op);
                 }
@@ -504,6 +586,37 @@ static void emit_node(ASTNode *node, FILE *out) {
             fprintf(out, "; if cond goto %s\n", node->as.if_goto.label);
             fprintf(out, "    cmp eax, 1\n    je %s\n", node->as.if_goto.label);
             break;
+
+        case AST_IF_STMT: {
+            static int if_counter = 0;
+            int current_if = if_counter++;
+            
+            fprintf(out, "; if statement %d\n", current_if);
+            
+            // Evaluate condition
+            emit_node(node->as.if_stmt.condition, out);
+            
+            // Compare condition with 1 (true)
+            fprintf(out, "    cmp eax, 0\n");
+            fprintf(out, "    je .else_%d\n", current_if);
+            
+            // Emit then block
+            fprintf(out, ".then_%d:\n", current_if);
+            for (size_t i = 0; i < node->as.if_stmt.then_count; i++) {
+                emit_node(node->as.if_stmt.then_body[i], out);
+            }
+            fprintf(out, "    jmp .end_if_%d\n", current_if);
+            
+            // Emit else block (if any)
+            fprintf(out, ".else_%d:\n", current_if);
+            for (size_t i = 0; i < node->as.if_stmt.else_count; i++) {
+                emit_node(node->as.if_stmt.else_body[i], out);
+            }
+            
+            fprintf(out, ".end_if_%d:\n", current_if);
+            fprintf(out, "; end if statement %d\n", current_if);
+            break;
+        }
 
         case AST_FUNC_CALL: {
             if (strcmp(node->as.func_call.name, "print") == 0 && node->as.func_call.arg_count == 1) {
