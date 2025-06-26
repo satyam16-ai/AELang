@@ -1,0 +1,12 @@
+extern print_int(val: i32);
+
+func main(): void {
+    print("Testing simple parsing");
+    let a: i32 = 1;
+    let b: i32 = 2;
+    let c: i32 = 3;
+    print("Variables declared");
+    print_int(a);
+    print_int(b);
+    print_int(c);
+}

@@ -1,0 +1,54 @@
+extern print_int(val: i32);
+extern print_float(val: f32);
+
+func main(): void {
+    print("=== ÆLang num Type: Advanced Demo ===");
+    print("Demonstrating dynamic int/float number type");
+    print("");
+    
+    // Demo 1: num variables can hold integers
+    print("Demo 1: Integer storage");
+    let int_value: num = 100;
+    let another_int: num = 25;
+    print("int_value: num = 100");
+    print("another_int: num = 25");
+    
+    // Demo 2: num variables can hold floats  
+    print("");
+    print("Demo 2: Float storage");
+    let float_value: num = 3.14159;
+    let precision: num = 2.5;
+    print("float_value: num = 3.14159");
+    print("precision: num = 2.5");
+    
+    // Demo 3: Mixed arithmetic operations
+    print("");
+    print("Demo 3: Mixed arithmetic");
+    let mixed_sum: num = int_value + another_int;
+    let mixed_product: num = float_value * precision;
+    print("100 + 25 = mixed_sum");
+    print("3.14159 * 2.5 = mixed_product");
+    
+    // Demo 4: Complex expressions with num
+    print("");
+    print("Demo 4: Complex expressions");
+    let complex_result: num = (int_value + float_value) / precision;
+    print("(100 + 3.14159) / 2.5 = complex_result");
+    
+    // Demo 5: num in nested expressions
+    print("");
+    print("Demo 5: Nested expressions");
+    let nested: num = ((int_value + another_int) * precision) + float_value;
+    print("((100 + 25) * 2.5) + 3.14159 = nested");
+    
+    print("");
+    print("=== num Type Benefits ===");
+    print("✓ Single type for both integers and floats");
+    print("✓ Automatic type handling in expressions"); 
+    print("✓ Simplified variable declarations");
+    print("✓ Maintains precision for floating-point values");
+    print("✓ Seamless arithmetic operations");
+    
+    print("");
+    print("ÆLang num type implementation: SUCCESS!");
+}

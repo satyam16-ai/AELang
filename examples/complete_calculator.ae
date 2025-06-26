@@ -1,0 +1,159 @@
+extern print_int(val: i32);
+extern print_float(val: f32);
+extern read_int();
+extern read_float();
+
+func main(): void {
+    print("=== ÆLang Complete Calculator ===");
+    print("Testing both integer and float arithmetic!");
+    print("");
+    
+    // INTEGER SECTION
+    print("=== INTEGER ARITHMETIC ===");
+    print("Enter first integer: ");
+    let a: i32 = read_int();
+    
+    print("Enter second integer: ");
+    let b: i32 = read_int();
+    
+    print("");
+    print("Your integers:");
+    print("First: ");
+    print_int(a);
+    print("Second: ");
+    print_int(b);
+    print("");
+    
+    print("Integer Results:");
+    
+    let int_sum: i32 = a + b;
+    print("Addition: ");
+    print_int(a);
+    print(" + ");
+    print_int(b);
+    print(" = ");
+    print_int(int_sum);
+    
+    let int_diff: i32 = a - b;
+    print("Subtraction: ");
+    print_int(a);
+    print(" - ");
+    print_int(b);
+    print(" = ");
+    print_int(int_diff);
+    
+    let int_product: i32 = a * b;
+    print("Multiplication: ");
+    print_int(a);
+    print(" × ");
+    print_int(b);
+    print(" = ");
+    print_int(int_product);
+    
+    let int_quotient: i32 = a / b;
+    print("Division: ");
+    print_int(a);
+    print(" ÷ ");
+    print_int(b);
+    print(" = ");
+    print_int(int_quotient);
+    
+    print("");
+    print("=== FLOAT ARITHMETIC ===");
+    print("Enter first float: ");
+    let x: f32 = read_float();
+    
+    print("Enter second float: ");
+    let y: f32 = read_float();
+    
+    print("");
+    print("Your floats:");
+    print("First: ");
+    print_float(x);
+    print("Second: ");
+    print_float(y);
+    print("");
+    
+    print("Float Results:");
+    
+    let float_sum: f32 = x + y;
+    print("Addition: ");
+    print_float(x);
+    print(" + ");
+    print_float(y);
+    print(" = ");
+    print_float(float_sum);
+    
+    let float_diff: f32 = x - y;
+    print("Subtraction: ");
+    print_float(x);
+    print(" - ");
+    print_float(y);
+    print(" = ");
+    print_float(float_diff);
+    
+    let float_product: f32 = x * y;
+    print("Multiplication: ");
+    print_float(x);
+    print(" × ");
+    print_float(y);
+    print(" = ");
+    print_float(float_product);
+    
+    let float_quotient: f32 = x / y;
+    print("Division: ");
+    print_float(x);
+    print(" ÷ ");
+    print_float(y);
+    print(" = ");
+    print_float(float_quotient);
+    
+    print("");
+    print("=== PRECISION COMPARISON ===");
+    print("Demonstrating integer vs float precision:");
+    
+    // Division precision test
+    print("Integer division (truncated): ");
+    print_int(a);
+    print(" ÷ ");
+    print_int(b);
+    print(" = ");
+    print_int(int_quotient);
+    
+    print("Float division (precise): ");
+    print_float(x);
+    print(" ÷ ");
+    print_float(y);
+    print(" = ");
+    print_float(float_quotient);
+    
+    print("");
+    print("=== ADVANCED OPERATIONS ===");
+    
+    // Complex expressions
+    let complex_int: i32 = a * 2 + b;
+    print("Complex integer (a*2+b): ");
+    print_int(complex_int);
+    
+    let complex_float: f32 = x * 2.5 + y;
+    print("Complex float (x*2.5+y): ");
+    print_float(complex_float);
+    
+    // Large number test
+    let large_int: i32 = a * 1000;
+    print("Large integer (a*1000): ");
+    print_int(large_int);
+    
+    let precise_float: f32 = x * 0.001;
+    print("Small float (x*0.001): ");
+    print_float(precise_float);
+    
+    print("");
+    print("=== CALCULATOR TEST COMPLETE! ===");
+    print("✓ Integer arithmetic tested");
+    print("✓ Float arithmetic tested");
+    print("✓ Precision comparison demonstrated");
+    print("✓ Complex expressions tested");
+    print("");
+    print("ÆLang successfully handles both types!");
+}

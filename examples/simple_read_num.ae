@@ -1,0 +1,14 @@
+// Simple read_num test without arithmetic
+extern print(msg: i32);
+extern print_float(val: f32);
+extern read_num();
+
+func main(): void {
+    print("Enter a number: ");
+    let input: num = read_num();
+    
+    print("You entered: ");
+    print_float(input);
+    
+    print("Test complete!");
+}

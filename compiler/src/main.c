@@ -65,10 +65,19 @@ int main(int argc, char **argv) {
 
     printf("[\u2713] Compiled %s → %s\n", input_path, output_path);
 
-    // Clean up
-    free_ast(ast);
-    free_token_list(tokens);
-    free(source);
+    // Optimized cleanup - prevent double-free
+    if (ast) {
+        free_ast(ast);
+        ast = NULL;
+    }
+    if (tokens) {
+        free_token_list(tokens);
+        tokens = NULL;
+    }
+    if (source) {
+        free(source);
+        source = NULL;
+    }
 
     return 0;
 }

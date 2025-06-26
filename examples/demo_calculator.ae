@@ -1,0 +1,57 @@
+extern print_int(val: i32);
+extern print_float(val: f32);
+extern read_int();
+extern read_float();
+
+func main(): void {
+    print("=== ÆLang Demo Calculator ===");
+    print("Showcasing int and float arithmetic");
+    print("");
+    
+    // INTEGER DEMO
+    print("INTEGER DEMO:");
+    print("Enter two integers for calculation:");
+    let a: i32 = read_int();
+    let b: i32 = read_int();
+    
+    print("Results:");
+    let sum: i32 = a + b;
+    print_int(a);
+    print(" + ");
+    print_int(b);
+    print(" = ");
+    print_int(sum);
+    
+    let product: i32 = a * b;
+    print_int(a);
+    print(" × ");
+    print_int(b);
+    print(" = ");
+    print_int(product);
+    
+    print("");
+    
+    // FLOAT DEMO
+    print("FLOAT DEMO:");
+    print("Enter two floats for calculation:");
+    let x: f32 = read_float();
+    let y: f32 = read_float();
+    
+    print("Results:");
+    let float_sum: f32 = x + y;
+    print_float(x);
+    print(" + ");
+    print_float(y);
+    print(" = ");
+    print_float(float_sum);
+    
+    let quotient: f32 = x / y;
+    print_float(x);
+    print(" ÷ ");
+    print_float(y);
+    print(" = ");
+    print_float(quotient);
+    
+    print("");
+    print("ÆLang handles both integers and floats!");
+}

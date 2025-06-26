@@ -1,0 +1,214 @@
+// Advanced Interactive Calculator with num Type User Input
+// Full-featured calculator demonstrating complete user interaction
+
+extern print(msg: i32);
+extern print_float(val: f32);
+extern read_num();
+
+func main(): void {
+    print("╔══════════════════════════════════════╗");
+    print("║     ÆLang Advanced Calculator        ║");
+    print("║   Interactive num Type Edition       ║");
+    print("╚══════════════════════════════════════╝");
+    print("");
+    
+    print("🌟 Welcome to the most advanced ÆLang calculator!");
+    print("   This calculator showcases the power of the 'num' type");
+    print("   with complete user interaction capabilities.");
+    print("");
+    
+    print("🔢 Features:");
+    print("   • Universal input (integers and decimals)");
+    print("   • All arithmetic operations");
+    print("   • Advanced mathematical functions");
+    print("   • Mixed-type calculations");
+    print("   • Real-time user interaction");
+    print("");
+    
+    print("═══════════════════════════════════════");
+    print("📥 INPUT PHASE");
+    print("═══════════════════════════════════════");
+    
+    // Get first number with detailed prompts
+    print("");
+    print("Step 1: Enter your first number");
+    print("        (Can be integer like 42 or decimal like 3.14159)");
+    print("");
+    print("First number: ");
+    let number1: num = read_num();
+    
+    print("");
+    print("✅ Received: ");
+    print_float(number1);
+    print("   Stored as universal 'num' type");
+    print("");
+    
+    // Get second number
+    print("Step 2: Enter your second number");
+    print("");
+    print("Second number: ");
+    let number2: num = read_num();
+    
+    print("");
+    print("✅ Received: ");
+    print_float(number2);
+    print("   Stored as universal 'num' type");
+    print("");
+    
+    print("═══════════════════════════════════════");
+    print("🧮 BASIC ARITHMETIC OPERATIONS");
+    print("═══════════════════════════════════════");
+    
+    // Perform basic arithmetic
+    let addition_result: num = number1 + number2;
+    let subtraction_result: num = number1 - number2;
+    let multiplication_result: num = number1 * number2;
+    let division_result: num = number1 / number2;
+    
+    print("");
+    print("🔢 Computing all operations...");
+    print("");
+    
+    // Display addition
+    print("➕ ADDITION:");
+    print("   ");
+    print_float(number1);
+    print(" + ");
+    print_float(number2);
+    print(" = ");
+    print_float(addition_result);
+    print("");
+    
+    // Display subtraction
+    print("➖ SUBTRACTION:");
+    print("   ");
+    print_float(number1);
+    print(" - ");
+    print_float(number2);
+    print(" = ");
+    print_float(subtraction_result);
+    print("");
+    
+    // Display multiplication
+    print("✖️  MULTIPLICATION:");
+    print("   ");
+    print_float(number1);
+    print(" × ");
+    print_float(number2);
+    print(" = ");
+    print_float(multiplication_result);
+    print("");
+    
+    // Display division
+    print("➗ DIVISION:");
+    print("   ");
+    print_float(number1);
+    print(" ÷ ");
+    print_float(number2);
+    print(" = ");
+    print_float(division_result);
+    print("");
+    
+    print("═══════════════════════════════════════");
+    print("📊 ADVANCED CALCULATIONS");
+    print("═══════════════════════════════════════");
+    
+    // Advanced mathematical operations
+    print("");
+    print("🔬 Computing advanced functions...");
+    print("");
+    
+    // Statistical calculations
+    let average: num = (number1 + number2) / 2.0;
+    let sum_of_squares: num = (number1 * number1) + (number2 * number2);
+    let geometric_mean_squared: num = number1 * number2;
+    
+    print("📈 STATISTICAL FUNCTIONS:");
+    print("");
+    print("   📊 Arithmetic Mean: ");
+    print_float(average);
+    print("");
+    print("   🔢 Sum of Squares: ");
+    print_float(sum_of_squares);
+    print("");
+    print("   📐 Product (Geometric): ");
+    print_float(geometric_mean_squared);
+    print("");
+    
+    // Algebraic expressions
+    let expression1: num = (number1 + number2) * (number1 - number2);
+    let expression2: num = (number1 * number1) - (number2 * number2);
+    let expression3: num = number1 / (number2 + 1.0);
+    
+    print("🧮 ALGEBRAIC EXPRESSIONS:");
+    print("");
+    print("   🎯 (a + b) × (a - b): ");
+    print_float(expression1);
+    print("");
+    print("   🎯 a² - b²: ");
+    print_float(expression2);
+    print("");
+    print("   🎯 a ÷ (b + 1): ");
+    print_float(expression3);
+    print("");
+    
+    print("═══════════════════════════════════════");
+    print("🌟 MIXED-TYPE DEMONSTRATIONS");
+    print("═══════════════════════════════════════");
+    
+    // Demonstrate with mathematical constants
+    print("");
+    print("🧪 Mixing your input with mathematical constants...");
+    print("");
+    
+    let pi: num = 3.14159265;
+    let e: num = 2.71828182;
+    let golden_ratio: num = 1.61803398;
+    
+    let with_pi: num = number1 * pi;
+    let with_e: num = number2 + e;
+    let with_golden: num = (number1 + number2) / golden_ratio;
+    
+    print("🥧 MATHEMATICAL CONSTANTS:");
+    print("");
+    print("   π × your first number: ");
+    print_float(with_pi);
+    print("");
+    print("   e + your second number: ");
+    print_float(with_e);
+    print("");
+    print("   (a + b) ÷ φ (golden ratio): ");
+    print_float(with_golden);
+    print("");
+    
+    print("═══════════════════════════════════════");
+    print("🏆 CALCULATION COMPLETE");
+    print("═══════════════════════════════════════");
+    
+    print("");
+    print("🎉 Congratulations! All calculations completed successfully!");
+    print("");
+    print("📝 Summary of what was demonstrated:");
+    print("   ✅ Interactive user input with num type");
+    print("   ✅ Seamless handling of integers and floats");
+    print("   ✅ All four basic arithmetic operations");
+    print("   ✅ Advanced mathematical expressions");
+    print("   ✅ Statistical and algebraic functions");
+    print("   ✅ Mixed-type arithmetic with constants");
+    print("   ✅ Complex nested calculations");
+    print("   ✅ Real-time result display");
+    print("");
+    print("🚀 ÆLang's num type system capabilities:");
+    print("   🔬 Scientific computing ready");
+    print("   💰 Financial calculations capable");
+    print("   🏗️  Engineering applications suitable");
+    print("   🎓 Educational programming perfect");
+    print("   🎮 Game development math support");
+    print("");
+    print("💡 The universal 'num' type eliminates the need to");
+    print("   choose between integer and floating-point types,");
+    print("   making ÆLang perfect for mathematical computing!");
+    print("");
+    print("Thank you for using ÆLang Advanced Calculator!");
+    print("═══════════════════════════════════════");
+}

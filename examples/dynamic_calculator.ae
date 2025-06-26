@@ -1,0 +1,161 @@
+extern print_int(val: i32);
+extern print_float(val: f32);
+extern read_int();
+extern read_float();
+
+func main(): void {
+    print("=== ÆLang Dynamic Calculator ===");
+    print("Enter numbers as integers OR floats");
+    print("The calculator will handle both types!");
+    print("");
+    
+    // DUAL-TYPE INPUT SECTION
+    print("=== FIRST NUMBER ===");
+    print("Enter as integer: ");
+    let num1_int: i32 = read_int();
+    
+    print("Enter same number as float: ");
+    let num1_float: f32 = read_float();
+    
+    print("=== SECOND NUMBER ===");
+    print("Enter as integer: ");
+    let num2_int: i32 = read_int();
+    
+    print("Enter same number as float: ");
+    let num2_float: f32 = read_float();
+    
+    print("");
+    print("=== YOUR NUMBERS ===");
+    print("First number  - Int: ");
+    print_int(num1_int);
+    print(" Float: ");
+    print_float(num1_float);
+    
+    print("Second number - Int: ");
+    print_int(num2_int);
+    print(" Float: ");
+    print_float(num2_float);
+    
+    print("");
+    print("=== INTEGER ARITHMETIC ===");
+    
+    // Addition
+    let int_add: i32 = num1_int + num2_int;
+    print("Addition: ");
+    print_int(num1_int);
+    print(" + ");
+    print_int(num2_int);
+    print(" = ");
+    print_int(int_add);
+    
+    // Subtraction
+    let int_sub: i32 = num1_int - num2_int;
+    print("Subtraction: ");
+    print_int(num1_int);
+    print(" - ");
+    print_int(num2_int);
+    print(" = ");
+    print_int(int_sub);
+    
+    // Multiplication
+    let int_mul: i32 = num1_int * num2_int;
+    print("Multiplication: ");
+    print_int(num1_int);
+    print(" × ");
+    print_int(num2_int);
+    print(" = ");
+    print_int(int_mul);
+    
+    // Division
+    let int_div: i32 = num1_int / num2_int;
+    print("Division: ");
+    print_int(num1_int);
+    print(" ÷ ");
+    print_int(num2_int);
+    print(" = ");
+    print_int(int_div);
+    print(" (truncated)");
+    
+    print("");
+    print("=== FLOAT ARITHMETIC ===");
+    
+    // Addition
+    let float_add: f32 = num1_float + num2_float;
+    print("Addition: ");
+    print_float(num1_float);
+    print(" + ");
+    print_float(num2_float);
+    print(" = ");
+    print_float(float_add);
+    
+    // Subtraction
+    let float_sub: f32 = num1_float - num2_float;
+    print("Subtraction: ");
+    print_float(num1_float);
+    print(" - ");
+    print_float(num2_float);
+    print(" = ");
+    print_float(float_sub);
+    
+    // Multiplication
+    let float_mul: f32 = num1_float * num2_float;
+    print("Multiplication: ");
+    print_float(num1_float);
+    print(" × ");
+    print_float(num2_float);
+    print(" = ");
+    print_float(float_mul);
+    
+    // Division
+    let float_div: f32 = num1_float / num2_float;
+    print("Division: ");
+    print_float(num1_float);
+    print(" ÷ ");
+    print_float(num2_float);
+    print(" = ");
+    print_float(float_div);
+    print(" (precise)");
+    
+    print("");
+    print("=== MIXED OPERATIONS ===");
+    
+    // Convert int to float for mixed operations
+    let mixed1: f32 = num1_float + num2_int;
+    print("Float + Int: ");
+    print_float(num1_float);
+    print(" + ");
+    print_int(num2_int);
+    print(" = ");
+    print_float(mixed1);
+    
+    let mixed2: f32 = num1_int * num2_float;
+    print("Int × Float: ");
+    print_int(num1_int);
+    print(" × ");
+    print_float(num2_float);
+    print(" = ");
+    print_float(mixed2);
+    
+    print("");
+    print("=== POWER OPERATIONS (using multiplication) ===");
+    
+    // Square operations
+    let int_square: i32 = num1_int * num1_int;
+    print("Integer squared: ");
+    print_int(num1_int);
+    print("² = ");
+    print_int(int_square);
+    
+    let float_square: f32 = num1_float * num1_float;
+    print("Float squared: ");
+    print_float(num1_float);
+    print("² = ");
+    print_float(float_square);
+    
+    print("");
+    print("=== CALCULATION COMPLETE ===");
+    print("✓ All arithmetic operations performed");
+    print("✓ Both integer and float precision");
+    print("✓ Mixed-type operations supported");
+    print("✓ Runtime type handling successful!");
+}

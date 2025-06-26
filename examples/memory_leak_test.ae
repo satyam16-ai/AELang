@@ -1,0 +1,32 @@
+extern print_int(val: i32);
+extern print_float(val: f32);
+
+func main(): void {
+    print("Memory Leak Detection Test");
+    
+    // Test repeated allocations
+    let leak_test1: i32 = 100;
+    let leak_test2: i32 = 200;
+    let leak_test3: i32 = 300;
+    
+    // Test float allocations
+    let float_leak1: f32 = 1.5;
+    let float_leak2: f32 = 2.5;
+    
+    // Test arithmetic creating temporaries
+    let temp_result1: i32 = leak_test1 + leak_test2;
+    let temp_result2: i32 = temp_result1 * leak_test3;
+    let temp_result3: f32 = float_leak1 * float_leak2;
+    
+    // Test nested expressions
+    let complex1: i32 = (leak_test1 + leak_test2) * leak_test3;
+    let complex2: f32 = (float_leak1 + float_leak2) / 2.0;
+    
+    print("Leak test results:");
+    print_int(temp_result2);
+    print_float(temp_result3);
+    print_int(complex1);
+    print_float(complex2);
+    
+    print("Memory leak test completed");
+}

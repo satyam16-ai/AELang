@@ -12,6 +12,7 @@ static TokenList *tokens;
 
 // Forward declarations
 static ASTNode *parse_expression();
+static void free_ast_node(ASTNode *node);
 
 static Token peek() {
     return tokens->tokens[current];
@@ -34,7 +35,7 @@ static int is_type_token(TokenType type) {
     return type == TOKEN_TYPE_STR || type == TOKEN_TYPE_PTR || type == TOKEN_TYPE_BOOL ||
            type == TOKEN_TYPE_U8 || type == TOKEN_TYPE_U16 || type == TOKEN_TYPE_U32 ||
            type == TOKEN_TYPE_I8 || type == TOKEN_TYPE_I16 || type == TOKEN_TYPE_I32 ||
-           type == TOKEN_TYPE_F32 || type == TOKEN_TYPE_VOID;
+           type == TOKEN_TYPE_F32 || type == TOKEN_TYPE_NUM || type == TOKEN_TYPE_VOID;
 }
 
 static Token expect_type_token(const char *msg) {
@@ -51,8 +52,13 @@ static Token expect(TokenType type, const char *msg) {
     return tokens->tokens[current - 1];
 }
 
+// Safe node creation with error handling
 static ASTNode *make_node(ASTNodeType type, int line) {
     ASTNode *node = calloc(1, sizeof(ASTNode));
+    if (!node) {
+        fprintf(stderr, "Error: Failed to allocate memory for AST node at line %d\n", line);
+        return NULL;
+    }
     node->type = type;
     node->line = line;
     return node;
@@ -76,8 +82,40 @@ static ASTNode *parse_literal(Token tok) {
     return node;
 }
 
+// Helper function to convert a literal to num type
+static void convert_literal_to_num(ASTNode *literal) {
+    if (literal->type != AST_LITERAL) return;
+    
+    NumValue num_val;
+    if (literal->as.literal.type == VALUE_INT) {
+        num_val.is_float = 0;
+        num_val.value.int_val = literal->as.literal.as.int_val;
+    } else if (literal->as.literal.type == VALUE_FLOAT) {
+        num_val.is_float = 1;
+        num_val.value.float_val = literal->as.literal.as.float_val;
+    } else {
+        return; // Can't convert other types
+    }
+    
+    literal->as.literal.type = VALUE_NUM;
+    literal->as.literal.as.num_val = num_val;
+}
+
 static ASTNode *parse_primary_expr() {
     Token tok = peek();
+    
+    // Handle parentheses for expression grouping
+    if (tok.type == TOKEN_LPAREN) {
+        advance(); // consume '('
+        ASTNode *expr = parse_expression();
+        if (!expr) {
+            fprintf(stderr, "Error: Expected expression after '('\n");
+            return NULL;
+        }
+        expect(TOKEN_RPAREN, ")");
+        return expr;
+    }
+    
     if (tok.type == TOKEN_INT || tok.type == TOKEN_FLOAT || tok.type == TOKEN_STRING || tok.type == TOKEN_BOOL) {
         advance();
         return parse_literal(tok);
@@ -92,7 +130,15 @@ static ASTNode *parse_primary_expr() {
             node->as.func_call.args = calloc(8, sizeof(ASTNode *));
             node->as.func_call.arg_count = 0;
             while (peek().type != TOKEN_RPAREN) {
-                node->as.func_call.args[node->as.func_call.arg_count++] = parse_expression();
+                ASTNode *arg = parse_expression();
+                if (!arg) {
+                    // Cleanup and return error
+                    free(node->as.func_call.name);
+                    free(node->as.func_call.args);
+                    free(node);
+                    return NULL;
+                }
+                node->as.func_call.args[node->as.func_call.arg_count++] = arg;
                 match(TOKEN_COMMA);
             }
             expect(TOKEN_RPAREN, ")");
@@ -104,18 +150,36 @@ static ASTNode *parse_primary_expr() {
             return id;
         }
     }
+    
+    fprintf(stderr, "Error: Unexpected token in expression at line %d\n", tok.line);
     return NULL;
 }
 
 static ASTNode *parse_binary_expr() {
     ASTNode *left = parse_primary_expr();
+    if (!left) {
+        return NULL; // Error in primary expression
+    }
 
     while (peek().type == TOKEN_PLUS || peek().type == TOKEN_MINUS ||
            peek().type == TOKEN_MUL || peek().type == TOKEN_DIV) {
         Token op = advance();
         ASTNode *right = parse_primary_expr();
+        
+        if (!right) {
+            // Cleanup left node and return error
+            free_ast_node(left);
+            return NULL;
+        }
 
         ASTNode *bin = make_node(AST_BIN_OP, op.line);
+        if (!bin) {
+            // Cleanup and return error
+            free_ast_node(left);
+            free_ast_node(right);
+            return NULL;
+        }
+        
         strncpy(bin->as.bin_op.op, op.text, 2);
         bin->as.bin_op.op[2] = '\0';  // Ensure null termination
         bin->as.bin_op.left = left;
@@ -135,13 +199,24 @@ static ASTNode *parse_statement();
 
 static AST *parse_block() {
     AST *ast = calloc(1, sizeof(AST));
-    ast->nodes = calloc(128, sizeof(ASTNode *));
+    ast->capacity = 256; // Increased capacity
+    ast->nodes = calloc(ast->capacity, sizeof(ASTNode *));
     ast->count = 0;
     while (peek().type != TOKEN_EOF) {
         ASTNode *stmt = parse_statement();
-        if (stmt)
+        if (stmt) {
+            // Dynamic resize if needed
+            if (ast->count >= ast->capacity) {
+                ast->capacity *= 2;
+                ast->nodes = realloc(ast->nodes, ast->capacity * sizeof(ASTNode *));
+                if (!ast->nodes) {
+                    fprintf(stderr, "Error: Failed to resize AST nodes array\n");
+                    free(ast);
+                    return NULL;
+                }
+            }
             ast->nodes[ast->count++] = stmt;
-        else
+        } else
             break;
     }
     return ast;
@@ -167,15 +242,30 @@ static ASTNode *parse_statement() {
 
     if (match(TOKEN_LET)) {
         ASTNode *node = make_node(AST_VAR_DECL, tok.line);
+        if (!node) {
+            fprintf(stderr, "Error: Failed to create AST_VAR_DECL node\n");
+            return NULL;
+        }
         Token name = expect(TOKEN_IDENT, "identifier");
         expect(TOKEN_COLON, ":");
         Token type = expect_type_token("type");
         expect(TOKEN_EQUAL, "=");
         ASTNode *value = parse_expression();
+        if (!value) {
+            fprintf(stderr, "Error: Failed to parse expression for variable\n");
+            free_ast_node(node);
+            return NULL;
+        }
         match(TOKEN_SEMICOLON);
         node->as.var_decl.name = strdup(name.text);
         node->as.var_decl.type_name = strdup(type.text);
         node->as.var_decl.value = value;
+        
+        // Convert to num type if variable is declared as num
+        if (strcmp(type.text, "num") == 0) {
+            convert_literal_to_num(value);
+        }
+        
         return node;
     } else if (match(TOKEN_CONST)) {
         ASTNode *node = make_node(AST_CONST_DECL, tok.line);
@@ -263,11 +353,34 @@ static ASTNode *parse_statement() {
         Token rtype = expect_type_token("return type");
         node->as.func_def.return_type = strdup(rtype.text);
         expect(TOKEN_LBRACE, "{");
-        node->as.func_def.body = calloc(32, sizeof(ASTNode *));
+        
+        // Dynamic function body allocation
+        size_t body_capacity = 64; // Start with larger capacity
+        node->as.func_def.body = calloc(body_capacity, sizeof(ASTNode *));
         node->as.func_def.body_count = 0;
+        
         while (!match(TOKEN_RBRACE)) {
+            // Check if we need to resize
+            if (node->as.func_def.body_count >= body_capacity) {
+                body_capacity *= 2;
+                node->as.func_def.body = realloc(node->as.func_def.body, body_capacity * sizeof(ASTNode *));
+                if (!node->as.func_def.body) {
+                    fprintf(stderr, "Error: Failed to resize function body array\n");
+                    return NULL;
+                }
+                // Zero out new memory
+                for (size_t i = node->as.func_def.body_count; i < body_capacity; i++) {
+                    node->as.func_def.body[i] = NULL;
+                }
+            }
+            
             ASTNode *stmt = parse_statement();
-            node->as.func_def.body[node->as.func_def.body_count++] = stmt;
+            if (stmt) {
+                node->as.func_def.body[node->as.func_def.body_count++] = stmt;
+            } else {
+                fprintf(stderr, "Warning: Failed to parse statement in function body\n");
+                break;
+            }
         }
         // Debug output for function body
         fprintf(stderr, "[PARSER DEBUG] func %s body_count=%zu\n", node->as.func_def.name, node->as.func_def.body_count);
@@ -289,100 +402,236 @@ AST *parse(TokenList *token_stream) {
     return parse_block();
 }
 
-// Recursively free an AST node and its children
+// Recursively free an AST node and its children - memory optimized
 static void free_ast_node(ASTNode *node) {
     if (!node) return;
+    
+    // Prevent double-free by marking as freed
+    if (node->type == -1) return;  // Already freed marker
+    
     switch (node->type) {
         case AST_VAR_DECL:
         case AST_CONST_DECL:
-            free(node->as.var_decl.name);
-            free(node->as.var_decl.type_name);
-            free_ast_node(node->as.var_decl.value);
+            if (node->as.var_decl.name) {
+                free(node->as.var_decl.name);
+                node->as.var_decl.name = NULL;
+            }
+            if (node->as.var_decl.type_name) {
+                free(node->as.var_decl.type_name);
+                node->as.var_decl.type_name = NULL;
+            }
+            if (node->as.var_decl.value && node->as.var_decl.value->type != -1) {
+                free_ast_node(node->as.var_decl.value);
+                node->as.var_decl.value = NULL;
+            }
             break;
         case AST_ASSIGN:
-            free(node->as.assign.target);
-            free_ast_node(node->as.assign.value);
+            if (node->as.assign.target) {
+                free(node->as.assign.target);
+                node->as.assign.target = NULL;
+            }
+            if (node->as.assign.value && node->as.assign.value->type != -1) {
+                free_ast_node(node->as.assign.value);
+                node->as.assign.value = NULL;
+            }
             break;
         case AST_BIN_OP:
-            free_ast_node(node->as.bin_op.left);
-            free_ast_node(node->as.bin_op.right);
+            if (node->as.bin_op.left && node->as.bin_op.left->type != -1) {
+                free_ast_node(node->as.bin_op.left);
+                node->as.bin_op.left = NULL;
+            }
+            if (node->as.bin_op.right && node->as.bin_op.right->type != -1) {
+                free_ast_node(node->as.bin_op.right);
+                node->as.bin_op.right = NULL;
+            }
             break;
         case AST_UNARY_OP:
-            free_ast_node(node->as.unary_op.expr);
+            if (node->as.unary_op.expr && node->as.unary_op.expr->type != -1) {
+                free_ast_node(node->as.unary_op.expr);
+                node->as.unary_op.expr = NULL;
+            }
             break;
         case AST_LITERAL:
-            if (node->as.literal.type == VALUE_STRING)
+            if (node->as.literal.type == VALUE_STRING && node->as.literal.as.str_val) {
                 free(node->as.literal.as.str_val);
+                node->as.literal.as.str_val = NULL;
+            }
             break;
         case AST_IDENTIFIER:
-            free(node->as.ident);
+            if (node->as.ident) {
+                free(node->as.ident);
+                node->as.ident = NULL;
+            }
             break;
         case AST_FUNC_CALL:
-            free(node->as.func_call.name);
-            for (size_t i = 0; i < node->as.func_call.arg_count; ++i)
-                free_ast_node(node->as.func_call.args[i]);
-            free(node->as.func_call.args);
+            if (node->as.func_call.name) {
+                free(node->as.func_call.name);
+                node->as.func_call.name = NULL;
+            }
+            if (node->as.func_call.args) {
+                for (size_t i = 0; i < node->as.func_call.arg_count; ++i) {
+                    if (node->as.func_call.args[i] && node->as.func_call.args[i]->type != -1) {
+                        free_ast_node(node->as.func_call.args[i]);
+                        node->as.func_call.args[i] = NULL;
+                    }
+                }
+                free(node->as.func_call.args);
+                node->as.func_call.args = NULL;
+            }
             break;
         case AST_EXTERN_FUNC:
-            free(node->as.extern_func.name);
-            for (size_t i = 0; i < node->as.extern_func.param_count; ++i) {
-                free(node->as.extern_func.param_names[i]);
-                free(node->as.extern_func.param_types[i]);
+            if (node->as.extern_func.name) {
+                free(node->as.extern_func.name);
+                node->as.extern_func.name = NULL;
             }
-            free(node->as.extern_func.param_names);
-            free(node->as.extern_func.param_types);
+            if (node->as.extern_func.param_names) {
+                for (size_t i = 0; i < node->as.extern_func.param_count; ++i) {
+                    if (node->as.extern_func.param_names[i]) {
+                        free(node->as.extern_func.param_names[i]);
+                        node->as.extern_func.param_names[i] = NULL;
+                    }
+                }
+                free(node->as.extern_func.param_names);
+                node->as.extern_func.param_names = NULL;
+            }
+            if (node->as.extern_func.param_types) {
+                for (size_t i = 0; i < node->as.extern_func.param_count; ++i) {
+                    if (node->as.extern_func.param_types[i]) {
+                        free(node->as.extern_func.param_types[i]);
+                        node->as.extern_func.param_types[i] = NULL;
+                    }
+                }
+                free(node->as.extern_func.param_types);
+                node->as.extern_func.param_types = NULL;
+            }
             break;
         case AST_FUNC_DEF:
-            free(node->as.func_def.name);
-            for (size_t i = 0; i < node->as.func_def.param_count; ++i) {
-                free(node->as.func_def.param_names[i]);
-                free(node->as.func_def.param_types[i]);
+            if (node->as.func_def.name) {
+                free(node->as.func_def.name);
+                node->as.func_def.name = NULL;
             }
-            free(node->as.func_def.param_names);
-            free(node->as.func_def.param_types);
-            free(node->as.func_def.return_type);
-            for (size_t i = 0; i < node->as.func_def.body_count; ++i)
-                free_ast_node(node->as.func_def.body[i]);
-            free(node->as.func_def.body);
+            if (node->as.func_def.param_names) {
+                for (size_t i = 0; i < node->as.func_def.param_count; ++i) {
+                    if (node->as.func_def.param_names[i]) {
+                        free(node->as.func_def.param_names[i]);
+                        node->as.func_def.param_names[i] = NULL;
+                    }
+                }
+                free(node->as.func_def.param_names);
+                node->as.func_def.param_names = NULL;
+            }
+            if (node->as.func_def.param_types) {
+                for (size_t i = 0; i < node->as.func_def.param_count; ++i) {
+                    if (node->as.func_def.param_types[i]) {
+                        free(node->as.func_def.param_types[i]);
+                        node->as.func_def.param_types[i] = NULL;
+                    }
+                }
+                free(node->as.func_def.param_types);
+                node->as.func_def.param_types = NULL;
+            }
+            if (node->as.func_def.return_type) {
+                free(node->as.func_def.return_type);
+                node->as.func_def.return_type = NULL;
+            }
+            // Safe body cleanup with null checks
+            if (node->as.func_def.body) {
+                for (size_t i = 0; i < node->as.func_def.body_count; ++i) {
+                    if (node->as.func_def.body[i] && node->as.func_def.body[i]->type != -1) {
+                        free_ast_node(node->as.func_def.body[i]);
+                        node->as.func_def.body[i] = NULL;
+                    }
+                }
+                free(node->as.func_def.body);
+                node->as.func_def.body = NULL;
+            }
             break;
         case AST_LABEL:
-            free(node->as.label_name);
+            if (node->as.label_name) {
+                free(node->as.label_name);
+                node->as.label_name = NULL;
+            }
             break;
         case AST_IF_GOTO:
-            free_ast_node(node->as.if_goto.condition);
-            free(node->as.if_goto.label);
+            if (node->as.if_goto.condition && node->as.if_goto.condition->type != -1) {
+                free_ast_node(node->as.if_goto.condition);
+                node->as.if_goto.condition = NULL;
+            }
+            if (node->as.if_goto.label) {
+                free(node->as.if_goto.label);
+                node->as.if_goto.label = NULL;
+            }
             break;
         case AST_GOTO:
-            free(node->as.label_name);
+            if (node->as.label_name) {
+                free(node->as.label_name);
+                node->as.label_name = NULL;
+            }
             break;
         case AST_IO:
-            free(node->as.io.var);
+            if (node->as.io.var) {
+                free(node->as.io.var);
+                node->as.io.var = NULL;
+            }
             break;
         case AST_LOAD:
-            free(node->as.load.dest);
-            free(node->as.load.addr);
-            free(node->as.load.type);
+            if (node->as.load.dest) {
+                free(node->as.load.dest);
+                node->as.load.dest = NULL;
+            }
+            if (node->as.load.addr) {
+                free(node->as.load.addr);
+                node->as.load.addr = NULL;
+            }
+            if (node->as.load.type) {
+                free(node->as.load.type);
+                node->as.load.type = NULL;
+            }
             break;
         case AST_STORE:
-            free(node->as.store.addr);
-            free(node->as.store.src);
+            if (node->as.store.addr) {
+                free(node->as.store.addr);
+                node->as.store.addr = NULL;
+            }
+            if (node->as.store.src) {
+                free(node->as.store.src);
+                node->as.store.src = NULL;
+            }
             break;
         case AST_DEBUG:
-            free(node->as.debug.var);
+            if (node->as.debug.var) {
+                free(node->as.debug.var);
+                node->as.debug.var = NULL;
+            }
             break;
         case AST_TRACE:
-            free(node->as.trace.message);
+            if (node->as.trace.message) {
+                free(node->as.trace.message);
+                node->as.trace.message = NULL;
+            }
             break;
         default:
             break;
     }
+    node->type = -1;  // Mark as freed
     free(node);
 }
 
 void free_ast(AST *ast) {
-    for (size_t i = 0; i < ast->count; ++i) {
-        free_ast_node(ast->nodes[i]);
+    if (!ast) return;
+    
+    if (ast->nodes) {
+        for (size_t i = 0; i < ast->count; ++i) {
+            if (ast->nodes[i]) {
+                free_ast_node(ast->nodes[i]);
+                ast->nodes[i] = NULL;
+            }
+        }
+        free(ast->nodes);
+        ast->nodes = NULL;
     }
-    free(ast->nodes);
+    
+    ast->count = 0;
+    ast->capacity = 0;
     free(ast);
 }

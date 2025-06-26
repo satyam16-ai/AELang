@@ -15,6 +15,9 @@ section .bss
 section .text
     global main
     extern printf
+    extern print
+    extern read_int
+    extern read_float
 
 extern print_int
 ; CODEGEN TEST MARKER: emitting function main

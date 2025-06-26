@@ -47,9 +47,6 @@ typedef enum {
     // Literals
     TOKEN_FLOAT,
     
-    // Type tokens
-    TOKEN_TYPE_F32,  // float type
-
     // Comparisons
     TOKEN_EQ,
     TOKEN_NEQ,
@@ -71,6 +68,8 @@ typedef enum {
     TOKEN_TYPE_I8,
     TOKEN_TYPE_I16,
     TOKEN_TYPE_I32,
+    TOKEN_TYPE_F32,
+    TOKEN_TYPE_NUM,
     TOKEN_TYPE_PTR,
     TOKEN_TYPE_STR,
     TOKEN_TYPE_BOOL,

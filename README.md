@@ -67,9 +67,13 @@ ae/
 │   ├── calculator.ae        # Interactive arithmetic calculator
 │   ├── float_calculator.ae  # Float arithmetic calculator
 │   ├── int_arithmetic.ae    # Integer arithmetic demonstrations
-│   ├── float_arithmetic.ae  # Float arithmetic demonstrations
-│   ├── edge_cases.ae        # Edge case testing
-│   ├── mixed_arithmetic.ae  # Mixed type operations
+│   ├── calculator.ae         # Basic calculator implementation
+│   ├── complete_calculator.ae # Comprehensive calculator (int + float)
+│   ├── demo_calculator.ae    # Simple demo calculator
+│   ├── simple_systems.ae     # Systems programming example
+│   ├── float_arithmetic.ae   # Float arithmetic demonstrations
+│   ├── edge_cases.ae         # Edge case testing
+│   ├── mixed_arithmetic.ae   # Mixed type operations
 │   └── interactive_calculator.ae # Full interactive calculator
 ├── build/                   # Build artifacts and executables
 ├── syn_highlighter/         # Syntax highlighter extension
@@ -213,6 +217,67 @@ func main(): void {
     print_float(result);
 }
 ```
+
+## 🧮 Calculator Examples
+
+ÆLang includes several calculator implementations demonstrating both integer and float arithmetic:
+
+### Demo Calculator (`demo_calculator.ae`)
+A focused example showing basic integer and float operations:
+```bash
+./build.sh examples/demo_calculator.ae
+echo -e "15\n4\n3.14\n2.5" | ./build/demo_calculator
+```
+
+**Output:**
+```
+INTEGER DEMO:
+Enter two integers for calculation:
+Results:
+15 + 4 = 19
+15 × 4 = 60
+
+FLOAT DEMO:
+Enter two floats for calculation:
+Results:
+3.140000 + 2.500000 = 5.640000
+3.140000 ÷ 2.500000 = 1.256000
+
+ÆLang handles both integers and floats!
+```
+
+### Complete Calculator (`complete_calculator.ae`)
+A comprehensive calculator demonstrating:
+- **Integer arithmetic**: `+`, `-`, `×`, `÷` with truncation
+- **Float arithmetic**: Precise decimal calculations
+- **Precision comparison**: Integer vs float division
+- **Complex expressions**: Multi-operation calculations
+- **Type safety**: Separate handling of `i32` and `f32`
+
+```bash
+# Manual build (due to compiler memory cleanup issue)
+./build.sh examples/complete_calculator.ae || true
+nasm -f elf build/complete_calculator.asm -o build/complete_calculator.o
+gcc -m32 -o build/complete_calculator build/complete_calculator.o build/print.o build/print_int.o build/read_int.o build/read_float.o
+
+# Run with sample input
+echo -e "10\n3\n5.5\n2.0" | ./build/complete_calculator
+```
+
+### Systems Programming Demo (`simple_systems.ae`)
+Demonstrates ÆLang's suitability for low-level programming:
+```bash
+./build.sh examples/simple_systems.ae
+./build/simple_systems
+```
+
+**Features tested:**
+- ✅ Type-safe integer and float arithmetic
+- ✅ Memory-efficient variable storage
+- ✅ Precise division handling (int truncation vs float precision)
+- ✅ Complex expression evaluation
+- ✅ String literal management
+- ✅ External function integration
 
 ## 🔧 Compilation Process
 

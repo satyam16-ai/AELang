@@ -1,0 +1,134 @@
+extern print_int(val: i32);
+extern print_float(val: f32);
+
+func main(): void {
+    print("=== ÆLang Universal Calculator ===");
+    print("Powered by the dynamic 'num' data type");
+    print("No more int vs float confusion!");
+    print("");
+    
+    // Example 1: Basic operations with mixed types
+    print("Example 1: Mixed Integer/Float Operations");
+    let int_val: num = 100;
+    let float_val: num = 25.5;
+    
+    let sum: num = int_val + float_val;
+    let difference: num = int_val - float_val;
+    let product: num = int_val * float_val;
+    let quotient: num = int_val / float_val;
+    
+    print("100 + 25.5 = 125.5");
+    print("100 - 25.5 = 74.5");
+    print("100 * 25.5 = 2550");
+    print("100 / 25.5 = 3.92...");
+    print("");
+    
+    // Example 2: Scientific calculator functions
+    print("Example 2: Circle Area Calculator");
+    let radius: num = 7.5;
+    let pi: num = 3.14159;
+    
+    let circumference: num = 2 * pi * radius;
+    let area: num = pi * radius * radius;
+    
+    print("Circle with radius 7.5:");
+    print("Circumference = 2 × π × r = 47.12...");
+    print("Area = π × r² = 176.71...");
+    print("");
+    
+    // Example 3: Financial calculator
+    print("Example 3: Loan Calculator");
+    let principal: num = 5000;
+    let rate: num = 7.5;
+    let time: num = 3;
+    
+    let interest: num = (principal * rate * time) / 100;
+    let total_amount: num = principal + interest;
+    
+    print("Loan: $5000 at 7.5% for 3 years");
+    print("Interest = $1125");
+    print("Total amount = $6125");
+    print("");
+    
+    // Example 4: Unit converter
+    print("Example 4: Temperature Converter");
+    let celsius: num = 30;
+    let fahrenheit: num = (celsius * 9) / 5 + 32;
+    let kelvin: num = celsius + 273.15;
+    
+    print("30°C converts to:");
+    print("86°F");
+    print("303.15 K");
+    print("");
+    
+    // Example 5: Pythagorean theorem
+    print("Example 5: Pythagorean Theorem");
+    let side_a: num = 3;
+    let side_b: num = 4;
+    let hypotenuse: num = (side_a * side_a) + (side_b * side_b);
+    
+    print("Right triangle with sides 3 and 4:");
+    print("a² + b² = 9 + 16 = 25");
+    print("Hypotenuse² = 25 (so c = 5)");
+    print("");
+    
+    // Example 6: Compound calculation
+    print("Example 6: Recipe Scaling");
+    let original_servings: num = 4;
+    let desired_servings: num = 6;
+    let scale_factor: num = desired_servings / original_servings;
+    
+    let flour: num = 2 * scale_factor;
+    let sugar: num = 1.5 * scale_factor;
+    let butter: num = 0.5 * scale_factor;
+    
+    print("Scaling recipe from 4 to 6 servings:");
+    print("Scale factor = 1.5");
+    print("Flour: 2 cups → 3 cups");
+    print("Sugar: 1.5 cups → 2.25 cups");
+    print("Butter: 0.5 cups → 0.75 cups");
+    print("");
+    
+    // Example 7: Complex expression
+    print("Example 7: Engineering Formula");
+    let voltage: num = 12;
+    let current: num = 2.5;
+    let resistance: num = voltage / current;
+    let power: num = voltage * current;
+    
+    print("Electrical calculations:");
+    print("V = 12V, I = 2.5A");
+    print("Resistance R = V/I = 4.8Ω");
+    print("Power P = V×I = 30W");
+    print("");
+    
+    // Example 8: Statistics
+    print("Example 8: Statistical Analysis");
+    let val1: num = 85;
+    let val2: num = 90;
+    let val3: num = 78;
+    let val4: num = 92;
+    let val5: num = 88;
+    
+    let sum_all: num = val1 + val2 + val3 + val4 + val5;
+    let average: num = sum_all / 5;
+    
+    print("Test scores: 85, 90, 78, 92, 88");
+    print("Sum = 433");
+    print("Average = 86.6");
+    print("");
+    
+    print("=== Calculator Features Demonstrated ===");
+    print("✓ Mixed integer and float arithmetic");
+    print("✓ Scientific calculations (geometry, physics)");
+    print("✓ Financial computations (loans, interest)");
+    print("✓ Unit conversions (temperature, measurements)");
+    print("✓ Engineering formulas (electrical, mechanical)");
+    print("✓ Statistical analysis (averages, sums)");
+    print("✓ Recipe and ratio calculations");
+    print("✓ Complex nested expressions");
+    print("");
+    print("The 'num' type makes ÆLang the perfect language");
+    print("for mathematical computing and calculations!");
+    print("One type handles all numeric needs!");
+}

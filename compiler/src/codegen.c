@@ -49,6 +49,13 @@ static void emit_literal(FILE *out, LiteralValue val) {
         case VALUE_FLOAT:
             fprintf(out, "%f", val.as.float_val);
             break;
+        case VALUE_NUM:
+            if (val.as.num_val.is_float) {
+                fprintf(out, "%f", val.as.num_val.value.float_val);
+            } else {
+                fprintf(out, "%d", val.as.num_val.value.int_val);
+            }
+            break;
     }
 }
 
@@ -111,17 +118,37 @@ static int find_float_var_index(const char *name) {
     return -1; // Not found
 }
 
-// Helper to check if a node is a float type
+// Helper to determine if a value should be treated as float
 static int is_float_type(ASTNode *node) {
-    if (node->type == AST_LITERAL)
-        return node->as.literal.type == VALUE_FLOAT;
-    // For variables, check if they end with ":f32" (rough heuristic)
-    if (node->type == AST_VAR_DECL)
-        return strstr(node->as.var_decl.type_name, "f32") != NULL;
-    // For identifiers, check if they're in our float variable mapping
-    if (node->type == AST_IDENTIFIER) {
-        return find_float_var_index(node->as.ident) >= 0;
+    if (!node) return 0;
+    
+    if (node->type == AST_LITERAL) {
+        return (node->as.literal.type == VALUE_FLOAT || 
+                (node->as.literal.type == VALUE_NUM && node->as.literal.as.num_val.is_float));
     }
+    
+    // Check if identifier is a float/num variable
+    if (node->type == AST_IDENTIFIER) {
+        for (int i = 0; i < var_map_count; i++) {
+            if (strcmp(var_names[i], node->as.ident) == 0) {
+                return var_types[i] == 1; // 1 = float/num, 0 = int
+            }
+        }
+    }
+    
+    // Binary operations between any float operands result in float
+    if (node->type == AST_BIN_OP) {
+        return is_float_type(node->as.bin_op.left) || is_float_type(node->as.bin_op.right);
+    }
+    
+    // Function calls that return floats
+    if (node->type == AST_FUNC_CALL) {
+        if (strcmp(node->as.func_call.name, "read_float") == 0 || 
+            strcmp(node->as.func_call.name, "read_num_safe") == 0) {
+            return 1;
+        }
+    }
+    
     return 0;
 }
 
@@ -229,10 +256,18 @@ static void collect_strings(ASTNode *node) {
 static void collect_floats(ASTNode *node) {
     if (!node) return;
 
-    if (node->type == AST_LITERAL && node->as.literal.type == VALUE_FLOAT) {
-        if (float_constants_count < MAX_FLOAT_CONSTS) {
-            float_constants[float_constants_count] = node->as.literal.as.float_val;
-            float_constants_count++;
+    if (node->type == AST_LITERAL) {
+        if (node->as.literal.type == VALUE_FLOAT) {
+            if (float_constants_count < MAX_FLOAT_CONSTS) {
+                float_constants[float_constants_count] = node->as.literal.as.float_val;
+                float_constants_count++;
+            }
+        } else if (node->as.literal.type == VALUE_NUM && node->as.literal.as.num_val.is_float) {
+            // Handle num type literals that contain float values
+            if (float_constants_count < MAX_FLOAT_CONSTS) {
+                float_constants[float_constants_count] = node->as.literal.as.num_val.value.float_val;
+                float_constants_count++;
+            }
         }
     }
 
@@ -250,6 +285,9 @@ static void collect_floats(ASTNode *node) {
             collect_floats(node->as.var_decl.value);
             // Count variables by type
             if (strstr(node->as.var_decl.type_name, "f32")) {
+                store_float_var(node->as.var_decl.name);
+            } else if (strstr(node->as.var_decl.type_name, "num")) {
+                // num type can be either int or float, start as float for flexibility
                 store_float_var(node->as.var_decl.name);
             } else if (strstr(node->as.var_decl.type_name, "i32")) {
                 store_int_var(node->as.var_decl.name);
@@ -276,6 +314,15 @@ static int find_float_const_index(float value) {
     return -1; // Not found
 }
 
+// Helper to find existing string index
+static int find_string_index(const char *str) {
+    for (int i = 0; i < string_literal_count; ++i) {
+        if (strcmp(string_literals[i], str) == 0)
+            return i;
+    }
+    return -1; // Not found
+}
+
 // Emit NASM node
 static void emit_node(ASTNode *node, FILE *out) {
     switch (node->type) {
@@ -294,6 +341,28 @@ static void emit_node(ASTNode *node, FILE *out) {
                 }
                 emit_node(node->as.var_decl.value, out);  // This will load value to FPU stack
                 fprintf(out, "    fstp dword [float_var_%d]  ; store %s\n", var_idx, node->as.var_decl.name);
+            } else if (strstr(node->as.var_decl.type_name, "num")) {
+                // num type - handle dynamically based on the value type
+                int var_idx = find_float_var_index(node->as.var_decl.name);
+                if (var_idx < 0) {
+                    fprintf(stderr, "Error: num variable %s not found in mapping\n", node->as.var_decl.name);
+                    var_idx = 0; // fallback
+                }
+                
+                // Check if the value being assigned is a float or should be treated as float
+                ASTNode *value = node->as.var_decl.value;
+                int value_is_float = is_float_type(value);
+                
+                if (value_is_float) {
+                    emit_node(value, out);  // This will load value to FPU stack
+                    fprintf(out, "    fstp dword [float_var_%d]  ; store %s as num (float)\n", var_idx, node->as.var_decl.name);
+                } else {
+                    emit_node(value, out);  // This will load value to EAX
+                    // Convert integer to float for storage in float variable space
+                    fprintf(out, "    mov [temp_int], eax\n");
+                    fprintf(out, "    fild dword [temp_int]  ; convert int to float\n");
+                    fprintf(out, "    fstp dword [float_var_%d]  ; store %s as num (converted from int)\n", var_idx, node->as.var_decl.name);
+                }
             } else if (strstr(node->as.var_decl.type_name, "i32")) {
                 // Find integer variable index
                 int var_idx = -1;
@@ -329,6 +398,20 @@ static void emit_node(ASTNode *node, FILE *out) {
                     fprintf(out, "    fld dword [float_%d]\n", idx);
                 } else {
                     fprintf(out, "; Error: float constant not found\n");
+                }
+            } else if (node->as.literal.type == VALUE_NUM) {
+                // Handle num type literals
+                if (node->as.literal.as.num_val.is_float) {
+                    // Treat as float
+                    int idx = find_float_const_index(node->as.literal.as.num_val.value.float_val);
+                    if (idx >= 0) {
+                        fprintf(out, "    fld dword [float_%d]\n", idx);
+                    } else {
+                        fprintf(out, "; Error: num float constant not found\n");
+                    }
+                } else {
+                    // Treat as integer
+                    fprintf(out, "    mov eax, %d\n", node->as.literal.as.num_val.value.int_val);
                 }
             } else if (node->as.literal.type == VALUE_INT) {
                 fprintf(out, "    mov eax, %d\n", node->as.literal.as.int_val);
@@ -443,6 +526,30 @@ static void emit_node(ASTNode *node, FILE *out) {
                 // Call read_float function (returns result on FPU stack)
                 fprintf(out, "    call read_float\n");
                 break;
+            } else if (strcmp(node->as.func_call.name, "read_num_safe") == 0 && node->as.func_call.arg_count == 0) {
+                // Call read_num_safe function (returns result on FPU stack as float)
+                fprintf(out, "    call read_num_safe\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "print_num") == 0 && node->as.func_call.arg_count == 1) {
+                // Call print_num function with formatted output
+                emit_node(node->as.func_call.args[0], out);  // Load value to FPU stack
+                fprintf(out, "    sub esp, 4\n");           // Space for float (32-bit)
+                fprintf(out, "    fstp dword [esp]\n");     // Store as single precision float
+                fprintf(out, "    call print_num\n");
+                fprintf(out, "    add esp, 4\n");           // Clean up (4 bytes)
+                break;
+            } else if (strcmp(node->as.func_call.name, "print_clean") == 0 && node->as.func_call.arg_count == 1) {
+                // Call print_clean function with string literal
+                ASTNode *arg = node->as.func_call.args[0];
+                if (arg->type == AST_LITERAL && arg->as.literal.type == VALUE_STRING) {
+                    int idx = find_string_index(arg->as.literal.as.str_val);
+                    if (idx >= 0) {
+                        fprintf(out, "    push msg_%d\n", idx);
+                        fprintf(out, "    call print_clean\n");
+                        fprintf(out, "    add esp, 4\n");
+                    }
+                }
+                break;
             }
 
             // Handle other function calls
@@ -540,6 +647,7 @@ void generate_code(AST *ast, FILE *out) {
     if (var_map_count > 0) {
         fprintf(out, "section .bss\n");
         fprintf(out, "    align 4\n");
+        fprintf(out, "    temp_int: resd 1  ; temporary for int to float conversion\n");
         
         // Emit float variables
         for (int i = 0; i < var_map_count; i++) {
@@ -564,7 +672,21 @@ void generate_code(AST *ast, FILE *out) {
     fprintf(out, "    extern printf\n");
     fprintf(out, "    extern print\n");
     fprintf(out, "    extern read_int\n");
-    fprintf(out, "    extern read_float\n\n");
+    fprintf(out, "    extern read_float\n");
+    fprintf(out, "    extern read_num\n");
+    fprintf(out, "    extern read_num_safe\n");
+    fprintf(out, "    extern print_num\n");
+    fprintf(out, "    extern print_clean\n");
+    fprintf(out, "    extern print_num_precision\n");
+    fprintf(out, "    extern print_num_scientific\n");
+    fprintf(out, "    extern print_currency\n");
+    fprintf(out, "    extern print_percentage\n");
+    fprintf(out, "    extern print_num_engineering\n");
+    fprintf(out, "    extern print_hex\n");
+    fprintf(out, "    extern read_num_validated\n");
+    fprintf(out, "    extern read_num_with_prompt\n");
+    fprintf(out, "    extern read_positive_num\n");
+    fprintf(out, "    extern read_integer_only\n\n");
 
     // First emit all externs and function definitions
     for (size_t i = 0; i < ast->count; ++i) {

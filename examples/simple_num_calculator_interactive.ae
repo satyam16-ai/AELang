@@ -1,0 +1,57 @@
+// Simple Interactive Calculator - Clean num Type Demo
+extern print(msg: i32);
+extern print_float(val: f32);
+extern read_num();
+
+func main(): void {
+    print("═══════════════════════════");
+    print("  ÆLang num Type Calculator");
+    print("═══════════════════════════");
+    print("");
+    
+    print("🔢 This calculator demonstrates:");
+    print("   • Interactive num type input");
+    print("   • Universal numeric handling");
+    print("   • Real-time calculations");
+    print("");
+    
+    // Get user input
+    print("Enter first number: ");
+    let a: num = read_num();
+    
+    print("Enter second number: ");
+    let b: num = read_num();
+    
+    print("");
+    print("Your inputs:");
+    print("  First:  ");
+    print_float(a);
+    print("  Second: ");
+    print_float(b);
+    print("");
+    
+    // Simple arithmetic
+    print("Basic Operations:");
+    print("─────────────────");
+    
+    let sum: num = a + b;
+    print("Addition: ");
+    print_float(sum);
+    
+    let diff: num = a - b;
+    print("Subtraction: ");
+    print_float(diff);
+    
+    let prod: num = a * b;
+    print("Multiplication: ");
+    print_float(prod);
+    
+    let quot: num = a / b;
+    print("Division: ");
+    print_float(quot);
+    
+    print("");
+    print("✅ SUCCESS: num type input and arithmetic completed!");
+    print("🎯 ÆLang's universal num type handles both integers");
+    print("   and decimals seamlessly through user input!");
+}

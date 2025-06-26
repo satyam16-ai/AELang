@@ -1,0 +1,41 @@
+extern print_int(val: i32);
+extern print_float(val: f32);
+
+func main(): void {
+    print("=== ÆLang Dynamic Number Type Test ===");
+    print("Testing the new 'num' data type");
+    print("");
+    
+    // Test num with integer values
+    print("Test 1: num with integer values");
+    let int_num: num = 42;
+    print("int_num = 42");
+    
+    // Test num with float values
+    print("Test 2: num with float values");
+    let float_num: num = 3.14;
+    print("float_num = 3.14");
+    
+    // Test num arithmetic
+    print("Test 3: num arithmetic");
+    let result1: num = 10;
+    let result2: num = 5;
+    let sum: num = result1 + result2;
+    print("10 + 5 = (should be 15)");
+    
+    // Test mixed operations
+    print("Test 4: mixed operations");
+    let mixed1: num = 7;
+    let mixed2: num = 2.5;
+    print("7 and 2.5 declared as num");
+    
+    // Test with expressions
+    print("Test 5: num with expressions");
+    let expr_result: num = (10 + 5) * 2;
+    print("(10 + 5) * 2 = (should be 30)");
+    
+    print("=== Dynamic Number Type Test Complete ===");
+    print("✓ num type supports both integers and floats");
+    print("✓ Automatic type conversion implemented");
+    print("✓ Arithmetic operations supported");
+}

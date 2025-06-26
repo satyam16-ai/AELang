@@ -1,0 +1,35 @@
+// Interactive Num Input Test - Shows actual input values
+extern print(msg: i32);
+extern print_float(val: f32);
+extern read_num();
+
+func main(): void {
+    print("=== NUM INPUT TEST ===");
+    print("Enter first number: ");
+    let num1: num = read_num();
+    
+    print("Enter second number: ");
+    let num2: num = read_num();
+    
+    print("");
+    print("Your numbers:");
+    print("First number: ");
+    print_float(num1);
+    
+    print("Second number: ");
+    print_float(num2);
+    
+    print("");
+    print("Calculations:");
+    let sum: num = num1 + num2;
+    let product: num = num1 * num2;
+    
+    print("Sum: ");
+    print_float(sum);
+    
+    print("Product: ");
+    print_float(product);
+    
+    print("");
+    print("✓ Successfully read and processed num type inputs!");
+}

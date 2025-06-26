@@ -35,8 +35,18 @@ typedef enum {
     VALUE_INT,
     VALUE_STRING,
     VALUE_BOOL,
-    VALUE_FLOAT
+    VALUE_FLOAT,
+    VALUE_NUM
 } ValueType;
+
+// Dynamic number type for 'num'
+typedef struct {
+    int is_float;  // 0 = int, 1 = float
+    union {
+        int int_val;
+        double float_val;
+    } value;
+} NumValue;
 
 // AST Literal Value
 typedef struct {
@@ -46,6 +56,7 @@ typedef struct {
         char *str_val;
         int bool_val;
         double float_val;  // Using double for better precision
+        NumValue num_val;  // Dynamic number type
     } as;
 } LiteralValue;
 
@@ -115,6 +126,7 @@ struct ASTNode {
 typedef struct {
     ASTNode **nodes;
     size_t count;
+    size_t capacity;
 } AST;
 
 AST *parse(TokenList *tokens);

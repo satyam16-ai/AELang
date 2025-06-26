@@ -1,0 +1,66 @@
+extern print_int(val: i32);
+extern print_float(val: f32);
+extern read_int();
+extern read_float();
+
+func main(): void {
+    print("=== ÆLang Optimized Calculator ===");
+    print("Fixed mixed-type operations and memory optimization");
+    print("");
+    
+    // INPUT SECTION - User chooses type
+    print("Enter first number as integer: ");
+    let a: i32 = read_int();
+    
+    print("Enter first number as float: ");
+    let x: f32 = read_float();
+    
+    print("Enter second number as integer: ");
+    let b: i32 = read_int();
+    
+    print("Enter second number as float: ");
+    let y: f32 = read_float();
+    
+    print("");
+    print("=== INTEGER OPERATIONS ===");
+    
+    let int_sum: i32 = a + b;
+    print("Sum: ");
+    print_int(int_sum);
+    
+    let int_diff: i32 = a - b;
+    print("Difference: ");
+    print_int(int_diff);
+    
+    let int_prod: i32 = a * b;
+    print("Product: ");
+    print_int(int_prod);
+    
+    let int_quot: i32 = a / b;
+    print("Quotient: ");
+    print_int(int_quot);
+    
+    print("");
+    print("=== FLOAT OPERATIONS ===");
+    
+    let float_sum: f32 = x + y;
+    print("Sum: ");
+    print_float(float_sum);
+    
+    let float_diff: f32 = x - y;
+    print("Difference: ");
+    print_float(float_diff);
+    
+    let float_prod: f32 = x * y;
+    print("Product: ");
+    print_float(float_prod);
+    
+    let float_quot: f32 = x / y;
+    print("Quotient: ");
+    print_float(float_quot);
+    
+    print("");
+    print("=== OPTIMIZED CALCULATOR COMPLETE ===");
+    print("Memory efficient - no mixed operations");
+    print("Type safety maintained throughout");
+}

@@ -35,7 +35,7 @@ static int match_keyword(const char *word) {
         {"load", TOKEN_LOAD}, {"store", TOKEN_STORE},
         {"u8", TOKEN_TYPE_U8}, {"u16", TOKEN_TYPE_U16}, {"u32", TOKEN_TYPE_U32},
         {"i8", TOKEN_TYPE_I8}, {"i16", TOKEN_TYPE_I16}, {"i32", TOKEN_TYPE_I32},
-        {"f32", TOKEN_TYPE_F32},
+        {"f32", TOKEN_TYPE_F32}, {"num", TOKEN_TYPE_NUM},
         {"ptr", TOKEN_TYPE_PTR}, {"str", TOKEN_TYPE_STR}, {"bool", TOKEN_TYPE_BOOL},
         {"true", TOKEN_BOOL}, {"false", TOKEN_BOOL},
         {"@debug", TOKEN_DEBUG}, {"@trace", TOKEN_TRACE},
@@ -152,10 +152,18 @@ TokenList *lex(const char *source) {
 }
 
 void free_token_list(TokenList *list) {
+    if (!list) return;
     for (size_t i = 0; i < list->count; ++i) {
-        free(list->tokens[i].text);
+        if (list->tokens[i].text) {
+            free(list->tokens[i].text);
+            list->tokens[i].text = NULL;
+        }
     }
-    free(list->tokens);
+    if (list->tokens) {
+        free(list->tokens);
+        list->tokens = NULL;
+    }
+    free(list);
 }
 
 const char *token_type_to_str(TokenType type) {
@@ -173,7 +181,7 @@ const char *token_type_to_str(TokenType type) {
         CASE(TOKEN_IDENT); CASE(TOKEN_INT); CASE(TOKEN_STRING); CASE(TOKEN_BOOL); CASE(TOKEN_FLOAT);
         CASE(TOKEN_TYPE_U8); CASE(TOKEN_TYPE_U16); CASE(TOKEN_TYPE_U32);
         CASE(TOKEN_TYPE_I8); CASE(TOKEN_TYPE_I16); CASE(TOKEN_TYPE_I32);
-        CASE(TOKEN_TYPE_F32); CASE(TOKEN_TYPE_VOID);
+        CASE(TOKEN_TYPE_F32); CASE(TOKEN_TYPE_NUM); CASE(TOKEN_TYPE_VOID);
         CASE(TOKEN_TYPE_PTR); CASE(TOKEN_TYPE_STR); CASE(TOKEN_TYPE_BOOL);
         CASE(TOKEN_DEBUG); CASE(TOKEN_TRACE);
     }
