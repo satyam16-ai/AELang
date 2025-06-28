@@ -1,9 +1,0 @@
-extern print_int(val: i32);
-
-func main(): void {
-    let x: i32 = 42;
-    print_int(x);
-    
-    let y: i32 = 100;
-    print_int(y);
-}

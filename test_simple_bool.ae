@@ -1,8 +1,0 @@
-extern print(message: str)
-
-func main(): i32 {
-    print("Testing basic boolean")
-    let x: bool = true
-    print("Boolean declared successfully")
-    return 0
-}

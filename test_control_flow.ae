@@ -1,7 +1,0 @@
-extern print_int(val: i32);
-
-const TEST_VALUE: i32 = 42;
-
-func main(): void {
-    print_int(TEST_VALUE);
-}

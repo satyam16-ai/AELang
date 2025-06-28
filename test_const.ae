@@ -1,7 +1,0 @@
-extern print_int(val: i32);
-
-const MAX: i32 = 100;
-
-func main(): void {
-    print_int(MAX);
-}

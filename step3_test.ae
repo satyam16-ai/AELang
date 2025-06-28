@@ -1,5 +1,0 @@
-func main(): i32 {
-    // Step 3: Unary NOT with binary operations
-    let a: bool = !(true && false)
-    return 0
-}

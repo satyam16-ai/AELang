@@ -1,4 +1,0 @@
-func main(): i32 {
-    let x: bool = !true
-    return 0
-}
