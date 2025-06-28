@@ -1,0 +1,46 @@
+// Comprehensive test for new features
+extern print(message: str);
+extern print_int(val: i32);
+
+func main(): void {
+    print("=== BOOLEAN TEST ===");
+    
+    // Test boolean variables
+    let flag: bool = true;
+    let negative: bool = false;
+    
+    print("Boolean variables created");
+    
+    // Test boolean in conditional
+    if true {
+        print("True condition works");
+    }
+    
+    if false {
+        print("This should not print");
+    } else {
+        print("False condition works");
+    }
+    
+    print("=== CONSTANT TEST ===");
+    
+    // Test constants
+    const MAX_VALUE: i32 = 100;
+    const PI_VALUE: f32 = 3.14159;
+    const ENABLED: bool = true;
+    
+    print("Constants declared");
+    
+    // Try to use constants
+    let test_val: i32 = MAX_VALUE;
+    print("Used constant in variable");
+    
+    print("=== LOGICAL OPERATORS TEST ===");
+    
+    // Test logical operators (these might not work yet)
+    // let result1: bool = true && false;
+    // let result2: bool = true || false;
+    // let result3: bool = !true;
+    
+    print("Tests completed");
+}

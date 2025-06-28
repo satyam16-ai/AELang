@@ -1,0 +1,6 @@
+extern print_int(val: i32);
+
+func main(): void {
+    print("Testing basic syntax");
+    print_int(42);
+}

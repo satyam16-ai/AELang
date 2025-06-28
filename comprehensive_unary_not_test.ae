@@ -1,0 +1,64 @@
+extern print(message: str)
+extern print_bool(val: bool)
+
+func main(): i32 {
+    print("=== COMPREHENSIVE UNARY NOT TEST ===")
+    
+    // Test 1: Basic unary NOT
+    print("Test 1: Basic unary NOT")
+    let a: bool = !true
+    let b: bool = !false
+    print_bool(a)  // Should print false
+    print_bool(b)  // Should print true
+    
+    // Test 2: Double negation
+    print("Test 2: Double negation")
+    let c: bool = !!true
+    let d: bool = !!false
+    print_bool(c)  // Should print true
+    print_bool(d)  // Should print false
+    
+    // Test 3: Unary NOT with variables
+    print("Test 3: Unary NOT with variables")
+    let x: bool = true
+    let y: bool = false
+    let nx: bool = !x
+    let ny: bool = !y
+    print_bool(nx)  // Should print false
+    print_bool(ny)  // Should print true
+    
+    // Test 4: Complex boolean expressions
+    print("Test 4: Complex boolean expressions")
+    let expr1: bool = !(true && false)
+    let expr2: bool = !(false || true)
+    let expr3: bool = !true && !false
+    let expr4: bool = !false || !true
+    print_bool(expr1)  // Should print true
+    print_bool(expr2)  // Should print false
+    print_bool(expr3)  // Should print false
+    print_bool(expr4)  // Should print true
+    
+    // Test 5: Unary NOT in if conditions
+    print("Test 5: Unary NOT in if conditions")
+    if !false {
+        print("!false is true - PASS")
+    } else {
+        print("!false is false - FAIL")
+    }
+    
+    if !true {
+        print("!true is true - FAIL")
+    } else {
+        print("!true is false - PASS")
+    }
+    
+    // Test 6: Nested expressions
+    print("Test 6: Nested expressions")
+    let nested1: bool = !(x && !y)
+    let nested2: bool = !(!x || y)
+    print_bool(nested1)  // Should evaluate !(true && !false) = !(true && true) = !true = false
+    print_bool(nested2)  // Should evaluate !(!true || false) = !(false || false) = !false = true
+    
+    print("=== ALL TESTS COMPLETED ===")
+    return 0
+}

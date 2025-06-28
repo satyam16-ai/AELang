@@ -1,0 +1,5 @@
+func main(): i32 {
+    // Step 1: Simple unary NOT (this should work)
+    let a: bool = !true
+    return 0
+}

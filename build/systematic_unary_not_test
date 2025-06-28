@@ -1,0 +1,160 @@
+; Generated NASM by ÆLang Compiler
+section .rodata
+    align 4
+msg_0 db "=== SYSTEMATIC UNARY NOT TESTING ===",0
+msg_1 db "Level 1: Basic unary NOT with literals",0
+msg_2 db "Level 1: PASSED",0
+msg_3 db "Level 2: Unary NOT with constants",0
+msg_4 db "Level 2: PASSED",0
+msg_5 db "Level 3: Unary NOT with variables",0
+msg_6 db "Level 3: PASSED",0
+msg_7 db "Level 4: Simple if with unary NOT of literal",0
+msg_8 db "Level 4a: PASSED - !false is true",0
+msg_9 db "Level 4b: ERROR - !true should be false",0
+msg_10 db "Level 4b: PASSED - !true is false",0
+msg_11 db "=== BASIC UNARY NOT TESTS COMPLETED ===",0
+fmt_float: db "%f", 10, 0
+
+section .bss
+    align 4
+    temp_int: resd 1  ; temporary for int to float conversion
+
+section .text
+    global main
+    extern printf
+    extern print
+    extern read_int
+    extern read_float
+    extern read_num
+    extern read_num_safe
+    extern print_num
+    extern print_clean
+    extern print_num_precision
+    extern print_num_scientific
+    extern print_currency
+    extern print_percentage
+    extern print_num_engineering
+    extern print_hex
+    extern read_num_validated
+    extern read_num_with_prompt
+    extern read_positive_num
+    extern read_integer_only
+
+extern print
+; CODEGEN TEST MARKER: emitting function main
+main:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 80  ; allocate space for 10 local variables
+    push msg_0
+    call print
+    add esp, 4
+    push msg_1
+    call print
+    add esp, 4
+; let test1a:bool = <EXPR_UNHANDLED>
+    mov rax, 1
+    test eax, eax
+    sete al
+    movzx eax, al
+    mov [ebp-4], eax  ; store test1a (local int)
+; let test1b:bool = <EXPR_UNHANDLED>
+    mov rax, 0
+    test eax, eax
+    sete al
+    movzx eax, al
+    mov [ebp-8], eax  ; store test1b (local int)
+    push msg_2
+    call print
+    add esp, 4
+    push msg_3
+    call print
+    add esp, 4
+; let TRUE_CONST:bool = 1
+    mov rax, 1
+    mov [ebp-12], eax  ; store TRUE_CONST (local int)
+; let FALSE_CONST:bool = 0
+    mov rax, 0
+    mov [ebp-16], eax  ; store FALSE_CONST (local int)
+; let test2a:bool = <EXPR_UNHANDLED>
+    mov rax, [rbp-12]  ; load TRUE_CONST (stack)
+    test eax, eax
+    sete al
+    movzx eax, al
+    mov [ebp-20], eax  ; store test2a (local int)
+; let test2b:bool = <EXPR_UNHANDLED>
+    mov rax, [rbp-16]  ; load FALSE_CONST (stack)
+    test eax, eax
+    sete al
+    movzx eax, al
+    mov [ebp-24], eax  ; store test2b (local int)
+    push msg_4
+    call print
+    add esp, 4
+    push msg_5
+    call print
+    add esp, 4
+; let var_true:bool = 1
+    mov rax, 1
+    mov [ebp-28], eax  ; store var_true (local int)
+; let var_false:bool = 0
+    mov rax, 0
+    mov [ebp-32], eax  ; store var_false (local int)
+; let test3a:bool = <EXPR_UNHANDLED>
+    mov rax, [rbp-28]  ; load var_true (stack)
+    test eax, eax
+    sete al
+    movzx eax, al
+    mov [ebp-36], eax  ; store test3a (local int)
+; let test3b:bool = <EXPR_UNHANDLED>
+    mov rax, [rbp-32]  ; load var_false (stack)
+    test eax, eax
+    sete al
+    movzx eax, al
+    mov [ebp-40], eax  ; store test3b (local int)
+    push msg_6
+    call print
+    add esp, 4
+    push msg_7
+    call print
+    add esp, 4
+; if statement 0
+    mov rax, 0
+    test eax, eax
+    sete al
+    movzx eax, al
+    cmp eax, 0
+    je .else_0
+.then_0:
+    push msg_8
+    call print
+    add esp, 4
+    jmp .end_if_0
+.else_0:
+.end_if_0:
+; end if statement 0
+; if statement 1
+    mov rax, 1
+    test eax, eax
+    sete al
+    movzx eax, al
+    cmp eax, 0
+    je .else_1
+.then_1:
+    push msg_9
+    call print
+    add esp, 4
+    jmp .end_if_1
+.else_1:
+    push msg_10
+    call print
+    add esp, 4
+.end_if_1:
+; end if statement 1
+    push msg_11
+    call print
+    add esp, 4
+    mov rax, 0
+    mov rsp, rbp  ; restore stack pointer
+    pop rbp
+    ret

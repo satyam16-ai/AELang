@@ -46,6 +46,11 @@ typedef enum {
     TOKEN_SHL,
     TOKEN_SHR,
 
+    // Logical operators
+    TOKEN_LOGICAL_AND,  // &&
+    TOKEN_LOGICAL_OR,   // ||
+    TOKEN_LOGICAL_NOT,  // !
+
     // Literals
     TOKEN_FLOAT,
     
@@ -62,6 +67,7 @@ typedef enum {
     TOKEN_INT,
     TOKEN_STRING,
     TOKEN_BOOL,
+    TOKEN_CHAR,
 
     // Types
     TOKEN_TYPE_U8,
@@ -75,6 +81,7 @@ typedef enum {
     TOKEN_TYPE_PTR,
     TOKEN_TYPE_STR,
     TOKEN_TYPE_BOOL,
+    TOKEN_TYPE_CHAR,
     TOKEN_TYPE_VOID,
 
     // Debug

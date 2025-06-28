@@ -1,0 +1,5 @@
+func main(): i32 {
+    // Step 4: Multiple unary NOT operations
+    let a: bool = !true && !false
+    return 0
+}

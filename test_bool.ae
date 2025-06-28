@@ -1,0 +1,6 @@
+extern print_int(val: i32);
+
+func main(): void {
+    let flag: bool = true;
+    print_int(1);
+}

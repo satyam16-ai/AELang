@@ -13,8 +13,8 @@ static TokenList *tokens;
 // Forward declarations
 static ASTNode *parse_expression();
 static ASTNode *parse_statement();
-static ASTNode *parse_if_statement(int line);
 static ASTNode *parse_if_statement_with_condition(int line, ASTNode *condition);
+static ASTNode *parse_unary_expr();
 static ASTNode *make_node(ASTNodeType type, int line);
 static void free_ast_node(ASTNode *node);
 
@@ -96,69 +96,13 @@ static ASTNode *parse_if_statement_with_condition(int line, ASTNode *condition) 
     
     // Check for else or elif
     if (check(TOKEN_ELIF)) {
-        // Create nested if for elif
+        // Handle elif by converting to else { if } structure  
         advance(); // consume TOKEN_ELIF
-        size_t else_capacity = 1;
-        node->as.if_stmt.else_body = malloc(else_capacity * sizeof(ASTNode*));
-        node->as.if_stmt.else_body[0] = parse_if_statement(peek().line); // Recursively parse elif as if
-        node->as.if_stmt.else_count = 1;
-    } else if (check(TOKEN_ELSE)) {
-        advance(); // consume TOKEN_ELSE
-        expect(TOKEN_LBRACE, "{");
-        size_t else_capacity = 0;
+        ASTNode *elif_condition = parse_expression(); // Parse the elif condition
         
-        while (!check(TOKEN_RBRACE) && !is_at_end()) {
-            if (node->as.if_stmt.else_count >= else_capacity) {
-                else_capacity = else_capacity == 0 ? 8 : else_capacity * 2;
-                node->as.if_stmt.else_body = realloc(node->as.if_stmt.else_body, 
-                                                   else_capacity * sizeof(ASTNode*));
-            }
-            ASTNode *stmt = parse_statement();
-            if (stmt) {
-                node->as.if_stmt.else_body[node->as.if_stmt.else_count++] = stmt;
-            }
-        }
-        expect(TOKEN_RBRACE, "}");
-    }
-    
-    return node;
-}
-
-static ASTNode *parse_if_statement(int line) {
-    // Parse if condition
-    ASTNode *node = make_node(AST_IF_STMT, line);
-    node->as.if_stmt.condition = parse_expression();
-    
-    // Parse then block
-    expect(TOKEN_LBRACE, "{");
-    node->as.if_stmt.then_body = NULL;
-    node->as.if_stmt.then_count = 0;
-    size_t then_capacity = 0;
-    
-    while (!check(TOKEN_RBRACE) && !is_at_end()) {
-        if (node->as.if_stmt.then_count >= then_capacity) {
-            then_capacity = then_capacity == 0 ? 8 : then_capacity * 2;
-            node->as.if_stmt.then_body = realloc(node->as.if_stmt.then_body, 
-                                               then_capacity * sizeof(ASTNode*));
-        }
-        ASTNode *stmt = parse_statement();
-        if (stmt) {
-            node->as.if_stmt.then_body[node->as.if_stmt.then_count++] = stmt;
-        }
-    }
-    expect(TOKEN_RBRACE, "}");
-    
-    // Initialize else body
-    node->as.if_stmt.else_body = NULL;
-    node->as.if_stmt.else_count = 0;
-    
-    // Check for else or elif
-    if (check(TOKEN_ELIF)) {
-        // Create nested if for elif
-        advance(); // consume TOKEN_ELIF
-        size_t else_capacity = 1;
-        node->as.if_stmt.else_body = malloc(else_capacity * sizeof(ASTNode*));
-        node->as.if_stmt.else_body[0] = parse_if_statement(peek().line); // Recursively parse elif as if
+        // Create the else body with a single if statement
+        node->as.if_stmt.else_body = malloc(sizeof(ASTNode*));
+        node->as.if_stmt.else_body[0] = parse_if_statement_with_condition(elif_condition->line, elif_condition);
         node->as.if_stmt.else_count = 1;
     } else if (check(TOKEN_ELSE)) {
         advance(); // consume TOKEN_ELSE
@@ -285,35 +229,123 @@ static ASTNode *parse_primary_expr() {
     return NULL;
 }
 
-static ASTNode *parse_binary_expr() {
-    ASTNode *left = parse_primary_expr();
-    if (!left) {
-        return NULL; // Error in primary expression
-    }
+// Forward declarations for precedence levels
+static ASTNode *parse_logical_or_expr();
+static ASTNode *parse_logical_xor_expr();
+static ASTNode *parse_logical_and_expr();
+static ASTNode *parse_comparison_expr();
+static ASTNode *parse_arithmetic_expr();
 
-    while (peek().type == TOKEN_PLUS || peek().type == TOKEN_MINUS ||
-           peek().type == TOKEN_MUL || peek().type == TOKEN_DIV || peek().type == TOKEN_MOD ||
-           peek().type == TOKEN_EQ || peek().type == TOKEN_NEQ ||
-           peek().type == TOKEN_LT || peek().type == TOKEN_GT ||
-           peek().type == TOKEN_LEQ || peek().type == TOKEN_GEQ) {
+static ASTNode *parse_binary_expr() {
+    return parse_logical_or_expr();
+}
+
+// Precedence level 1: Logical OR (lowest precedence)
+static ASTNode *parse_logical_or_expr() {
+    ASTNode *left = parse_logical_xor_expr();
+    if (!left) return NULL;
+
+    while (peek().type == TOKEN_LOGICAL_OR) {
         Token op = advance();
-        ASTNode *right = parse_primary_expr();
-        
+        ASTNode *right = parse_logical_xor_expr();
         if (!right) {
-            // Cleanup left node and return error
             free_ast_node(left);
             return NULL;
         }
 
         ASTNode *bin = make_node(AST_BIN_OP, op.line);
         if (!bin) {
-            // Cleanup and return error
             free_ast_node(left);
             free_ast_node(right);
             return NULL;
         }
         
-        // Handle operator text (can be 1 or 2 characters)
+        strcpy(bin->as.bin_op.op, "||");
+        bin->as.bin_op.left = left;
+        bin->as.bin_op.right = right;
+        left = bin;
+    }
+    return left;
+}
+
+// Precedence level 2: Logical XOR
+static ASTNode *parse_logical_xor_expr() {
+    ASTNode *left = parse_logical_and_expr();
+    if (!left) return NULL;
+
+    while (peek().type == TOKEN_XOR) {
+        Token op = advance();
+        ASTNode *right = parse_logical_and_expr();
+        if (!right) {
+            free_ast_node(left);
+            return NULL;
+        }
+
+        ASTNode *bin = make_node(AST_BIN_OP, op.line);
+        if (!bin) {
+            free_ast_node(left);
+            free_ast_node(right);
+            return NULL;
+        }
+        
+        strcpy(bin->as.bin_op.op, "^^");
+        bin->as.bin_op.left = left;
+        bin->as.bin_op.right = right;
+        left = bin;
+    }
+    return left;
+}
+
+// Precedence level 3: Logical AND
+static ASTNode *parse_logical_and_expr() {
+    ASTNode *left = parse_comparison_expr();
+    if (!left) return NULL;
+
+    while (peek().type == TOKEN_LOGICAL_AND) {
+        Token op = advance();
+        ASTNode *right = parse_comparison_expr();
+        if (!right) {
+            free_ast_node(left);
+            return NULL;
+        }
+
+        ASTNode *bin = make_node(AST_BIN_OP, op.line);
+        if (!bin) {
+            free_ast_node(left);
+            free_ast_node(right);
+            return NULL;
+        }
+        
+        strcpy(bin->as.bin_op.op, "&&");
+        bin->as.bin_op.left = left;
+        bin->as.bin_op.right = right;
+        left = bin;
+    }
+    return left;
+}
+
+// Precedence level 4: Comparison operators
+static ASTNode *parse_comparison_expr() {
+    ASTNode *left = parse_arithmetic_expr();
+    if (!left) return NULL;
+
+    while (peek().type == TOKEN_EQ || peek().type == TOKEN_NEQ ||
+           peek().type == TOKEN_LT || peek().type == TOKEN_GT ||
+           peek().type == TOKEN_LEQ || peek().type == TOKEN_GEQ) {
+        Token op = advance();
+        ASTNode *right = parse_arithmetic_expr();
+        if (!right) {
+            free_ast_node(left);
+            return NULL;
+        }
+
+        ASTNode *bin = make_node(AST_BIN_OP, op.line);
+        if (!bin) {
+            free_ast_node(left);
+            free_ast_node(right);
+            return NULL;
+        }
+        
         int op_len = strlen(op.text);
         if (op_len < 3) {
             strcpy(bin->as.bin_op.op, op.text);
@@ -323,11 +355,82 @@ static ASTNode *parse_binary_expr() {
         }
         bin->as.bin_op.left = left;
         bin->as.bin_op.right = right;
+        left = bin;
+    }
+    return left;
+}
 
+// Precedence level 5: Arithmetic operators 
+static ASTNode *parse_arithmetic_expr() {
+    ASTNode *left = parse_unary_expr();
+    if (!left) return NULL;
+
+    while (peek().type == TOKEN_PLUS || peek().type == TOKEN_MINUS ||
+           peek().type == TOKEN_MUL || peek().type == TOKEN_DIV || peek().type == TOKEN_MOD) {
+        Token op = advance();
+        ASTNode *right = parse_unary_expr();
+        if (!right) {
+            free_ast_node(left);
+            return NULL;
+        }
+
+        ASTNode *bin = make_node(AST_BIN_OP, op.line);
+        if (!bin) {
+            free_ast_node(left);
+            free_ast_node(right);
+            return NULL;
+        }
+        
+        strcpy(bin->as.bin_op.op, op.text);
+        bin->as.bin_op.left = left;
+        bin->as.bin_op.right = right;
         left = bin;
     }
 
     return left;
+}
+
+// Precedence level 6: Unary operators (higher precedence than binary)
+static ASTNode *parse_unary_expr() {
+    Token tok = peek();
+    
+    // Handle logical NOT operator
+    if (tok.type == TOKEN_LOGICAL_NOT) {
+        advance(); // consume '!'
+        ASTNode *operand = parse_unary_expr();
+        if (!operand) {
+            fprintf(stderr, "Error: Expected expression after '!'\n");
+            return NULL;
+        }
+        ASTNode *unary = make_node(AST_UNARY_OP, tok.line);
+        if (!unary) {
+            free_ast_node(operand);
+            return NULL;
+        }
+        unary->as.unary_op.op = '!';
+        unary->as.unary_op.expr = operand;
+        return unary;
+    }
+    
+    // Handle unary minus operator
+    if (tok.type == TOKEN_MINUS) {
+        advance(); // consume '-'
+        ASTNode *operand = parse_unary_expr();
+        if (!operand) {
+            fprintf(stderr, "Error: Expected expression after unary '-'\n");
+            return NULL;
+        }
+        ASTNode *unary = make_node(AST_UNARY_OP, tok.line);
+        if (!unary) {
+            free_ast_node(operand);
+            return NULL;
+        }
+        unary->as.unary_op.op = '-';
+        unary->as.unary_op.expr = operand;
+        return unary;
+    }
+    
+    return parse_primary_expr();
 }
 
 static ASTNode *parse_expression() {
@@ -464,6 +567,17 @@ static ASTNode *parse_statement() {
     } else if (match(TOKEN_HALT)) {
         match(TOKEN_SEMICOLON);
         return make_node(AST_HALT, tok.line);
+    } else if (match(TOKEN_RETURN)) {
+        ASTNode *node = make_node(AST_RETURN, tok.line);
+        if (peek().type != TOKEN_SEMICOLON) {
+            // Return with value
+            node->as.ret.value = parse_expression();
+        } else {
+            // Return without value (void)
+            node->as.ret.value = NULL;
+        }
+        match(TOKEN_SEMICOLON);
+        return node;
     } else if (match(TOKEN_EXTERN)) {
         ASTNode *node = make_node(AST_EXTERN_FUNC, tok.line);
         Token name = expect(TOKEN_IDENT, "function name");
@@ -481,6 +595,13 @@ static ASTNode *parse_statement() {
             node->as.extern_func.param_count++;
             match(TOKEN_COMMA);
         }
+        // Parse optional return type
+        if (match(TOKEN_COLON)) {
+            Token ret_type = expect_type_token("return type");
+            node->as.extern_func.return_type = strdup(ret_type.text);
+        } else {
+            node->as.extern_func.return_type = strdup("void");  // Default to void
+        }
         match(TOKEN_SEMICOLON);
         return node;
     } else if (match(TOKEN_FUNC)) {
@@ -493,6 +614,7 @@ static ASTNode *parse_statement() {
         node->as.func_def.param_count = 0;
         while (!match(TOKEN_RPAREN)) {
             Token param = expect(TOKEN_IDENT, "param");
+            // fprintf(stderr, "[DEBUG] Parsing func def parameter: %s at line %d\n", param.text, param.line);
             expect(TOKEN_COLON, ":");
             Token typ = expect_type_token("type");
             node->as.func_def.param_names[node->as.func_def.param_count] = strdup(param.text);
@@ -534,10 +656,11 @@ static ASTNode *parse_statement() {
             }
         }
         // Debug output for function body
-        fprintf(stderr, "[PARSER DEBUG] func %s body_count=%zu\n", node->as.func_def.name, node->as.func_def.body_count);
+        // fprintf(stderr, "[PARSER DEBUG] func %s body_count=%zu\n", node->as.func_def.name, node->as.func_def.body_count);
         for (size_t i = 0; i < node->as.func_def.body_count; ++i) {
-            if (node->as.func_def.body[i])
-                fprintf(stderr, "[PARSER DEBUG]   body[%zu] type=%d\n", i, node->as.func_def.body[i]->type);
+            if (node->as.func_def.body[i]) {
+                // fprintf(stderr, "[PARSER DEBUG]   body[%zu] type=%d\n", i, node->as.func_def.body[i]->type);
+            }
         }
         return node;
     }
@@ -558,7 +681,7 @@ static void free_ast_node(ASTNode *node) {
     if (!node) return;
     
     // Prevent double-free by marking as freed
-    if (node->type == -1) return;  // Already freed marker
+    if (node->type == AST_FREED) return;  // Already freed marker
     
     switch (node->type) {
         case AST_VAR_DECL:
@@ -571,7 +694,7 @@ static void free_ast_node(ASTNode *node) {
                 free(node->as.var_decl.type_name);
                 node->as.var_decl.type_name = NULL;
             }
-            if (node->as.var_decl.value && node->as.var_decl.value->type != -1) {
+            if (node->as.var_decl.value && node->as.var_decl.value->type != AST_FREED) {
                 free_ast_node(node->as.var_decl.value);
                 node->as.var_decl.value = NULL;
             }
@@ -581,23 +704,23 @@ static void free_ast_node(ASTNode *node) {
                 free(node->as.assign.target);
                 node->as.assign.target = NULL;
             }
-            if (node->as.assign.value && node->as.assign.value->type != -1) {
+            if (node->as.assign.value && node->as.assign.value->type != AST_FREED) {
                 free_ast_node(node->as.assign.value);
                 node->as.assign.value = NULL;
             }
             break;
         case AST_BIN_OP:
-            if (node->as.bin_op.left && node->as.bin_op.left->type != -1) {
+            if (node->as.bin_op.left && node->as.bin_op.left->type != AST_FREED) {
                 free_ast_node(node->as.bin_op.left);
                 node->as.bin_op.left = NULL;
             }
-            if (node->as.bin_op.right && node->as.bin_op.right->type != -1) {
+            if (node->as.bin_op.right && node->as.bin_op.right->type != AST_FREED) {
                 free_ast_node(node->as.bin_op.right);
                 node->as.bin_op.right = NULL;
             }
             break;
         case AST_UNARY_OP:
-            if (node->as.unary_op.expr && node->as.unary_op.expr->type != -1) {
+            if (node->as.unary_op.expr && node->as.unary_op.expr->type != AST_FREED) {
                 free_ast_node(node->as.unary_op.expr);
                 node->as.unary_op.expr = NULL;
             }
@@ -621,7 +744,7 @@ static void free_ast_node(ASTNode *node) {
             }
             if (node->as.func_call.args) {
                 for (size_t i = 0; i < node->as.func_call.arg_count; ++i) {
-                    if (node->as.func_call.args[i] && node->as.func_call.args[i]->type != -1) {
+                    if (node->as.func_call.args[i] && node->as.func_call.args[i]->type != AST_FREED) {
                         free_ast_node(node->as.func_call.args[i]);
                         node->as.func_call.args[i] = NULL;
                     }
@@ -688,7 +811,7 @@ static void free_ast_node(ASTNode *node) {
             // Safe body cleanup with null checks
             if (node->as.func_def.body) {
                 for (size_t i = 0; i < node->as.func_def.body_count; ++i) {
-                    if (node->as.func_def.body[i] && node->as.func_def.body[i]->type != -1) {
+                    if (node->as.func_def.body[i] && node->as.func_def.body[i]->type != AST_FREED) {
                         free_ast_node(node->as.func_def.body[i]);
                         node->as.func_def.body[i] = NULL;
                     }
@@ -704,7 +827,7 @@ static void free_ast_node(ASTNode *node) {
             }
             break;
         case AST_IF_GOTO:
-            if (node->as.if_goto.condition && node->as.if_goto.condition->type != -1) {
+            if (node->as.if_goto.condition && node->as.if_goto.condition->type != AST_FREED) {
                 free_ast_node(node->as.if_goto.condition);
                 node->as.if_goto.condition = NULL;
             }
@@ -714,7 +837,7 @@ static void free_ast_node(ASTNode *node) {
             }
             break;
         case AST_IF_STMT:
-            if (node->as.if_stmt.condition && node->as.if_stmt.condition->type != -1) {
+            if (node->as.if_stmt.condition && node->as.if_stmt.condition->type != AST_FREED) {
                 free_ast_node(node->as.if_stmt.condition);
                 node->as.if_stmt.condition = NULL;
             }
@@ -790,7 +913,7 @@ static void free_ast_node(ASTNode *node) {
         default:
             break;
     }
-    node->type = -1;  // Mark as freed
+    node->type = AST_FREED;  // Mark as freed
     free(node);
 }
 

@@ -36,7 +36,7 @@ static int match_keyword(const char *word) {
         {"u8", TOKEN_TYPE_U8}, {"u16", TOKEN_TYPE_U16}, {"u32", TOKEN_TYPE_U32},
         {"i8", TOKEN_TYPE_I8}, {"i16", TOKEN_TYPE_I16}, {"i32", TOKEN_TYPE_I32},
         {"f32", TOKEN_TYPE_F32}, {"num", TOKEN_TYPE_NUM},
-        {"ptr", TOKEN_TYPE_PTR}, {"str", TOKEN_TYPE_STR}, {"bool", TOKEN_TYPE_BOOL},
+        {"ptr", TOKEN_TYPE_PTR}, {"str", TOKEN_TYPE_STR}, {"bool", TOKEN_TYPE_BOOL}, {"char", TOKEN_TYPE_CHAR},
         {"true", TOKEN_BOOL}, {"false", TOKEN_BOOL},
         {"@debug", TOKEN_DEBUG}, {"@trace", TOKEN_TRACE},
         {"void", TOKEN_TYPE_VOID},
@@ -123,7 +123,7 @@ TokenList *lex(const char *source) {
                 break;
             case '!':
                 if (*(source + 1) == '=') { add_token(list, make_token(TOKEN_NEQ, "!=", line)); source += 2; }
-                else source++;
+                else { add_token(list, make_token(TOKEN_LOGICAL_NOT, "!", line)); source++; }
                 break;
             case '<':
                 if (*(source + 1) == '=') { add_token(list, make_token(TOKEN_LEQ, "<=", line)); source += 2; }
@@ -140,8 +140,14 @@ TokenList *lex(const char *source) {
             case '*': add_token(list, make_token(TOKEN_MUL, "*", line)); source++; break;
             case '/': add_token(list, make_token(TOKEN_DIV, "/", line)); source++; break;
             case '%': add_token(list, make_token(TOKEN_MOD, "%", line)); source++; break;
-            case '&': add_token(list, make_token(TOKEN_AND, "&", line)); source++; break;
-            case '|': add_token(list, make_token(TOKEN_OR, "|", line)); source++; break;
+            case '&': 
+                if (*(source + 1) == '&') { add_token(list, make_token(TOKEN_LOGICAL_AND, "&&", line)); source += 2; }
+                else { add_token(list, make_token(TOKEN_AND, "&", line)); source++; }
+                break;
+            case '|': 
+                if (*(source + 1) == '|') { add_token(list, make_token(TOKEN_LOGICAL_OR, "||", line)); source += 2; }
+                else { add_token(list, make_token(TOKEN_OR, "|", line)); source++; }
+                break;
             case '^': add_token(list, make_token(TOKEN_XOR, "^", line)); source++; break;
             default: source++; break;
         }
@@ -177,12 +183,13 @@ const char *token_type_to_str(TokenType type) {
         CASE(TOKEN_EQUAL); CASE(TOKEN_LBRACKET); CASE(TOKEN_RBRACKET);
         CASE(TOKEN_PLUS); CASE(TOKEN_MINUS); CASE(TOKEN_MUL); CASE(TOKEN_DIV); CASE(TOKEN_MOD);
         CASE(TOKEN_AND); CASE(TOKEN_OR); CASE(TOKEN_XOR); CASE(TOKEN_SHL); CASE(TOKEN_SHR);
+        CASE(TOKEN_LOGICAL_AND); CASE(TOKEN_LOGICAL_OR); CASE(TOKEN_LOGICAL_NOT);
         CASE(TOKEN_EQ); CASE(TOKEN_NEQ); CASE(TOKEN_LT); CASE(TOKEN_GT); CASE(TOKEN_LEQ); CASE(TOKEN_GEQ);
-        CASE(TOKEN_IDENT); CASE(TOKEN_INT); CASE(TOKEN_STRING); CASE(TOKEN_BOOL); CASE(TOKEN_FLOAT);
+        CASE(TOKEN_IDENT); CASE(TOKEN_INT); CASE(TOKEN_STRING); CASE(TOKEN_BOOL); CASE(TOKEN_CHAR); CASE(TOKEN_FLOAT);
         CASE(TOKEN_TYPE_U8); CASE(TOKEN_TYPE_U16); CASE(TOKEN_TYPE_U32);
         CASE(TOKEN_TYPE_I8); CASE(TOKEN_TYPE_I16); CASE(TOKEN_TYPE_I32);
         CASE(TOKEN_TYPE_F32); CASE(TOKEN_TYPE_NUM); CASE(TOKEN_TYPE_VOID);
-        CASE(TOKEN_TYPE_PTR); CASE(TOKEN_TYPE_STR); CASE(TOKEN_TYPE_BOOL);
+        CASE(TOKEN_TYPE_PTR); CASE(TOKEN_TYPE_STR); CASE(TOKEN_TYPE_BOOL); CASE(TOKEN_TYPE_CHAR);
         CASE(TOKEN_DEBUG); CASE(TOKEN_TRACE);
     }
     #undef CASE

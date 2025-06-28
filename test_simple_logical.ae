@@ -1,0 +1,31 @@
+// Simple test without unary operators
+extern print(message: str);
+extern print_int(val: i32);
+
+func main(): void {
+    print("=== SIMPLE LOGICAL TEST ===");
+    
+    // Test constants first
+    const FLAG: bool = true;
+    let enabled: bool = FLAG;
+    
+    print("Constants working!");
+    
+    // Test simple logical operations without NOT
+    let a: bool = true;
+    let b: bool = false;
+    
+    if a && b {
+        print("true && false = true (wrong!)");
+    } else {
+        print("true && false = false (correct!)");
+    }
+    
+    if a || b {
+        print("true || false = true (correct!)");
+    } else {
+        print("true || false = false (wrong!)");
+    }
+    
+    print("Basic logical operators work!");
+}

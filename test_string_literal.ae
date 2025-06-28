@@ -1,0 +1,5 @@
+extern print(msg: str);
+
+func main(): void {
+    print("Hello World");
+}

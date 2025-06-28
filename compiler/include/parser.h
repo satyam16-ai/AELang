@@ -28,7 +28,8 @@ typedef enum {
     AST_STORE,
     AST_IO,
     AST_DEBUG,
-    AST_TRACE
+    AST_TRACE,
+    AST_FREED = 0xFFFF  // Marker for freed nodes
 } ASTNodeType;
 
 // Value types
@@ -36,6 +37,7 @@ typedef enum {
     VALUE_INT,
     VALUE_STRING,
     VALUE_BOOL,
+    VALUE_CHAR,
     VALUE_FLOAT,
     VALUE_NUM
 } ValueType;
@@ -56,6 +58,7 @@ typedef struct {
         int int_val;
         char *str_val;
         int bool_val;
+        char char_val;
         double float_val;  // Using double for better precision
         NumValue num_val;  // Dynamic number type
     } as;
@@ -91,7 +94,7 @@ struct ASTNode {
         struct { char *name; ASTNode **args; size_t arg_count; } func_call;
 
         // Extern Declaration
-        struct { char *name; char **param_names; char **param_types; size_t param_count; } extern_func;
+        struct { char *name; char **param_names; char **param_types; size_t param_count; char *return_type; } extern_func;
 
         // Function Definition
         struct {
@@ -118,6 +121,9 @@ struct ASTNode {
             ASTNode **else_body; 
             size_t else_count;
         } if_stmt;
+
+        // Return Statement
+        struct { ASTNode *value; } ret;
 
         // IO
         struct { int port; char *var; int is_in; } io;

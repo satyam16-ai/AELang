@@ -8,10 +8,6 @@ fmt_float: db "%f", 10, 0
 section .bss
     align 4
     temp_int: resd 1  ; temporary for int to float conversion
-    float_var_0: resd 1  ; pi
-    float_var_1: resd 1  ; radius
-    float_var_2: resd 1  ; res
-    int_var_0: resd 1  ; x
 
 section .text
     global main
@@ -37,31 +33,33 @@ section .text
 extern print_int
 ; CODEGEN TEST MARKER: emitting function main
 main:
-    push ebp
-    mov ebp, esp
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32  ; allocate space for 4 local variables
 ; let pi:f32 = 3.500000
     fld dword [float_0]
-    fstp dword [float_var_0]  ; store pi
+    fstp dword [ebp-4]  ; store pi (local float)
 ; let x:i32 = 5
-    mov eax, 5
-    mov [int_var_0], eax  ; store x
+    mov rax, 5
+    mov [ebp-8], eax  ; store x (local int)
 ; let radius:f32 = 5.800000
     fld dword [float_1]
-    fstp dword [float_var_1]  ; store radius
+    fstp dword [ebp-12]  ; store radius (local float)
 ; let res:f32 = pi + radius
-    fld dword [float_var_0]  ; load pi
-    fld dword [float_var_1]  ; load radius
+    movss xmm0, [rbp-4]  ; load pi (stack)
+    movss xmm0, [rbp-12]  ; load radius (stack)
     faddp
-    fstp dword [float_var_2]  ; store res
-    fld dword [float_var_2]  ; load res
+    fstp dword [ebp-16]  ; store res (local float)
+    movss xmm0, [rbp-16]  ; load res (stack)
     sub esp, 8
     fstp qword [esp]
     push fmt_float
     call printf
     add esp, 12
-    mov eax, [int_var_0]  ; load x
+    mov rax, [rbp-8]  ; load x (stack)
     push eax
     call print_int
     add esp, 4
-    pop ebp
+    mov rsp, rbp  ; restore stack pointer
+    pop rbp
     ret

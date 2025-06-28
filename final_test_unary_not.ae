@@ -1,0 +1,14 @@
+extern print_bool(val: bool)
+
+func main(): i32 {
+    // Final verification: Unary NOT operator
+    let simple: bool = !true
+    let complex: bool = !true && !false
+    let nested: bool = !(true && !false)
+    
+    print_bool(simple)   // Should print false
+    print_bool(complex)  // Should print false
+    print_bool(nested)   // Should print false
+    
+    return 0
+}

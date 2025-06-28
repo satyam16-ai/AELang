@@ -1,0 +1,5 @@
+func main(): i32 {
+    // Step 2: Double negation 
+    let a: bool = !!true
+    return 0
+}
