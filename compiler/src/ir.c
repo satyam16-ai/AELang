@@ -105,8 +105,11 @@ void append_instruction(IRContext *ctx, IRInstruction *instr) {
 
 // Generate unique label name
 static char *generate_label(IRContext *ctx, const char *prefix) {
-    char *label = malloc(64);
-    snprintf(label, 64, "%s_%d", prefix, ctx->label_counter++);
+    // Calculate required size: prefix + "_" + counter digits + null terminator
+    int counter_digits = snprintf(NULL, 0, "%d", ctx->label_counter);
+    int needed_size = strlen(prefix) + 1 + counter_digits + 1;
+    char *label = malloc(needed_size);
+    snprintf(label, needed_size, "%s_%d", prefix, ctx->label_counter++);
     return label;
 }
 
@@ -170,6 +173,63 @@ static IROperand *generate_expression_ir(AnnotatedASTNode *node, IRContext *ctx)
                         const_op = create_const_int_operand(ast_node->as.literal.as.num_val.value.int_val);
                     }
                     
+                    IRInstruction *instr = create_instruction(IR_LOAD_CONST, temp, const_op, NULL, ast_node->line);
+                    append_instruction(ctx, instr);
+                    return temp;
+                }
+                // Handle additional integer types
+                case VALUE_I8: {
+                    IROperand *temp = create_temp_operand(ctx, TYPE_I32);  // Promote to i32 for IR
+                    IROperand *const_op = create_const_int_operand(ast_node->as.literal.as.i8_val);
+                    IRInstruction *instr = create_instruction(IR_LOAD_CONST, temp, const_op, NULL, ast_node->line);
+                    append_instruction(ctx, instr);
+                    return temp;
+                }
+                case VALUE_I16: {
+                    IROperand *temp = create_temp_operand(ctx, TYPE_I32);  // Promote to i32 for IR
+                    IROperand *const_op = create_const_int_operand(ast_node->as.literal.as.i16_val);
+                    IRInstruction *instr = create_instruction(IR_LOAD_CONST, temp, const_op, NULL, ast_node->line);
+                    append_instruction(ctx, instr);
+                    return temp;
+                }
+                case VALUE_I64: {
+                    IROperand *temp = create_temp_operand(ctx, TYPE_I32);  // Truncate to i32 for now
+                    IROperand *const_op = create_const_int_operand((int32_t)ast_node->as.literal.as.i64_val);
+                    IRInstruction *instr = create_instruction(IR_LOAD_CONST, temp, const_op, NULL, ast_node->line);
+                    append_instruction(ctx, instr);
+                    return temp;
+                }
+                case VALUE_U8: {
+                    IROperand *temp = create_temp_operand(ctx, TYPE_I32);  // Promote to i32 for IR
+                    IROperand *const_op = create_const_int_operand(ast_node->as.literal.as.u8_val);
+                    IRInstruction *instr = create_instruction(IR_LOAD_CONST, temp, const_op, NULL, ast_node->line);
+                    append_instruction(ctx, instr);
+                    return temp;
+                }
+                case VALUE_U16: {
+                    IROperand *temp = create_temp_operand(ctx, TYPE_I32);  // Promote to i32 for IR
+                    IROperand *const_op = create_const_int_operand(ast_node->as.literal.as.u16_val);
+                    IRInstruction *instr = create_instruction(IR_LOAD_CONST, temp, const_op, NULL, ast_node->line);
+                    append_instruction(ctx, instr);
+                    return temp;
+                }
+                case VALUE_U32: {
+                    IROperand *temp = create_temp_operand(ctx, TYPE_I32);  // Map to i32 for IR
+                    IROperand *const_op = create_const_int_operand((int32_t)ast_node->as.literal.as.u32_val);
+                    IRInstruction *instr = create_instruction(IR_LOAD_CONST, temp, const_op, NULL, ast_node->line);
+                    append_instruction(ctx, instr);
+                    return temp;
+                }
+                case VALUE_U64: {
+                    IROperand *temp = create_temp_operand(ctx, TYPE_I32);  // Truncate to i32 for now
+                    IROperand *const_op = create_const_int_operand((int32_t)ast_node->as.literal.as.u64_val);
+                    IRInstruction *instr = create_instruction(IR_LOAD_CONST, temp, const_op, NULL, ast_node->line);
+                    append_instruction(ctx, instr);
+                    return temp;
+                }
+                case VALUE_F64: {
+                    IROperand *temp = create_temp_operand(ctx, TYPE_F32);  // Map to f32 for now
+                    IROperand *const_op = create_const_float_operand((float)ast_node->as.literal.as.f64_val);
                     IRInstruction *instr = create_instruction(IR_LOAD_CONST, temp, const_op, NULL, ast_node->line);
                     append_instruction(ctx, instr);
                     return temp;

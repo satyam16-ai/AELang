@@ -105,14 +105,49 @@ bool dead_code_elimination_pass(IRFunction *func, OptimizationStats *stats) {
     
     bool changed = false;
     
-    // Mark all used temporaries
-    bool *used_temps = calloc(1000, sizeof(bool));  // Assume max 1000 temps
+    // First pass: find the maximum temp_id used
+    int max_temp_id = -1;
+    IRInstruction *instr = func->instructions;
+    while (instr) {
+        if (instr->dest && instr->dest->type == OPERAND_TEMP) {
+            if (instr->dest->value.temp_id > max_temp_id) {
+                max_temp_id = instr->dest->value.temp_id;
+            }
+        }
+        if (instr->src1 && instr->src1->type == OPERAND_TEMP) {
+            if (instr->src1->value.temp_id > max_temp_id) {
+                max_temp_id = instr->src1->value.temp_id;
+            }
+        }
+        if (instr->src2 && instr->src2->type == OPERAND_TEMP) {
+            if (instr->src2->value.temp_id > max_temp_id) {
+                max_temp_id = instr->src2->value.temp_id;
+            }
+        }
+        instr = instr->next;
+    }
+    
+    // If no temporaries found, nothing to optimize
+    if (max_temp_id < 0) {
+        printf("[DCE] No temporaries found, skipping\n");
+        return false;
+    }
+    
+    // Dynamically allocate used_temps array
+    bool *used_temps = calloc(max_temp_id + 1, sizeof(bool));
+    if (!used_temps) {
+        fprintf(stderr, "[DCE] Error: Failed to allocate memory for %d temporaries\n", max_temp_id + 1);
+        return false;
+    }
+    
+    printf("[DCE] Allocated tracking for %d temporaries (0-%d)\n", max_temp_id + 1, max_temp_id);
+    fflush(stdout);
     
     printf("[DCE] First pass: marking used temporaries\n");
     fflush(stdout);
     
-    // First pass: mark all used temporaries
-    IRInstruction *instr = func->instructions;
+    // Second pass: mark all used temporaries
+    instr = func->instructions;
     int instr_count = 0;
     while (instr) {
         instr_count++;

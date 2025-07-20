@@ -37,9 +37,12 @@ static int match(TokenType type) {
 
 static int is_type_token(TokenType type) {
     return type == TOKEN_TYPE_STR || type == TOKEN_TYPE_PTR || type == TOKEN_TYPE_BOOL ||
-           type == TOKEN_TYPE_U8 || type == TOKEN_TYPE_U16 || type == TOKEN_TYPE_U32 ||
-           type == TOKEN_TYPE_I8 || type == TOKEN_TYPE_I16 || type == TOKEN_TYPE_I32 ||
-           type == TOKEN_TYPE_F32 || type == TOKEN_TYPE_NUM || type == TOKEN_TYPE_VOID;
+           type == TOKEN_TYPE_U8 || type == TOKEN_TYPE_U16 || type == TOKEN_TYPE_U32 || 
+           type == TOKEN_TYPE_U64 ||
+           type == TOKEN_TYPE_I8 || type == TOKEN_TYPE_I16 || type == TOKEN_TYPE_I32 || 
+           type == TOKEN_TYPE_I64 ||
+           type == TOKEN_TYPE_F32 || type == TOKEN_TYPE_F64 ||
+           type == TOKEN_TYPE_CHAR || type == TOKEN_TYPE_NUM || type == TOKEN_TYPE_VOID;
 }
 
 static Token expect_type_token(const char *msg) {
@@ -152,6 +155,9 @@ static ASTNode *parse_literal(Token tok) {
     } else if (tok.type == TOKEN_BOOL) {
         node->as.literal.type = VALUE_BOOL;
         node->as.literal.as.bool_val = strcmp(tok.text, "true") == 0;
+    } else if (tok.type == TOKEN_CHAR) {
+        node->as.literal.type = VALUE_CHAR;
+        node->as.literal.as.char_val = tok.text[0];  // First character of the token text
     }
     return node;
 }
@@ -190,7 +196,8 @@ static ASTNode *parse_primary_expr() {
         return expr;
     }
     
-    if (tok.type == TOKEN_INT || tok.type == TOKEN_FLOAT || tok.type == TOKEN_STRING || tok.type == TOKEN_BOOL) {
+    if (tok.type == TOKEN_INT || tok.type == TOKEN_FLOAT || tok.type == TOKEN_STRING || 
+        tok.type == TOKEN_BOOL || tok.type == TOKEN_CHAR) {
         advance();
         return parse_literal(tok);
     } else if (tok.type == TOKEN_IDENT) {

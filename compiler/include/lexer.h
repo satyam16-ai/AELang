@@ -69,20 +69,27 @@ typedef enum {
     TOKEN_BOOL,
     TOKEN_CHAR,
 
-    // Types
-    TOKEN_TYPE_U8,
-    TOKEN_TYPE_U16,
-    TOKEN_TYPE_U32,
-    TOKEN_TYPE_I8,
-    TOKEN_TYPE_I16,
-    TOKEN_TYPE_I32,
-    TOKEN_TYPE_F32,
-    TOKEN_TYPE_NUM,
-    TOKEN_TYPE_PTR,
-    TOKEN_TYPE_STR,
-    TOKEN_TYPE_BOOL,
-    TOKEN_TYPE_CHAR,
-    TOKEN_TYPE_VOID,
+    // Types - Extended Integer Types
+    TOKEN_TYPE_I8,      // 8-bit signed integer (-128 to 127)
+    TOKEN_TYPE_I16,     // 16-bit signed integer (-32,768 to 32,767)
+    TOKEN_TYPE_I32,     // 32-bit signed integer (-2^31 to 2^31-1)
+    TOKEN_TYPE_I64,     // 64-bit signed integer (-2^63 to 2^63-1)
+    TOKEN_TYPE_U8,      // 8-bit unsigned integer (0 to 255)
+    TOKEN_TYPE_U16,     // 16-bit unsigned integer (0 to 65,535)
+    TOKEN_TYPE_U32,     // 32-bit unsigned integer (0 to 2^32-1)
+    TOKEN_TYPE_U64,     // 64-bit unsigned integer (0 to 2^64-1)
+    
+    // Floating Point Types
+    TOKEN_TYPE_F32,     // 32-bit IEEE-754 float
+    TOKEN_TYPE_F64,     // 64-bit IEEE-754 double
+    
+    // Special Types
+    TOKEN_TYPE_NUM,     // Universal dynamic numeric type
+    TOKEN_TYPE_STR,     // String type (enhanced)
+    TOKEN_TYPE_CHAR,    // Character type (enhanced)
+    TOKEN_TYPE_BOOL,    // Boolean type
+    TOKEN_TYPE_PTR,     // Pointer type
+    TOKEN_TYPE_VOID,    // Void type
 
     // Debug
     TOKEN_DEBUG,

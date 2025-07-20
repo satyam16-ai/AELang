@@ -33,9 +33,9 @@ static int match_keyword(const char *word) {
         {"if", TOKEN_IF}, {"else", TOKEN_ELSE}, {"elif", TOKEN_ELIF}, {"goto", TOKEN_GOTO}, {"asm", TOKEN_ASM},
         {"halt", TOKEN_HALT}, {"in", TOKEN_IN}, {"out", TOKEN_OUT},
         {"load", TOKEN_LOAD}, {"store", TOKEN_STORE},
-        {"u8", TOKEN_TYPE_U8}, {"u16", TOKEN_TYPE_U16}, {"u32", TOKEN_TYPE_U32},
-        {"i8", TOKEN_TYPE_I8}, {"i16", TOKEN_TYPE_I16}, {"i32", TOKEN_TYPE_I32},
-        {"f32", TOKEN_TYPE_F32}, {"num", TOKEN_TYPE_NUM},
+        {"u8", TOKEN_TYPE_U8}, {"u16", TOKEN_TYPE_U16}, {"u32", TOKEN_TYPE_U32}, {"u64", TOKEN_TYPE_U64},
+        {"i8", TOKEN_TYPE_I8}, {"i16", TOKEN_TYPE_I16}, {"i32", TOKEN_TYPE_I32}, {"i64", TOKEN_TYPE_I64},
+        {"f32", TOKEN_TYPE_F32}, {"f64", TOKEN_TYPE_F64}, {"num", TOKEN_TYPE_NUM},
         {"ptr", TOKEN_TYPE_PTR}, {"str", TOKEN_TYPE_STR}, {"bool", TOKEN_TYPE_BOOL}, {"char", TOKEN_TYPE_CHAR},
         {"true", TOKEN_BOOL}, {"false", TOKEN_BOOL},
         {"@debug", TOKEN_DEBUG}, {"@trace", TOKEN_TRACE},
@@ -104,6 +104,35 @@ TokenList *lex(const char *source) {
             add_token(list, make_token(TOKEN_STRING, str_val, line));
             free(str_val);
             if (*source == '"') source++;
+            continue;
+        }
+
+        // Handle character literals
+        if (*source == '\'') {
+            source++;
+            if (*source == '\\') {
+                // Handle escape sequences
+                source++;
+                char escaped_char;
+                switch (*source) {
+                    case 'n': escaped_char = '\n'; break;
+                    case 't': escaped_char = '\t'; break;
+                    case 'r': escaped_char = '\r'; break;
+                    case '\\': escaped_char = '\\'; break;
+                    case '\'': escaped_char = '\''; break;
+                    case '0': escaped_char = '\0'; break;
+                    default: escaped_char = *source; break;
+                }
+                char char_str[2] = {escaped_char, '\0'};
+                add_token(list, make_token(TOKEN_CHAR, char_str, line));
+                source++;
+            } else {
+                // Regular character
+                char char_str[2] = {*source, '\0'};
+                add_token(list, make_token(TOKEN_CHAR, char_str, line));
+                source++;
+            }
+            if (*source == '\'') source++;
             continue;
         }
 
@@ -186,9 +215,9 @@ const char *token_type_to_str(TokenType type) {
         CASE(TOKEN_LOGICAL_AND); CASE(TOKEN_LOGICAL_OR); CASE(TOKEN_LOGICAL_NOT);
         CASE(TOKEN_EQ); CASE(TOKEN_NEQ); CASE(TOKEN_LT); CASE(TOKEN_GT); CASE(TOKEN_LEQ); CASE(TOKEN_GEQ);
         CASE(TOKEN_IDENT); CASE(TOKEN_INT); CASE(TOKEN_STRING); CASE(TOKEN_BOOL); CASE(TOKEN_CHAR); CASE(TOKEN_FLOAT);
-        CASE(TOKEN_TYPE_U8); CASE(TOKEN_TYPE_U16); CASE(TOKEN_TYPE_U32);
-        CASE(TOKEN_TYPE_I8); CASE(TOKEN_TYPE_I16); CASE(TOKEN_TYPE_I32);
-        CASE(TOKEN_TYPE_F32); CASE(TOKEN_TYPE_NUM); CASE(TOKEN_TYPE_VOID);
+        CASE(TOKEN_TYPE_I8); CASE(TOKEN_TYPE_I16); CASE(TOKEN_TYPE_I32); CASE(TOKEN_TYPE_I64);
+        CASE(TOKEN_TYPE_U8); CASE(TOKEN_TYPE_U16); CASE(TOKEN_TYPE_U32); CASE(TOKEN_TYPE_U64);
+        CASE(TOKEN_TYPE_F32); CASE(TOKEN_TYPE_F64); CASE(TOKEN_TYPE_NUM); CASE(TOKEN_TYPE_VOID);
         CASE(TOKEN_TYPE_PTR); CASE(TOKEN_TYPE_STR); CASE(TOKEN_TYPE_BOOL); CASE(TOKEN_TYPE_CHAR);
         CASE(TOKEN_DEBUG); CASE(TOKEN_TRACE);
     }

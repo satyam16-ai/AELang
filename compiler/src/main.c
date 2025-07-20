@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "lexer.h"
 #include "parser.h"
@@ -14,9 +15,13 @@ int main(int argc, char **argv) {
     if (argc < 2) {
         fprintf(stderr, "Usage: %s <input.ae> [options]\n", argv[0]);
         fprintf(stderr, "Options:\n");
-        fprintf(stderr, "  -o <file>     Output assembly file\n");
-        fprintf(stderr, "  -O0, -O1, -O2 Optimization level (default: -O1)\n");
-        fprintf(stderr, "  <output.asm>  Output file (if no -o specified)\n");
+        fprintf(stderr, "  -o <file>       Output assembly file\n");
+        fprintf(stderr, "  -O0, -O1, -O2   Optimization level (default: -O1)\n");
+        fprintf(stderr, "  --arch32        Force 32-bit architecture\n");
+        fprintf(stderr, "  --arch64        Force 64-bit architecture\n");
+        fprintf(stderr, "  --strict-sizes  Enforce strict integer size checking\n");
+        fprintf(stderr, "  <output.asm>    Output file (if no -o specified)\n");
+        fprintf(stderr, "\nNote: String and character operations are enabled by default\n");
         return 1;
     }
 
@@ -24,7 +29,16 @@ int main(int argc, char **argv) {
     const char *output_path = NULL;
     int optimization_level = 1;  // Default optimization level
     
-    // Parse command line arguments
+    // Enhanced compilation configuration
+    CompilationConfig config = {
+        .target_arch = ARCH_32BIT,           // Default to 32-bit
+        .enable_string_variables = true,     // Always enabled by default
+        .enable_char_operations = true,      // Always enabled by default
+        .strict_integer_sizes = false,       // Relaxed by default
+        .optimize_for_size = false           // Optimize for speed by default
+    };
+    
+    // Enhanced command line argument parsing
     for (int i = 2; i < argc; i++) {
         if (strcmp(argv[i], "-o") == 0) {
             if (i + 1 >= argc) {
@@ -38,11 +52,20 @@ int main(int argc, char **argv) {
             optimization_level = 1;
         } else if (strcmp(argv[i], "-O2") == 0) {
             optimization_level = 2;
+        } else if (strcmp(argv[i], "--arch32") == 0) {
+            config.target_arch = ARCH_32BIT;
+        } else if (strcmp(argv[i], "--arch64") == 0) {
+            config.target_arch = ARCH_64BIT;
+        } else if (strcmp(argv[i], "--strict-sizes") == 0) {
+            config.strict_integer_sizes = true;
+        } else if (strcmp(argv[i], "--optimize-size") == 0) {
+            config.optimize_for_size = true;
         } else if (argv[i][0] != '-' && output_path == NULL) {
             // Positional argument for output file
             output_path = argv[i];
         } else {
             fprintf(stderr, "Unknown option: %s\n", argv[i]);
+            fprintf(stderr, "Use --help for usage information\n");
             return 1;
         }
     }
@@ -104,10 +127,17 @@ int main(int argc, char **argv) {
     }
     printf("  Generated AST with %zu nodes\n", ast->count);
 
+    // Architecture is determined by command line flags only
+    // No automatic detection - user must specify --arch32 or --arch64
+
     printf("[4/7] Semantic Analysis...\n");
-    // Semantic analysis
-    SemanticContext *sem_ctx = create_semantic_context();
-    printf("DEBUG: Created semantic context\n");
+    // Enhanced semantic analysis with configuration
+    printf("  Target Architecture: %s\n", config.target_arch == ARCH_64BIT ? "64-bit" : "32-bit");
+    printf("  String Variables: %s\n", config.enable_string_variables ? "Enabled" : "Disabled");
+    printf("  Character Operations: %s\n", config.enable_char_operations ? "Enabled" : "Disabled");
+    
+    SemanticContext *sem_ctx = create_semantic_context_with_config(&config);
+    printf("DEBUG: Created enhanced semantic context\n");
     
     AnnotatedAST *annotated_ast = semantic_analyze(ast, sem_ctx);
     printf("DEBUG: Semantic analysis function returned\n");
@@ -168,7 +198,7 @@ int main(int argc, char **argv) {
     
     // For now, we'll still use the original codegen since we haven't 
     // implemented IR-to-assembly yet. This is the final piece to complete.
-    generate_code(ast, out);
+    generate_code(ast, out, &config);
     fclose(out);
 
     printf("[\u2713] Enhanced Compilation Complete!\n");

@@ -1,0 +1,14 @@
+gcc -Wall -Wextra -std=c99 -Iinclude -c src/lexer.c -o src/lexer.o
+gcc -Wall -Wextra -std=c99 -Iinclude -c src/parser.c -o src/parser.o
+gcc -Wall -Wextra -std=c99 -Iinclude -c src/semantic.c -o src/semantic.o
+gcc -Wall -Wextra -std=c99 -Iinclude -c src/ir.c -o src/ir.o
+gcc -Wall -Wextra -std=c99 -Iinclude -c src/optimizer.c -o src/optimizer.o
+gcc -Wall -Wextra -std=c99 -Iinclude -c src/codegen.c -o src/codegen.o
+src/codegen.c:92:20: warning: ‘get_arg_register’ defined but not used [-Wunused-function]
+   92 | static const char* get_arg_register(int arg_index) {
+      |                    ^~~~~~~~~~~~~~~~
+src/codegen.c:59:20: warning: ‘get_data_directive’ defined but not used [-Wunused-function]
+   59 | static const char* get_data_directive(void) {
+      |                    ^~~~~~~~~~~~~~~~~~
+gcc -Wall -Wextra -std=c99 -Iinclude -c src/main.c -o src/main.o
+gcc -Wall -Wextra -std=c99 -Iinclude -o build/aelang src/lexer.o src/parser.o src/semantic.o src/ir.o src/optimizer.o src/codegen.o src/main.o

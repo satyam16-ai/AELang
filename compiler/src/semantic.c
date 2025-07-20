@@ -18,8 +18,27 @@ static unsigned int hash(const char *str) {
 
 // Create semantic analysis context
 SemanticContext *create_semantic_context(void) {
+    CompilationConfig default_config = {
+        .target_arch = ARCH_32BIT,
+        .enable_string_variables = false,
+        .enable_char_operations = false,
+        .strict_integer_sizes = false,
+        .optimize_for_size = false
+    };
+    return create_semantic_context_with_config(&default_config);
+}
+
+SemanticContext *create_semantic_context_with_config(CompilationConfig *config) {
     SemanticContext *ctx = calloc(1, sizeof(SemanticContext));
     if (!ctx) return NULL;
+    
+    // Store configuration
+    ctx->config = malloc(sizeof(CompilationConfig));
+    if (!ctx->config) {
+        free(ctx);
+        return NULL;
+    }
+    *ctx->config = *config;
     
     // Create global scope
     ctx->global_scope = calloc(1, sizeof(Scope));
@@ -29,44 +48,118 @@ SemanticContext *create_semantic_context(void) {
     ctx->warning_count = 0;
     ctx->current_function = NULL;
     
-    // Add built-in functions to global scope
+    // Add built-in functions to global scope (enhanced for all types)
     define_symbol(ctx, "print", SYMBOL_FUNCTION, TYPE_VOID, 0);
+    
+    // Integer print functions
+    define_symbol(ctx, "print_i8", SYMBOL_FUNCTION, TYPE_VOID, 0);
+    define_symbol(ctx, "print_i16", SYMBOL_FUNCTION, TYPE_VOID, 0);
+    define_symbol(ctx, "print_i32", SYMBOL_FUNCTION, TYPE_VOID, 0);
+    define_symbol(ctx, "print_i64", SYMBOL_FUNCTION, TYPE_VOID, 0);
+    define_symbol(ctx, "print_u8", SYMBOL_FUNCTION, TYPE_VOID, 0);
+    define_symbol(ctx, "print_u16", SYMBOL_FUNCTION, TYPE_VOID, 0);
+    define_symbol(ctx, "print_u32", SYMBOL_FUNCTION, TYPE_VOID, 0);
+    define_symbol(ctx, "print_u64", SYMBOL_FUNCTION, TYPE_VOID, 0);
+    
+    // Floating point print functions
+    define_symbol(ctx, "print_f32", SYMBOL_FUNCTION, TYPE_VOID, 0);
+    define_symbol(ctx, "print_f64", SYMBOL_FUNCTION, TYPE_VOID, 0);
+    
+    // Legacy compatibility
     define_symbol(ctx, "print_int", SYMBOL_FUNCTION, TYPE_VOID, 0);
     define_symbol(ctx, "print_float", SYMBOL_FUNCTION, TYPE_VOID, 0);
     define_symbol(ctx, "print_bool", SYMBOL_FUNCTION, TYPE_VOID, 0);
     define_symbol(ctx, "print_num", SYMBOL_FUNCTION, TYPE_VOID, 0);
-    define_symbol(ctx, "read_int", SYMBOL_FUNCTION, TYPE_I32, 0);
-    define_symbol(ctx, "read_float", SYMBOL_FUNCTION, TYPE_F32, 0);
+    
+    // Enhanced I/O functions
+    if (config->enable_string_variables) {
+        define_symbol(ctx, "print_str", SYMBOL_FUNCTION, TYPE_VOID, 0);
+        define_symbol(ctx, "read_str", SYMBOL_FUNCTION, TYPE_STR, 0);
+    }
+    
+    if (config->enable_char_operations) {
+        define_symbol(ctx, "print_char", SYMBOL_FUNCTION, TYPE_VOID, 0);
+        define_symbol(ctx, "read_char", SYMBOL_FUNCTION, TYPE_CHAR, 0);
+    }
+    
+    // Integer read functions
+    define_symbol(ctx, "read_i8", SYMBOL_FUNCTION, TYPE_I8, 0);
+    define_symbol(ctx, "read_i16", SYMBOL_FUNCTION, TYPE_I16, 0);
+    define_symbol(ctx, "read_i32", SYMBOL_FUNCTION, TYPE_I32, 0);
+    define_symbol(ctx, "read_i64", SYMBOL_FUNCTION, TYPE_I64, 0);
+    define_symbol(ctx, "read_u8", SYMBOL_FUNCTION, TYPE_U8, 0);
+    define_symbol(ctx, "read_u16", SYMBOL_FUNCTION, TYPE_U16, 0);
+    define_symbol(ctx, "read_u32", SYMBOL_FUNCTION, TYPE_U32, 0);
+    define_symbol(ctx, "read_u64", SYMBOL_FUNCTION, TYPE_U64, 0);
+    
+    // Floating point read functions
+    define_symbol(ctx, "read_f32", SYMBOL_FUNCTION, TYPE_F32, 0);
+    define_symbol(ctx, "read_f64", SYMBOL_FUNCTION, TYPE_F64, 0);
+    
+    // Universal numeric functions
     define_symbol(ctx, "read_num", SYMBOL_FUNCTION, TYPE_NUM, 0);
     define_symbol(ctx, "read_num_safe", SYMBOL_FUNCTION, TYPE_NUM, 0);
+    
+    // Legacy compatibility
+    define_symbol(ctx, "read_int", SYMBOL_FUNCTION, TYPE_I32, 0);
+    define_symbol(ctx, "read_float", SYMBOL_FUNCTION, TYPE_F32, 0);
     
     return ctx;
 }
 
-// Convert string type to semantic type
+// Convert string type to semantic type - Enhanced Type System
 SemanticType string_to_semantic_type(const char *type_str) {
     if (!type_str) return TYPE_UNKNOWN;
     
+    // Signed integer types
+    if (strcmp(type_str, "i8") == 0) return TYPE_I8;
+    if (strcmp(type_str, "i16") == 0) return TYPE_I16;
     if (strcmp(type_str, "i32") == 0) return TYPE_I32;
+    if (strcmp(type_str, "i64") == 0) return TYPE_I64;
+    
+    // Unsigned integer types
+    if (strcmp(type_str, "u8") == 0) return TYPE_U8;
+    if (strcmp(type_str, "u16") == 0) return TYPE_U16;
+    if (strcmp(type_str, "u32") == 0) return TYPE_U32;
+    if (strcmp(type_str, "u64") == 0) return TYPE_U64;
+    
+    // Floating point types
     if (strcmp(type_str, "f32") == 0) return TYPE_F32;
+    if (strcmp(type_str, "f64") == 0) return TYPE_F64;
+    
+    // Special types
     if (strcmp(type_str, "num") == 0) return TYPE_NUM;
-    if (strcmp(type_str, "bool") == 0) return TYPE_BOOL;
     if (strcmp(type_str, "str") == 0) return TYPE_STR;
     if (strcmp(type_str, "char") == 0) return TYPE_CHAR;
+    if (strcmp(type_str, "bool") == 0) return TYPE_BOOL;
     if (strcmp(type_str, "void") == 0) return TYPE_VOID;
     
     return TYPE_UNKNOWN;
 }
 
-// Convert AST literal type to semantic type
+// Convert AST literal type to semantic type - Enhanced Type System
 static SemanticType literal_to_semantic_type(LiteralValue *literal) {
     switch (literal->type) {
-        case VALUE_INT: return TYPE_I32;
-        case VALUE_FLOAT: return TYPE_F32;
-        case VALUE_BOOL: return TYPE_BOOL;
-        case VALUE_CHAR: return TYPE_CHAR;
-        case VALUE_STRING: return TYPE_STR;
+        // Integer types
+        case VALUE_I8: return TYPE_I8;
+        case VALUE_I16: return TYPE_I16;
+        case VALUE_I32: return TYPE_I32;  // Also handles VALUE_INT
+        case VALUE_I64: return TYPE_I64;
+        case VALUE_U8: return TYPE_U8;
+        case VALUE_U16: return TYPE_U16;
+        case VALUE_U32: return TYPE_U32;
+        case VALUE_U64: return TYPE_U64;
+        
+        // Floating point types
+        case VALUE_F32: return TYPE_F32;  // Also handles VALUE_FLOAT
+        case VALUE_F64: return TYPE_F64;
+        
+        // Special types
         case VALUE_NUM: return TYPE_NUM;
+        case VALUE_STR: return TYPE_STR;  // Also handles VALUE_STRING
+        case VALUE_CHAR: return TYPE_CHAR;
+        case VALUE_BOOL: return TYPE_BOOL;
+        
         default: return TYPE_UNKNOWN;
     }
 }
@@ -156,24 +249,120 @@ void exit_scope(SemanticContext *ctx) {
     free(old_scope);
 }
 
-// Type checking functions
+// Enhanced Type checking functions
+bool is_integer_type(SemanticType type) {
+    return type == TYPE_I8 || type == TYPE_I16 || type == TYPE_I32 || type == TYPE_I64 ||
+           type == TYPE_U8 || type == TYPE_U16 || type == TYPE_U32 || type == TYPE_U64;
+}
+
+bool is_unsigned_type(SemanticType type) {
+    return type == TYPE_U8 || type == TYPE_U16 || type == TYPE_U32 || type == TYPE_U64;
+}
+
+bool is_signed_type(SemanticType type) {
+    return type == TYPE_I8 || type == TYPE_I16 || type == TYPE_I32 || type == TYPE_I64;
+}
+
+bool is_floating_type(SemanticType type) {
+    return type == TYPE_F32 || type == TYPE_F64;
+}
+
+bool is_numeric_type(SemanticType type) {
+    return is_integer_type(type) || is_floating_type(type) || type == TYPE_NUM;
+}
+
+int get_type_size_bits(SemanticType type) {
+    switch (type) {
+        case TYPE_I8:
+        case TYPE_U8: return 8;
+        case TYPE_I16:
+        case TYPE_U16: return 16;
+        case TYPE_I32:
+        case TYPE_U32:
+        case TYPE_F32: return 32;
+        case TYPE_I64:
+        case TYPE_U64:
+        case TYPE_F64: return 64;
+        case TYPE_CHAR: return 8;
+        case TYPE_BOOL: return 8;
+        default: return 0;
+    }
+}
+
+// Enhanced type compatibility checking
 bool types_compatible(SemanticType left, SemanticType right) {
     if (left == right) return true;
     
-    // Special compatibility rules
+    // Special compatibility rules for NUM type
     if (left == TYPE_NUM || right == TYPE_NUM) {
-        // num is compatible with i32 and f32
-        return (left == TYPE_I32 || left == TYPE_F32 || left == TYPE_NUM) &&
-               (right == TYPE_I32 || right == TYPE_F32 || right == TYPE_NUM);
+        // num is compatible with all numeric types
+        return is_numeric_type(left) && is_numeric_type(right);
     }
     
-    // i32 and f32 are compatible in mixed arithmetic
-    if ((left == TYPE_I32 && right == TYPE_F32) || 
-        (left == TYPE_F32 && right == TYPE_I32)) {
+    // Integer types are compatible within signedness groups
+    if (is_integer_type(left) && is_integer_type(right)) {
+        // Allow conversions within same signedness
+        if (is_signed_type(left) && is_signed_type(right)) {
+            return true; // Allow implicit conversions between signed types
+        }
+        if (is_unsigned_type(left) && is_unsigned_type(right)) {
+            return true; // Allow implicit conversions between unsigned types
+        }
+        // Allow signed literals to unsigned types (common case: let x: u8 = 255)
+        if (is_signed_type(right) && is_unsigned_type(left)) {
+            return true; // Allow signed literals to be assigned to unsigned variables
+        }
+        // Allow unsigned to signed for completeness
+        if (is_unsigned_type(right) && is_signed_type(left)) {
+            return true;
+        }
+        return false;
+    }
+    
+    // Floating point types are compatible with implicit widening
+    if (is_floating_type(left) && is_floating_type(right)) {
+        return true;  // Allow all float conversions for now
+    }
+    
+    // Integer to floating point conversion allowed
+    if (is_integer_type(left) && is_floating_type(right)) {
+        return true;
+    }
+    
+    // Character type is compatible with u8/i8
+    if (left == TYPE_CHAR && (right == TYPE_U8 || right == TYPE_I8)) {
+        return true;
+    }
+    if (right == TYPE_CHAR && (left == TYPE_U8 || left == TYPE_I8)) {
         return true;
     }
     
     return false;
+}
+
+SemanticType promote_numeric_types(SemanticType left, SemanticType right) {
+    // NUM type takes precedence
+    if (left == TYPE_NUM || right == TYPE_NUM) return TYPE_NUM;
+    
+    // Floating point promotion
+    if (left == TYPE_F64 || right == TYPE_F64) return TYPE_F64;
+    if (left == TYPE_F32 || right == TYPE_F32) return TYPE_F32;
+    
+    // Integer promotion - promote to largest type
+    if (is_integer_type(left) && is_integer_type(right)) {
+        int left_size = get_type_size_bits(left);
+        int right_size = get_type_size_bits(right);
+        
+        if (left_size > right_size) return left;
+        if (right_size > left_size) return right;
+        
+        // Same size - prefer unsigned
+        if (is_unsigned_type(left)) return left;
+        return right;
+    }
+    
+    // Default to larger type
+    return get_type_size_bits(left) >= get_type_size_bits(right) ? left : right;
 }
 
 SemanticType get_binary_op_result_type(SemanticType left, SemanticType right, const char *op) {
@@ -189,10 +378,28 @@ SemanticType get_binary_op_result_type(SemanticType left, SemanticType right, co
         return TYPE_BOOL;
     }
     
-    // Arithmetic operators
-    if (left == TYPE_NUM || right == TYPE_NUM) return TYPE_NUM;
-    if (left == TYPE_F32 || right == TYPE_F32) return TYPE_F32;
-    if (left == TYPE_I32 && right == TYPE_I32) return TYPE_I32;
+    // Modulo operator - only works with integer types
+    if (strcmp(op, "%") == 0) {
+        if (is_integer_type(left) && is_integer_type(right)) {
+            return promote_numeric_types(left, right);
+        }
+        return TYPE_ERROR;
+    }
+    
+    // Arithmetic operators - use type promotion
+    if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0 || 
+        strcmp(op, "*") == 0 || strcmp(op, "/") == 0) {
+        if (is_numeric_type(left) && is_numeric_type(right)) {
+            return promote_numeric_types(left, right);
+        }
+        
+        // String concatenation (if both are strings)
+        if (left == TYPE_STR && right == TYPE_STR && strcmp(op, "+") == 0) {
+            return TYPE_STR;
+        }
+        
+        return TYPE_ERROR;
+    }
     
     return TYPE_ERROR;
 }

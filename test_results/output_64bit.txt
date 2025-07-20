@@ -1,0 +1,51 @@
+=======================================================
+        COMPREHENSIVE TEST SUITE FOR ÆLANG
+                Architecture Test
+=======================================================
+=== BASIC INTEGER TESTS ===
+Addition (42 + 24):
+66
+Subtraction (42 - 24):
+18
+Multiplication (42 * 24):
+1008
+Division (42 / 2):
+21
+=== BASIC FLOAT TESTS ===
+Float addition (3.14 + 2.71):
+-nanFloat subtraction (3.14 - 2.71):
+-nanFloat multiplication (3.14 * 2.71):
+-nanFloat division (3.14 / 2.0):
+-nan=== COMPARISON TESTS ===
+10 == 10:
+1
+10 != 20:
+1
+10 < 20:
+1
+20 > 10:
+1
+10 <= 10:
+1
+20 >= 20:
+1
+=== LOGICAL TESTS ===
+true && true:
+1
+true && false:
+0
+true || false:
+1
+false || false:
+0
+!true:
+0
+!false:
+1
+=== CONTROL FLOW TESTS ===
+x is greater than 10
+x is not less than 5
+y is false (zero)
+=== RECURSION TESTS ===
+Factorial of 5:
+timeout: the monitored command dumped core

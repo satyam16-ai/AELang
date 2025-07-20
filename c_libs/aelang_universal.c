@@ -359,3 +359,214 @@ int read_bool_safe() {
     
     return result;
 }
+
+// =============================================================================
+// ENHANCED TYPE-SPECIFIC PRINT FUNCTIONS
+// Added for ÆLang enhanced integer and floating-point type system
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// SIGNED INTEGER PRINT FUNCTIONS
+// -----------------------------------------------------------------------------
+
+void print_i8(signed char value) {
+    printf("%d\n", (int)value);
+    fflush(stdout);
+}
+
+void print_i16(short value) {
+    printf("%d\n", (int)value);
+    fflush(stdout);
+}
+
+void print_i32(int value) {
+    printf("%d\n", value);
+    fflush(stdout);
+}
+
+void print_i64(long long value) {
+    printf("%lld\n", value);
+    fflush(stdout);
+}
+
+// -----------------------------------------------------------------------------
+// UNSIGNED INTEGER PRINT FUNCTIONS
+// -----------------------------------------------------------------------------
+
+void print_u8(unsigned char value) {
+    printf("%u\n", (unsigned int)value);
+    fflush(stdout);
+}
+
+void print_u16(unsigned short value) {
+    printf("%u\n", (unsigned int)value);
+    fflush(stdout);
+}
+
+void print_u32(unsigned int value) {
+    printf("%u\n", value);
+    fflush(stdout);
+}
+
+void print_u64(unsigned long long value) {
+    printf("%llu\n", value);
+    fflush(stdout);
+}
+
+// -----------------------------------------------------------------------------
+// FLOATING POINT PRINT FUNCTIONS
+// -----------------------------------------------------------------------------
+
+void print_f32(float value) {
+    printf("%.6f\n", value);
+    fflush(stdout);
+}
+
+void print_f64(double value) {
+    printf("%.15f\n", value);
+    fflush(stdout);
+}
+
+// -----------------------------------------------------------------------------
+// STRING AND CHARACTER PRINT FUNCTIONS
+// -----------------------------------------------------------------------------
+
+void print_str(const char *value) {
+    printf("%s\n", value);
+    fflush(stdout);
+}
+
+void print_char(char value) {
+    printf("%c\n", value);
+    fflush(stdout);
+}
+
+// -----------------------------------------------------------------------------
+// ENHANCED INPUT FUNCTIONS FOR NEW TYPES
+// -----------------------------------------------------------------------------
+
+signed char read_i8() {
+    int value;
+    if (scanf("%d", &value) == 1) {
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF);
+        return (signed char)value;
+    }
+    return 0;
+}
+
+short read_i16() {
+    int value;
+    if (scanf("%d", &value) == 1) {
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF);
+        return (short)value;
+    }
+    return 0;
+}
+
+int read_i32() {
+    int value;
+    if (scanf("%d", &value) == 1) {
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF);
+        return value;
+    }
+    return 0;
+}
+
+long long read_i64() {
+    long long value;
+    if (scanf("%lld", &value) == 1) {
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF);
+        return value;
+    }
+    return 0;
+}
+
+unsigned char read_u8() {
+    unsigned int value;
+    if (scanf("%u", &value) == 1) {
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF);
+        return (unsigned char)value;
+    }
+    return 0;
+}
+
+unsigned short read_u16() {
+    unsigned int value;
+    if (scanf("%u", &value) == 1) {
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF);
+        return (unsigned short)value;
+    }
+    return 0;
+}
+
+unsigned int read_u32() {
+    unsigned int value;
+    if (scanf("%u", &value) == 1) {
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF);
+        return value;
+    }
+    return 0;
+}
+
+unsigned long long read_u64() {
+    unsigned long long value;
+    if (scanf("%llu", &value) == 1) {
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF);
+        return value;
+    }
+    return 0;
+}
+
+float read_f32() {
+    float value;
+    if (scanf("%f", &value) == 1) {
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF);
+        return value;
+    }
+    return 0.0f;
+}
+
+double read_f64() {
+    double value;
+    if (scanf("%lf", &value) == 1) {
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF);
+        return value;
+    }
+    return 0.0;
+}
+
+// -----------------------------------------------------------------------------
+// STRING AND CHARACTER INPUT FUNCTIONS
+// -----------------------------------------------------------------------------
+
+void read_str(char *buffer, int max_length) {
+    if (fgets(buffer, max_length, stdin) != NULL) {
+        // Remove newline if present
+        size_t len = strlen(buffer);
+        if (len > 0 && buffer[len - 1] == '\n') {
+            buffer[len - 1] = '\0';
+        }
+    } else {
+        buffer[0] = '\0';  // Empty string on error
+    }
+}
+
+char read_char() {
+    char value;
+    if (scanf(" %c", &value) == 1) {  // Space before %c to skip whitespace
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF);
+        return value;
+    }
+    return '\0';
+}

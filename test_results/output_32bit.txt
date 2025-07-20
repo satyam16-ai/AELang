@@ -1,0 +1,101 @@
+=======================================================
+        COMPREHENSIVE TEST SUITE FOR ÆLANG
+                Architecture Test
+=======================================================
+=== BASIC INTEGER TESTS ===
+Addition (42 + 24):
+66
+Subtraction (42 - 24):
+18
+Multiplication (42 * 24):
+1008
+Division (42 / 2):
+21
+=== BASIC FLOAT TESTS ===
+Float addition (3.14 + 2.71):
+-nanFloat subtraction (3.14 - 2.71):
+-nanFloat multiplication (3.14 * 2.71):
+-nanFloat division (3.14 / 2.0):
+-nan=== COMPARISON TESTS ===
+10 == 10:
+1
+10 != 20:
+1
+10 < 20:
+1
+20 > 10:
+1
+10 <= 10:
+1
+20 >= 20:
+1
+=== LOGICAL TESTS ===
+true && true:
+1
+true && false:
+0
+true || false:
+1
+false || false:
+0
+!true:
+0
+!false:
+1
+=== CONTROL FLOW TESTS ===
+x is greater than 10
+x is not less than 5
+y is false (zero)
+=== RECURSION TESTS ===
+Factorial of 5:
+120
+Factorial of 6:
+720
+Factorial of 0:
+1
+=== VARIABLE TESTS ===
+Local integer sum:
+300
+Local float sum:
+10.70=== EXPRESSION TESTS ===
+2 + 3 * 4 (should be 14):
+28
+(2 + 3) * 4 (should be 20):
+128
+2 * 3 + 4 (should be 10):
+116
+=== EDGE CASE TESTS ===
+Max i32:
+2147483647
+Min i32:
+-2147483648
+Zero:
+0
+Large float:
+999999.50Small float:
+0.00=== MIXED ARITHMETIC TESTS ===
+Integer to float conversion:
+45.14Float operations:
+13=======================================================
+                  TEST SUMMARY
+=======================================================
+Integer result:
+66
+Float result:
+1086010112Comparison result:
+1
+Logical result:
+1
+Control flow result:
+22
+Recursion result:
+840
+Variable result:
+300
+Expression result:
+272
+Edge case result:
+42
+Mixed arithmetic result:
+0🎯 COMPREHENSIVE TEST SUITE COMPLETED!
+=======================================================

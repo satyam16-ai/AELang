@@ -1,13 +1,152 @@
 // codegen.c - NASM code generator for ÆLang
 #define _GNU_SOURCE
 #include "codegen.h"
+#include "semantic.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
+// Global compilation configuration for architecture-aware code generation
+static CompilationConfig *current_config = NULL;
+
 // Forward declarations
 static const char* get_function_return_type(const char* func_name);
 static int is_float_return_type(const char* return_type);
+static int find_or_add_string(const char *str);
+static void emit_node(ASTNode *node, FILE *out);
+static void emit_function_call_64bit(FILE *out, const char *func_name, ASTNode **args, int arg_count);
+
+// Architecture-aware register and instruction helpers
+static const char* get_int_register(void) {
+    return (current_config && current_config->target_arch == ARCH_64BIT) ? "rax" : "eax";
+}
+
+static const char* get_int_register_b(void) {
+    return (current_config && current_config->target_arch == ARCH_64BIT) ? "rbx" : "ebx";
+}
+
+static const char* get_stack_pointer(void) __attribute__((unused));
+static const char* get_stack_pointer(void) {
+    return (current_config && current_config->target_arch == ARCH_64BIT) ? "rsp" : "esp";
+}
+
+static const char* get_base_pointer(void) {
+    return (current_config && current_config->target_arch == ARCH_64BIT) ? "rbp" : "ebp";
+}
+
+static const char* get_mov_instruction(void) {
+    return "mov";  // mov works for both 32-bit and 64-bit
+}
+
+static const char* get_push_instruction(void) {
+    return "push";  // push works for both 32-bit and 64-bit
+}
+
+static const char* get_pop_instruction(void) {
+    return "pop";   // pop works for both 32-bit and 64-bit
+}
+
+static const char* get_call_instruction(void) __attribute__((unused));
+static const char* get_call_instruction(void) {
+    return "call";  // call works for both 32-bit and 64-bit
+}
+
+static const char* get_word_size(void) __attribute__((unused));
+static const char* get_word_size(void) {
+    return (current_config && current_config->target_arch == ARCH_64BIT) ? "qword" : "dword";
+}
+
+static const char* get_data_directive(void) {
+    return (current_config && current_config->target_arch == ARCH_64BIT) ? "dq" : "dd";
+}
+
+static int get_word_size_bytes(void) {
+    return (current_config && current_config->target_arch == ARCH_64BIT) ? 8 : 4;
+}
+
+static const char* get_int_size_specifier(void) {
+    return "dword";  // Always dword for i32 in both 32-bit and 64-bit modes
+}
+
+static const char* get_int_register_32bit(void) {
+    return (current_config && current_config->target_arch == ARCH_64BIT) ? "eax" : "eax";
+}
+
+static void emit_stack_cleanup(FILE* out, int bytes) {
+    if (current_config && current_config->target_arch == ARCH_64BIT) {
+        fprintf(out, "    add rsp, %d\n", bytes * 2);  // 64-bit: 8 bytes per parameter
+    } else {
+        fprintf(out, "    add esp, %d\n", bytes);     // 32-bit: 4 bytes per parameter
+    }
+}
+
+static void emit_stack_cleanup_with_comment(FILE* out, int bytes, const char* comment) {
+    if (current_config && current_config->target_arch == ARCH_64BIT) {
+        fprintf(out, "    add rsp, %d  ; %s\n", bytes * 2, comment);
+    } else {
+        fprintf(out, "    add esp, %d  ; %s\n", bytes, comment);
+    }
+}
+
+// 64-bit calling convention helper functions
+static const char* get_arg_register(int arg_index) {
+    if (current_config && current_config->target_arch == ARCH_64BIT) {
+        // System V AMD64 ABI - arguments passed in registers
+        switch (arg_index) {
+            case 0: return "rdi";
+            case 1: return "rsi";
+            case 2: return "rdx";
+            case 3: return "rcx";
+            case 4: return "r8";
+            case 5: return "r9";
+            default: return NULL; // Use stack for 7th+ argument
+        }
+    }
+    return NULL; // 32-bit uses stack for all arguments
+}
+
+static void emit_function_call_64bit(FILE *out, const char *func_name, ASTNode **args, int arg_count) {
+    if (current_config && current_config->target_arch == ARCH_64BIT) {
+        // 64-bit System V AMD64 calling convention
+        
+        // For print functions with string arguments, handle specially
+        if (strcmp(func_name, "print") == 0 && arg_count == 1) {
+            ASTNode *arg = args[0];
+            if (arg->type == AST_LITERAL && arg->as.literal.type == VALUE_STRING) {
+                int idx = find_or_add_string(arg->as.literal.as.str_val);
+                fprintf(out, "    mov rdi, msg_%d\n", idx);
+                fprintf(out, "    call %s\n", func_name);
+                return;
+            }
+        } else if (strcmp(func_name, "print_clean") == 0 && arg_count == 1) {
+            ASTNode *arg = args[0];
+            if (arg->type == AST_LITERAL && arg->as.literal.type == VALUE_STRING) {
+                int idx = find_or_add_string(arg->as.literal.as.str_val);
+                fprintf(out, "    mov rdi, msg_%d\n", idx);
+                fprintf(out, "    call %s\n", func_name);
+                return;
+            }
+        } else if (strcmp(func_name, "print_int") == 0 && arg_count == 1) {
+            // Evaluate the argument and put result in rdi
+            emit_node(args[0], out);
+            fprintf(out, "    mov rdi, rax\n");
+            fprintf(out, "    call %s\n", func_name);
+            return;
+        } else if (strcmp(func_name, "print_num") == 0 && arg_count == 1) {
+            // For floating point, we need to use SSE registers in 64-bit
+            emit_node(args[0], out);  // Load value to FPU stack
+            fprintf(out, "    sub rsp, 16\n");                   // Align stack to 16-byte boundary and space for float
+            fprintf(out, "    fstp dword [rsp]\n");              // Store as single precision float on stack
+            fprintf(out, "    movss xmm0, [rsp]\n");             // Load into SSE register for calling convention (single precision)
+            fprintf(out, "    call %s\n", func_name);
+            fprintf(out, "    add rsp, 16\n");                   // Clean up stack
+            return;
+        }
+        
+        // Generic handling for other functions (if needed)
+        fprintf(out, "    call %s\n", func_name);
+    }
+}
 
 // Debug: AST node names
 static const char *ast_type_str(int type) {
@@ -41,20 +180,44 @@ static const char *ast_type_str(int type) {
 // Emit literal (inline debug output only)
 static void emit_literal(FILE *out, LiteralValue val) {
     switch (val.type) {
-        case VALUE_INT:
-            fprintf(out, "%d", val.as.int_val);
+        case VALUE_I8:
+            fprintf(out, "%d", (int)val.as.i8_val);
             break;
-        case VALUE_STRING:
+        case VALUE_I16:
+            fprintf(out, "%d", (int)val.as.i16_val);
+            break;
+        case VALUE_I32:  // Also handles VALUE_INT
+            fprintf(out, "%d", val.as.i32_val);
+            break;
+        case VALUE_I64:
+            fprintf(out, "%lld", (long long)val.as.i64_val);
+            break;
+        case VALUE_U8:
+            fprintf(out, "%u", (unsigned int)val.as.u8_val);
+            break;
+        case VALUE_U16:
+            fprintf(out, "%u", (unsigned int)val.as.u16_val);
+            break;
+        case VALUE_U32:
+            fprintf(out, "%u", val.as.u32_val);
+            break;
+        case VALUE_U64:
+            fprintf(out, "%llu", (unsigned long long)val.as.u64_val);
+            break;
+        case VALUE_F32:  // Also handles VALUE_FLOAT
+            fprintf(out, "%f", val.as.f32_val);
+            break;
+        case VALUE_F64:
+            fprintf(out, "%f", val.as.f64_val);
+            break;
+        case VALUE_STR:  // Also handles VALUE_STRING
             fprintf(out, "\"%s\"", val.as.str_val);
-            break;
-        case VALUE_BOOL:
-            fprintf(out, "%d", val.as.bool_val);
             break;
         case VALUE_CHAR:
             fprintf(out, "'%c'", val.as.char_val);
             break;
-        case VALUE_FLOAT:
-            fprintf(out, "%f", val.as.float_val);
+        case VALUE_BOOL:
+            fprintf(out, "%d", val.as.bool_val);
             break;
         case VALUE_NUM:
             if (val.as.num_val.is_float) {
@@ -95,33 +258,112 @@ static void emit_expr(ASTNode *expr, FILE *out) {
     }
 }
 
-// --- String literal collection ---
-#define MAX_STRINGS 128
-static const char *string_literals[MAX_STRINGS];
+// --- String literal collection (Dynamic) ---
+static const char **string_literals = NULL;
+static int string_literals_capacity = 0;
 static int string_literal_count = 0;
 static int float_const_count = 0;  // Counter for float constants
 static int float_var_count = 0;    // Counter for float variables
 
-// Simple variable mapping
-#define MAX_VARS 64
-static const char *var_names[MAX_VARS];
-
-// Current function context for parameter access
-static ASTNode *current_function = NULL;
-static int var_indices[MAX_VARS];
-static int var_types[MAX_VARS];  // 0 = int, 1 = float
+// Simple variable mapping (Dynamic)
+static const char **var_names = NULL;
+static int *var_indices = NULL;
+static int *var_types = NULL;  // 0 = int, 1 = float
+static int *var_locations = NULL;   // 0 = global, 1 = stack
+static int *var_offsets = NULL;     // Stack offset for stack-based variables
+static int var_names_capacity = 0;
 static int var_map_count = 0;
 static int int_var_count = 0;    // Counter for integer variables
 
+// Current function context for parameter access
+static ASTNode *current_function = NULL;
+
 // Stack frame management for local variables
 static int current_stack_offset = 0;  // Offset from EBP for local variables (negative values)
-static int var_locations[MAX_VARS];   // 0 = global, 1 = stack
-static int var_offsets[MAX_VARS];     // Stack offset for stack-based variables
 
-// Float constants collection
-#define MAX_FLOAT_CONSTS 64
-static float float_constants[MAX_FLOAT_CONSTS];
+// Float constants collection (Dynamic)
+static float *float_constants = NULL;
+static int float_constants_capacity = 0;
 static int float_constants_count = 0;
+
+// Dynamic memory management functions
+static void ensure_string_literals_capacity(int needed_capacity) {
+    if (needed_capacity > string_literals_capacity) {
+        int new_capacity = string_literals_capacity == 0 ? 256 : string_literals_capacity * 2;
+        while (new_capacity < needed_capacity) {
+            new_capacity *= 2;
+        }
+        
+        string_literals = realloc(string_literals, new_capacity * sizeof(const char*));
+        if (!string_literals) {
+            fprintf(stderr, "Fatal error: Failed to allocate memory for string literals\n");
+            exit(1);
+        }
+        string_literals_capacity = new_capacity;
+        fprintf(stderr, "[CODEGEN DEBUG] Expanded string literals capacity to %d\n", new_capacity);
+    }
+}
+
+static void ensure_var_capacity(int needed_capacity) {
+    if (needed_capacity > var_names_capacity) {
+        int new_capacity = var_names_capacity == 0 ? 128 : var_names_capacity * 2;
+        while (new_capacity < needed_capacity) {
+            new_capacity *= 2;
+        }
+        
+        var_names = realloc(var_names, new_capacity * sizeof(const char*));
+        var_indices = realloc(var_indices, new_capacity * sizeof(int));
+        var_types = realloc(var_types, new_capacity * sizeof(int));
+        var_locations = realloc(var_locations, new_capacity * sizeof(int));
+        var_offsets = realloc(var_offsets, new_capacity * sizeof(int));
+        
+        if (!var_names || !var_indices || !var_types || !var_locations || !var_offsets) {
+            fprintf(stderr, "Fatal error: Failed to allocate memory for variable tables\n");
+            exit(1);
+        }
+        var_names_capacity = new_capacity;
+        fprintf(stderr, "[CODEGEN DEBUG] Expanded variable tables capacity to %d\n", new_capacity);
+    }
+}
+
+static void ensure_float_constants_capacity(int needed_capacity) {
+    if (needed_capacity > float_constants_capacity) {
+        int new_capacity = float_constants_capacity == 0 ? 128 : float_constants_capacity * 2;
+        while (new_capacity < needed_capacity) {
+            new_capacity *= 2;
+        }
+        
+        float_constants = realloc(float_constants, new_capacity * sizeof(float));
+        if (!float_constants) {
+            fprintf(stderr, "Fatal error: Failed to allocate memory for float constants\n");
+            exit(1);
+        }
+        float_constants_capacity = new_capacity;
+        fprintf(stderr, "[CODEGEN DEBUG] Expanded float constants capacity to %d\n", new_capacity);
+    }
+}
+
+static void cleanup_dynamic_arrays() {
+    free(string_literals);
+    free(var_names);
+    free(var_indices);
+    free(var_types);
+    free(var_locations);
+    free(var_offsets);
+    free(float_constants);
+    
+    string_literals = NULL;
+    var_names = NULL;
+    var_indices = NULL;
+    var_types = NULL;
+    var_locations = NULL;
+    var_offsets = NULL;
+    float_constants = NULL;
+    
+    string_literals_capacity = 0;
+    var_names_capacity = 0;
+    float_constants_capacity = 0;
+}
 
 // Helper function to recursively count local variables in all nested structures
 static int count_local_variables(ASTNode *node) {
@@ -183,7 +425,9 @@ static int count_local_variables(ASTNode *node) {
 
 // Helper to determine if a parameter is a float type
 static int is_param_float_type(const char *type_name) {
-    return (strstr(type_name, "f32") != NULL || strstr(type_name, "num") != NULL);
+    return (strstr(type_name, "f32") != NULL || 
+            strstr(type_name, "f64") != NULL || 
+            strstr(type_name, "num") != NULL);
 }
 
 // Helper to determine if a value should be treated as float
@@ -191,7 +435,9 @@ static int is_float_type(ASTNode *node) {
     if (!node) return 0;
     
     if (node->type == AST_LITERAL) {
-        return (node->as.literal.type == VALUE_FLOAT || 
+        return (node->as.literal.type == VALUE_F32 || 
+                node->as.literal.type == VALUE_F64 ||
+                node->as.literal.type == VALUE_FLOAT ||  // Legacy support
                 (node->as.literal.type == VALUE_NUM && node->as.literal.as.num_val.is_float));
     }
     
@@ -251,14 +497,16 @@ static int store_var(const char *name, int is_float) {
         idx = int_var_count++;
     }
     
-    if (var_map_count < MAX_VARS) {
-        var_names[var_map_count] = strdup(name);
-        var_indices[var_map_count] = idx;
-        var_types[var_map_count] = is_float ? 1 : 0;
-        var_locations[var_map_count] = 0;  // Default to global
-        var_offsets[var_map_count] = 0;    // No offset for globals
-        var_map_count++;
-    }
+    // Ensure we have enough capacity
+    ensure_var_capacity(var_map_count + 1);
+    
+    var_names[var_map_count] = strdup(name);
+    var_indices[var_map_count] = idx;
+    var_types[var_map_count] = is_float ? 1 : 0;
+    var_locations[var_map_count] = 0;  // Default to global
+    var_offsets[var_map_count] = 0;    // No offset for globals
+    var_map_count++;
+    
     return idx;
 }
 
@@ -271,20 +519,20 @@ static int store_local_var(const char *name, int is_float) {
         }
     }
     
-    // Allocate stack space (4 bytes for both int and float)
-    current_stack_offset -= 4;
+    // Allocate stack space (4 bytes for 32-bit, 8 bytes for 64-bit)
+    current_stack_offset -= get_word_size_bytes();
+    
+    // Ensure we have enough capacity
+    ensure_var_capacity(var_map_count + 1);
     
     // Add new variable to mapping
-    if (var_map_count < MAX_VARS) {
-        var_names[var_map_count] = strdup(name);
-        var_indices[var_map_count] = var_map_count;  // Use map index as identifier
-        var_types[var_map_count] = is_float ? 1 : 0;
-        var_locations[var_map_count] = 1;  // Stack-based
-        var_offsets[var_map_count] = current_stack_offset;
-        var_map_count++;
-        return var_map_count - 1;
-    }
-    return -1;
+    var_names[var_map_count] = strdup(name);
+    var_indices[var_map_count] = var_map_count;  // Use map index as identifier
+    var_types[var_map_count] = is_float ? 1 : 0;
+    var_locations[var_map_count] = 1;  // Stack-based
+    var_offsets[var_map_count] = current_stack_offset;
+    var_map_count++;
+    return var_map_count - 1;
 }
 
 // Helper to store a float variable
@@ -302,9 +550,15 @@ static void emit_float_var_load(const char *name, FILE *out) {
     for (int i = 0; i < var_map_count; i++) {
         if (strcmp(var_names[i], name) == 0 && var_types[i] == 1) {
             if (var_locations[i] == 1) {  // Stack-based
-                fprintf(out, "    movss xmm0, [rbp%d]  ; load %s (stack)\n", var_offsets[i], name);
+                if (current_config && current_config->target_arch == ARCH_64BIT) {
+                    fprintf(out, "    fld dword [%s%d]  ; load %s (stack)\n", 
+                           get_base_pointer(), var_offsets[i], name);
+                } else {
+                    fprintf(out, "    fld dword [%s%d]  ; load %s (stack)\n", 
+                           get_base_pointer(), var_offsets[i], name);
+                }
             } else {  // Global
-                fprintf(out, "    movss xmm0, [float_var_%d]  ; load %s\n", var_indices[i], name);
+                fprintf(out, "    fld dword [float_var_%d]  ; load %s\n", var_indices[i], name);
             }
             return;
         }
@@ -317,9 +571,22 @@ static void emit_int_var_load(const char *name, FILE *out) {
     for (int i = 0; i < var_map_count; i++) {
         if (strcmp(var_names[i], name) == 0 && var_types[i] == 0) {
             if (var_locations[i] == 1) {  // Stack-based
-                fprintf(out, "    mov eax, [ebp%d]  ; load %s (stack)\n", var_offsets[i], name);
+                if (current_config && current_config->target_arch == ARCH_64BIT) {
+                    // In 64-bit mode, mov eax automatically zeros the upper 32 bits of rax
+                    fprintf(out, "    mov eax, %s [%s%d]  ; load %s (stack)\n", 
+                           get_int_size_specifier(), get_base_pointer(), var_offsets[i], name);
+                } else {
+                    fprintf(out, "    mov %s, %s [%s%d]  ; load %s (stack)\n", 
+                           get_int_register(), get_int_size_specifier(), get_base_pointer(), var_offsets[i], name);
+                }
             } else {  // Global
-                fprintf(out, "    mov eax, [int_var_%d]  ; load %s\n", var_indices[i], name);
+                if (current_config && current_config->target_arch == ARCH_64BIT) {
+                    fprintf(out, "    mov eax, %s [int_var_%d]  ; load %s\n", 
+                           get_int_size_specifier(), var_indices[i], name);
+                } else {
+                    fprintf(out, "    mov %s, %s [int_var_%d]  ; load %s\n", 
+                           get_int_register(), get_int_size_specifier(), var_indices[i], name);
+                }
             }
             return;
         }
@@ -333,12 +600,13 @@ static int find_or_add_string(const char *str) {
         if (strcmp(string_literals[i], str) == 0)
             return i;
     }
-    if (string_literal_count < MAX_STRINGS) {
-        fprintf(stderr, "[CODEGEN DEBUG] Adding string literal: %s\n", str);
-        string_literals[string_literal_count] = str;
-        return string_literal_count++;
-    }
-    return -1;
+    
+    // Ensure we have enough capacity
+    ensure_string_literals_capacity(string_literal_count + 1);
+    
+    fprintf(stderr, "[CODEGEN DEBUG] Adding string literal: %s\n", str);
+    string_literals[string_literal_count] = str;
+    return string_literal_count++;
 }
 
 static void collect_strings(ASTNode *node) {
@@ -397,16 +665,30 @@ static void collect_floats(ASTNode *node) {
 
     if (node->type == AST_LITERAL) {
         if (node->as.literal.type == VALUE_FLOAT) {
-            if (float_constants_count < MAX_FLOAT_CONSTS) {
-                float_constants[float_constants_count] = node->as.literal.as.float_val;
-                float_constants_count++;
-            }
+            ensure_float_constants_capacity(float_constants_count + 1);
+            float_constants[float_constants_count] = node->as.literal.as.float_val;
+            fprintf(stderr, "[CODEGEN DEBUG] Collected VALUE_FLOAT: %f at index %d\n", 
+                   node->as.literal.as.float_val, float_constants_count);
+            float_constants_count++;
+        } else if (node->as.literal.type == VALUE_F32) {
+            ensure_float_constants_capacity(float_constants_count + 1);
+            float_constants[float_constants_count] = node->as.literal.as.f32_val;
+            fprintf(stderr, "[CODEGEN DEBUG] Collected VALUE_F32: %f at index %d\n", 
+                   node->as.literal.as.f32_val, float_constants_count);
+            float_constants_count++;
+        } else if (node->as.literal.type == VALUE_F64) {
+            ensure_float_constants_capacity(float_constants_count + 1);
+            float_constants[float_constants_count] = (float)node->as.literal.as.f64_val;
+            fprintf(stderr, "[CODEGEN DEBUG] Collected VALUE_F64: %f at index %d\n", 
+                   (float)node->as.literal.as.f64_val, float_constants_count);
+            float_constants_count++;
         } else if (node->as.literal.type == VALUE_NUM && node->as.literal.as.num_val.is_float) {
             // Handle num type literals that contain float values
-            if (float_constants_count < MAX_FLOAT_CONSTS) {
-                float_constants[float_constants_count] = node->as.literal.as.num_val.value.float_val;
-                float_constants_count++;
-            }
+            ensure_float_constants_capacity(float_constants_count + 1);
+            float_constants[float_constants_count] = node->as.literal.as.num_val.value.float_val;
+            fprintf(stderr, "[CODEGEN DEBUG] Collected VALUE_NUM (float): %f at index %d\n", 
+                   node->as.literal.as.num_val.value.float_val, float_constants_count);
+            float_constants_count++;
         }
     }
 
@@ -456,20 +738,15 @@ static void collect_floats(ASTNode *node) {
 
 // Helper to find float constant index
 static int find_float_const_index(float value) {
+    fprintf(stderr, "[CODEGEN DEBUG] Looking for float constant: %f\n", value);
     for (int i = 0; i < float_constants_count; i++) {
+        fprintf(stderr, "[CODEGEN DEBUG] Comparing with float_constants[%d] = %f\n", i, float_constants[i]);
         if (float_constants[i] == value) {
+            fprintf(stderr, "[CODEGEN DEBUG] Found float constant at index %d\n", i);
             return i;
         }
     }
-    return -1; // Not found
-}
-
-// Helper to find existing string index
-static int find_string_index(const char *str) {
-    for (int i = 0; i < string_literal_count; ++i) {
-        if (strcmp(string_literals[i], str) == 0)
-            return i;
-    }
+    fprintf(stderr, "[CODEGEN DEBUG] Float constant NOT found!\n");
     return -1; // Not found
 }
 
@@ -599,14 +876,18 @@ static void emit_node(ASTNode *node, FILE *out) {
                         if (strcmp(var_names[i], node->as.var_decl.name) == 0 && var_locations[i] == 1) {
                             if (value_is_float) {
                                 // Value is already on FPU stack
-                                fprintf(out, "    fstp dword [ebp%d]  ; store %s (local float)\n", 
-                                       var_offsets[i], node->as.var_decl.name);
+                                fprintf(out, "    fstp dword [%s%d]  ; store %s (local float)\n", 
+                                       get_base_pointer(), var_offsets[i], node->as.var_decl.name);
                             } else {
-                                // Value is in EAX, need to convert to float
-                                fprintf(out, "    mov [temp_int], eax\n");
-                                fprintf(out, "    fild dword [temp_int]  ; convert int to float\n");
-                                fprintf(out, "    fstp dword [ebp%d]  ; store %s (local float, converted)\n", 
-                                       var_offsets[i], node->as.var_decl.name);
+                                // Value is in register, need to convert to float
+                                fprintf(out, "    %s [temp_int], %s\n", get_mov_instruction(), get_int_register());
+                                if (current_config && current_config->target_arch == ARCH_64BIT) {
+                                    fprintf(out, "    fild qword [temp_int]  ; convert int to float\n");
+                                } else {
+                                    fprintf(out, "    fild dword [temp_int]  ; convert int to float\n");
+                                }
+                                fprintf(out, "    fstp dword [%s%d]  ; store %s (local float, converted)\n", 
+                                       get_base_pointer(), var_offsets[i], node->as.var_decl.name);
                             }
                             found_local = 1;
                             break;
@@ -635,8 +916,8 @@ static void emit_node(ASTNode *node, FILE *out) {
                     int found_local = 0;
                     for (int i = 0; i < var_map_count; i++) {
                         if (strcmp(var_names[i], node->as.var_decl.name) == 0 && var_locations[i] == 1) {
-                            fprintf(out, "    mov [ebp%d], eax  ; store %s (local int)\n", 
-                                   var_offsets[i], node->as.var_decl.name);
+                            fprintf(out, "    mov %s [%s%d], %s  ; store %s (local int)\n", 
+                                   get_int_size_specifier(), get_base_pointer(), var_offsets[i], get_int_register_32bit(), node->as.var_decl.name);
                             found_local = 1;
                             break;
                         }
@@ -646,8 +927,8 @@ static void emit_node(ASTNode *node, FILE *out) {
                                node->as.var_decl.name);
                     }
                 } else {
-                    fprintf(out, "    mov [int_var_%d], eax  ; store %s (global int)\n", 
-                           var_idx, node->as.var_decl.name);
+                    fprintf(out, "    %s [int_var_%d], %s  ; store %s (global int)\n", 
+                           get_mov_instruction(), var_idx, get_int_register(), node->as.var_decl.name);
                 }
             }
             break;
@@ -657,11 +938,175 @@ static void emit_node(ASTNode *node, FILE *out) {
             emit_expr(node->as.assign.value, out);
             fprintf(out, "\n");
             emit_node(node->as.assign.value, out);  // Generate actual code
+            
+            // Store the result back to the target variable
+            const char *target_name = node->as.assign.target;
+            int found = 0;
+            
+            // Check if target is a function parameter
+            if (current_function != NULL) {
+                for (size_t i = 0; i < current_function->as.func_def.param_count; i++) {
+                    if (strcmp(current_function->as.func_def.param_names[i], target_name) == 0) {
+                        // This is a function parameter - store back to stack
+                        int offset = 8 + (i * 4);
+                        
+                        // Check if this parameter is a float type
+                        if (current_function->as.func_def.param_types && 
+                            is_param_float_type(current_function->as.func_def.param_types[i])) {
+                            fprintf(out, "    fstp dword [%s+%d]  ; store to float parameter %s\n", 
+                                   get_base_pointer(), offset, target_name);
+                        } else {
+                            fprintf(out, "    %s [%s+%d], %s  ; store to parameter %s\n", 
+                                   get_mov_instruction(), get_base_pointer(), offset, get_int_register(), target_name);
+                        }
+                        found = 1;
+                        break;
+                    }
+                }
+            }
+            
+            // If not found as parameter, check local/global variables
+            if (!found) {
+                for (int i = 0; i < var_map_count; i++) {
+                    if (strcmp(var_names[i], target_name) == 0) {
+                        if (var_types[i] == 1) { // float
+                            if (var_locations[i] == 1) {  // Stack-based
+                                // Check if the assigned value is also float type
+                                int value_is_float = is_float_type(node->as.assign.value);
+                                if (value_is_float) {
+                                    fprintf(out, "    fstp dword [%s%d]  ; store %s (local float)\n", 
+                                           get_base_pointer(), var_offsets[i], target_name);
+                                } else {
+                                    // Value is in register, need to convert to float
+                                    fprintf(out, "    %s [temp_int], %s\n", get_mov_instruction(), get_int_register());
+                                    if (current_config && current_config->target_arch == ARCH_64BIT) {
+                                        fprintf(out, "    fild qword [temp_int]  ; convert int to float\n");
+                                    } else {
+                                        fprintf(out, "    fild dword [temp_int]  ; convert int to float\n");
+                                    }
+                                    fprintf(out, "    fstp dword [%s%d]  ; store %s (local float, converted)\n", 
+                                           get_base_pointer(), var_offsets[i], target_name);
+                                }
+                            } else {  // Global
+                                int value_is_float = is_float_type(node->as.assign.value);
+                                if (value_is_float) {
+                                    fprintf(out, "    fstp dword [float_var_%d]  ; store %s (global float)\n", 
+                                           var_indices[i], target_name);
+                                } else {
+                                    // Value is in EAX, need to convert to float
+                                    fprintf(out, "    mov [temp_int], eax\n");
+                                    fprintf(out, "    fild dword [temp_int]  ; convert int to float\n");
+                                    fprintf(out, "    fstp dword [float_var_%d]  ; store %s (global float, converted)\n", 
+                                           var_indices[i], target_name);
+                                }
+                            }
+                        } else { // int
+                            if (var_locations[i] == 1) {  // Stack-based
+                                fprintf(out, "    mov %s [%s%d], %s  ; store %s (local int)\n", 
+                                       get_int_size_specifier(), get_base_pointer(), var_offsets[i], get_int_register_32bit(), target_name);
+                            } else {  // Global
+                                fprintf(out, "    mov %s [int_var_%d], %s  ; store %s (global int)\n", 
+                                       get_int_size_specifier(), var_indices[i], get_int_register_32bit(), target_name);
+                            }
+                        }
+                        found = 1;
+                        break;
+                    }
+                }
+            }
+            
+            if (!found) {
+                fprintf(stderr, "Error: Assignment target variable %s not found\n", target_name);
+            }
             break;
 
         case AST_LITERAL:
-            if (node->as.literal.type == VALUE_FLOAT) {
+            fprintf(stderr, "[CODEGEN DEBUG] Processing literal node with type: %d\n", node->as.literal.type);
+            // Handle new integer types
+            if (node->as.literal.type == VALUE_I8) {
+                fprintf(out, "    %s %s, %d\n", get_mov_instruction(), get_int_register(), (int)node->as.literal.as.i8_val);
+            } else if (node->as.literal.type == VALUE_I16) {
+                fprintf(out, "    %s %s, %d\n", get_mov_instruction(), get_int_register(), (int)node->as.literal.as.i16_val);
+            } else if (node->as.literal.type == VALUE_I32) {
+                fprintf(out, "    %s %s, %d\n", get_mov_instruction(), get_int_register(), node->as.literal.as.i32_val);
+            } else if (node->as.literal.type == VALUE_I64) {
+                // For 64-bit integers, handle differently based on architecture
+                if (current_config && current_config->target_arch == ARCH_64BIT) {
+                    fprintf(out, "    mov rax, %lld  ; i64 full precision\n", 
+                           (long long)node->as.literal.as.i64_val);
+                } else {
+                    fprintf(out, "    mov eax, %lld  ; i64 truncated to 32-bit\n", 
+                           (long long)node->as.literal.as.i64_val);
+                }
+            } else if (node->as.literal.type == VALUE_U8) {
+                fprintf(out, "    %s %s, %u\n", get_mov_instruction(), get_int_register(), (unsigned int)node->as.literal.as.u8_val);
+            } else if (node->as.literal.type == VALUE_U16) {
+                fprintf(out, "    %s %s, %u\n", get_mov_instruction(), get_int_register(), (unsigned int)node->as.literal.as.u16_val);
+            } else if (node->as.literal.type == VALUE_U32) {
+                fprintf(out, "    %s %s, %u\n", get_mov_instruction(), get_int_register(), node->as.literal.as.u32_val);
+            } else if (node->as.literal.type == VALUE_U64) {
+                // For 64-bit integers, handle differently based on architecture
+                if (current_config && current_config->target_arch == ARCH_64BIT) {
+                    fprintf(out, "    mov rax, %llu  ; u64 full precision\n", 
+                           (unsigned long long)node->as.literal.as.u64_val);
+                } else {
+                    fprintf(out, "    mov eax, %llu  ; u64 truncated to 32-bit\n", 
+                           (unsigned long long)node->as.literal.as.u64_val);
+                }
+            } 
+            // Handle new floating point types
+            else if (node->as.literal.type == VALUE_F32) {
                 // Find the constant index and emit load
+                // Note: VALUE_F32 is same as VALUE_FLOAT, parser stores in float_val (double)
+                fprintf(stderr, "[CODEGEN DEBUG] emit_node VALUE_F32: %f (from float_val)\n", node->as.literal.as.float_val);
+                int idx = find_float_const_index((float)node->as.literal.as.float_val);
+                if (idx >= 0) {
+                    fprintf(out, "    fld dword [float_%d]\n", idx);
+                } else {
+                    fprintf(out, "; Error: f32 constant not found\n");
+                }
+            } else if (node->as.literal.type == VALUE_FLOAT) {
+                // Handle VALUE_FLOAT (same as VALUE_F32) - uses float_val field  
+                fprintf(stderr, "[CODEGEN DEBUG] emit_node VALUE_FLOAT: %f\n", node->as.literal.as.float_val);
+                int idx = find_float_const_index((float)node->as.literal.as.float_val);
+                if (idx >= 0) {
+                    fprintf(out, "    fld dword [float_%d]\n", idx);
+                } else {
+                    fprintf(out, "; Error: float constant not found\n");
+                }
+            } else if (node->as.literal.type == VALUE_F64) {
+                // For f64, we need to handle as double precision
+                int idx = find_float_const_index((float)node->as.literal.as.f64_val);  // Convert for now
+                if (idx >= 0) {
+                    fprintf(out, "    fld dword [float_%d]  ; f64 as f32 for now\n", idx);
+                } else {
+                    fprintf(out, "; Error: f64 constant not found\n");
+                }
+            }
+            // Handle string and character types
+            else if (node->as.literal.type == VALUE_STR) {
+                int idx = find_or_add_string(node->as.literal.as.str_val);
+                fprintf(out, "    mov eax, msg_%d\n", idx);
+            } else if (node->as.literal.type == VALUE_CHAR) {
+                char c = node->as.literal.as.char_val;
+                if (c == '\n') {
+                    fprintf(out, "    mov eax, %d  ; char newline\n", (int)c);
+                } else if (c == '\t') {
+                    fprintf(out, "    mov eax, %d  ; char tab\n", (int)c);
+                } else if (c == '\r') {
+                    fprintf(out, "    mov eax, %d  ; char carriage-return\n", (int)c);
+                } else if (c == '\0') {
+                    fprintf(out, "    mov eax, %d  ; char null\n", (int)c);
+                } else if (c >= 32 && c <= 126) {
+                    fprintf(out, "    mov eax, %d  ; char '%c'\n", (int)c, c);
+                } else {
+                    fprintf(out, "    mov eax, %d  ; char (ASCII %d)\n", (int)c, (int)c);
+                }
+            }
+            // Legacy support
+            else if (node->as.literal.type == VALUE_FLOAT) {
+                // Find the constant index and emit load
+                fprintf(stderr, "[CODEGEN DEBUG] emit_node VALUE_FLOAT: %f\n", node->as.literal.as.float_val);
                 int idx = find_float_const_index(node->as.literal.as.float_val);
                 if (idx >= 0) {
                     fprintf(out, "    fld dword [float_%d]\n", idx);
@@ -758,69 +1203,122 @@ static void emit_node(ASTNode *node, FILE *out) {
             } else {
                 // Integer operations
                 emit_node(left, out);
-                fprintf(out, "    push eax\n");
+                fprintf(out, "    %s %s\n", get_push_instruction(), get_int_register());
 
                 emit_node(right, out);
-                fprintf(out, "    mov ebx, eax\n");
-                fprintf(out, "    pop eax\n");
+                fprintf(out, "    %s %s, %s\n", get_mov_instruction(), get_int_register_b(), get_int_register());
+                fprintf(out, "    %s %s\n", get_pop_instruction(), get_int_register());
 
                 if (strcmp(op, "+") == 0) {
-                    fprintf(out, "    add eax, ebx\n");
+                    fprintf(out, "    add %s, %s\n", get_int_register(), get_int_register_b());
                 } else if (strcmp(op, "-") == 0) {
-                    fprintf(out, "    sub eax, ebx\n");
+                    fprintf(out, "    sub %s, %s\n", get_int_register(), get_int_register_b());
                 } else if (strcmp(op, "*") == 0) {
-                    fprintf(out, "    imul eax, ebx\n");
+                    fprintf(out, "    imul %s, %s\n", get_int_register(), get_int_register_b());
                 } else if (strcmp(op, "/") == 0) {
-                    fprintf(out, "    xor edx, edx\n");
-                    fprintf(out, "    mov ecx, ebx\n");
-                    fprintf(out, "    div ecx\n");
+                    if (current_config && current_config->target_arch == ARCH_64BIT) {
+                        fprintf(out, "    xor rdx, rdx\n");
+                        fprintf(out, "    mov rcx, %s\n", get_int_register_b());
+                        fprintf(out, "    div rcx\n");
+                    } else {
+                        fprintf(out, "    xor edx, edx\n");
+                        fprintf(out, "    mov ecx, %s\n", get_int_register_b());
+                        fprintf(out, "    div ecx\n");
+                    }
                 } else if (strcmp(op, "%") == 0) {
-                    fprintf(out, "    xor edx, edx\n");  // Clear EDX for division
-                    fprintf(out, "    mov ecx, ebx\n");  // Move divisor to ECX
-                    fprintf(out, "    div ecx\n");       // Divide EAX by ECX, remainder in EDX
-                    fprintf(out, "    mov eax, edx\n");  // Move remainder to EAX
+                    if (current_config && current_config->target_arch == ARCH_64BIT) {
+                        fprintf(out, "    xor rdx, rdx\n");  // Clear RDX for division
+                        fprintf(out, "    mov rcx, %s\n", get_int_register_b());  // Move divisor to RCX
+                        fprintf(out, "    div rcx\n");       // Divide RAX by RCX, remainder in RDX
+                        fprintf(out, "    mov rax, rdx\n");  // Move remainder to RAX
+                    } else {
+                        fprintf(out, "    xor edx, edx\n");  // Clear EDX for division
+                        fprintf(out, "    mov ecx, %s\n", get_int_register_b());  // Move divisor to ECX
+                        fprintf(out, "    div ecx\n");       // Divide EAX by ECX, remainder in EDX
+                        fprintf(out, "    mov eax, edx\n");  // Move remainder to EAX
+                    }
                 } else if (strcmp(op, "==") == 0) {
-                    fprintf(out, "    cmp eax, ebx\n");
+                    fprintf(out, "    cmp %s, %s\n", get_int_register(), get_int_register_b());
                     fprintf(out, "    sete al\n");      // Set AL if equal
-                    fprintf(out, "    movzx eax, al\n"); // Zero-extend AL to EAX (0 or 1)
+                    if (current_config && current_config->target_arch == ARCH_64BIT) {
+                        fprintf(out, "    movzx rax, al\n"); // Zero-extend AL to RAX (0 or 1)
+                    } else {
+                        fprintf(out, "    movzx eax, al\n"); // Zero-extend AL to EAX (0 or 1)
+                    }
                 } else if (strcmp(op, "!=") == 0) {
-                    fprintf(out, "    cmp eax, ebx\n");
+                    fprintf(out, "    cmp %s, %s\n", get_int_register(), get_int_register_b());
                     fprintf(out, "    setne al\n");     // Set AL if not equal
-                    fprintf(out, "    movzx eax, al\n");
+                    if (current_config && current_config->target_arch == ARCH_64BIT) {
+                        fprintf(out, "    movzx rax, al\n");
+                    } else {
+                        fprintf(out, "    movzx eax, al\n");
+                    }
                 } else if (strcmp(op, "<") == 0) {
-                    fprintf(out, "    cmp eax, ebx\n");
+                    fprintf(out, "    cmp %s, %s\n", get_int_register(), get_int_register_b());
                     fprintf(out, "    setl al\n");      // Set AL if less than (signed)
-                    fprintf(out, "    movzx eax, al\n");
+                    if (current_config && current_config->target_arch == ARCH_64BIT) {
+                        fprintf(out, "    movzx rax, al\n");
+                    } else {
+                        fprintf(out, "    movzx eax, al\n");
+                    }
                 } else if (strcmp(op, ">") == 0) {
-                    fprintf(out, "    cmp eax, ebx\n");
+                    fprintf(out, "    cmp %s, %s\n", get_int_register(), get_int_register_b());
                     fprintf(out, "    setg al\n");      // Set AL if greater than (signed)
-                    fprintf(out, "    movzx eax, al\n");
+                    if (current_config && current_config->target_arch == ARCH_64BIT) {
+                        fprintf(out, "    movzx rax, al\n");
+                    } else {
+                        fprintf(out, "    movzx eax, al\n");
+                    }
                 } else if (strcmp(op, "<=") == 0) {
-                    fprintf(out, "    cmp eax, ebx\n");
+                    fprintf(out, "    cmp %s, %s\n", get_int_register(), get_int_register_b());
                     fprintf(out, "    setle al\n");     // Set AL if less than or equal (signed)
-                    fprintf(out, "    movzx eax, al\n");
+                    if (current_config && current_config->target_arch == ARCH_64BIT) {
+                        fprintf(out, "    movzx rax, al\n");
+                    } else {
+                        fprintf(out, "    movzx eax, al\n");
+                    }
                 } else if (strcmp(op, ">=") == 0) {
-                    fprintf(out, "    cmp eax, ebx\n");
+                    fprintf(out, "    cmp %s, %s\n", get_int_register(), get_int_register_b());
                     fprintf(out, "    setge al\n");     // Set AL if greater than or equal (signed)
-                    fprintf(out, "    movzx eax, al\n");
+                    if (current_config && current_config->target_arch == ARCH_64BIT) {
+                        fprintf(out, "    movzx rax, al\n");
+                    } else {
+                        fprintf(out, "    movzx eax, al\n");
+                    }
                 } else if (strcmp(op, "&&") == 0) {
                     // Logical AND: both operands must be non-zero
-                    fprintf(out, "    test eax, eax\n");    // Test left operand
+                    fprintf(out, "    test %s, %s\n", get_int_register(), get_int_register());    // Test left operand
                     fprintf(out, "    setne al\n");         // Set AL = 1 if left != 0
-                    fprintf(out, "    movzx eax, al\n");    // Zero-extend to EAX
-                    fprintf(out, "    test ebx, ebx\n");    // Test right operand  
-                    fprintf(out, "    setne bl\n");         // Set BL = 1 if right != 0
-                    fprintf(out, "    movzx ebx, bl\n");    // Zero-extend to EBX
-                    fprintf(out, "    and eax, ebx\n");     // EAX = left && right
+                    if (current_config && current_config->target_arch == ARCH_64BIT) {
+                        fprintf(out, "    movzx rax, al\n");    // Zero-extend to RAX
+                        fprintf(out, "    test %s, %s\n", get_int_register_b(), get_int_register_b());    // Test right operand  
+                        fprintf(out, "    setne bl\n");         // Set BL = 1 if right != 0
+                        fprintf(out, "    movzx rbx, bl\n");    // Zero-extend to RBX
+                        fprintf(out, "    and rax, rbx\n");     // RAX = left && right
+                    } else {
+                        fprintf(out, "    movzx eax, al\n");    // Zero-extend to EAX
+                        fprintf(out, "    test %s, %s\n", get_int_register_b(), get_int_register_b());    // Test right operand  
+                        fprintf(out, "    setne bl\n");         // Set BL = 1 if right != 0
+                        fprintf(out, "    movzx ebx, bl\n");    // Zero-extend to EBX
+                        fprintf(out, "    and eax, ebx\n");     // EAX = left && right
+                    }
                 } else if (strcmp(op, "||") == 0) {
                     // Logical OR: at least one operand must be non-zero
-                    fprintf(out, "    test eax, eax\n");    // Test left operand
+                    fprintf(out, "    test %s, %s\n", get_int_register(), get_int_register());    // Test left operand
                     fprintf(out, "    setne al\n");         // Set AL = 1 if left != 0
-                    fprintf(out, "    movzx eax, al\n");    // Zero-extend to EAX
-                    fprintf(out, "    test ebx, ebx\n");    // Test right operand
-                    fprintf(out, "    setne bl\n");         // Set BL = 1 if right != 0
-                    fprintf(out, "    movzx ebx, bl\n");    // Zero-extend to EBX
-                    fprintf(out, "    or eax, ebx\n");      // EAX = left || right
+                    if (current_config && current_config->target_arch == ARCH_64BIT) {
+                        fprintf(out, "    movzx rax, al\n");    // Zero-extend to RAX
+                        fprintf(out, "    test %s, %s\n", get_int_register_b(), get_int_register_b());    // Test right operand
+                        fprintf(out, "    setne bl\n");         // Set BL = 1 if right != 0
+                        fprintf(out, "    movzx rbx, bl\n");    // Zero-extend to RBX
+                        fprintf(out, "    or rax, rbx\n");      // RAX = left || right
+                    } else {
+                        fprintf(out, "    movzx eax, al\n");    // Zero-extend to EAX
+                        fprintf(out, "    test %s, %s\n", get_int_register_b(), get_int_register_b());    // Test right operand
+                        fprintf(out, "    setne bl\n");         // Set BL = 1 if right != 0
+                        fprintf(out, "    movzx ebx, bl\n");    // Zero-extend to EBX
+                        fprintf(out, "    or eax, ebx\n");      // EAX = left || right
+                    }
                 } else if (strcmp(op, "^^") == 0) {
                     // Logical XOR: exactly one operand must be non-zero
                     fprintf(out, "    test eax, eax\n");    // Test left operand
@@ -886,6 +1384,13 @@ static void emit_node(ASTNode *node, FILE *out) {
         }
 
         case AST_FUNC_CALL: {
+            // Use 64-bit calling convention if applicable
+            if (current_config && current_config->target_arch == ARCH_64BIT) {
+                emit_function_call_64bit(out, node->as.func_call.name, node->as.func_call.args, node->as.func_call.arg_count);
+                break;
+            }
+            
+            // 32-bit calling convention (original code)
             if (strcmp(node->as.func_call.name, "print") == 0 && node->as.func_call.arg_count == 1) {
                 ASTNode *arg = node->as.func_call.args[0];
                 if (arg->type == AST_LITERAL && arg->as.literal.type == VALUE_STRING) {
@@ -893,15 +1398,15 @@ static void emit_node(ASTNode *node, FILE *out) {
                     int idx = find_or_add_string(arg->as.literal.as.str_val);
                     fprintf(out, "    push msg_%d\n", idx);
                     fprintf(out, "    call print\n");
-                    fprintf(out, "    add esp, 4\n");
+                    emit_stack_cleanup(out, 4);
                     break;
                 }
             } else if (strcmp(node->as.func_call.name, "print_int") == 0 && node->as.func_call.arg_count == 1) {
                 // Evaluate the argument and put result in eax
                 emit_node(node->as.func_call.args[0], out);
-                fprintf(out, "    push eax\n");
+                fprintf(out, "    push %s\n", get_int_register());
                 fprintf(out, "    call print_int\n");
-                fprintf(out, "    add esp, 4\n");
+                emit_stack_cleanup(out, 4);
                 break;
             } else if (strcmp(node->as.func_call.name, "print_float") == 0 && node->as.func_call.arg_count == 1) {
                 ASTNode *arg = node->as.func_call.args[0];
@@ -910,11 +1415,11 @@ static void emit_node(ASTNode *node, FILE *out) {
                 emit_node(arg, out);
                 
                 // Call printf with the float
-                fprintf(out, "    sub esp, 8\n");          // Space for double
-                fprintf(out, "    fstp qword [esp]\n");    // Store as double
+                fprintf(out, "    sub %s, 8\n", get_stack_pointer());          // Space for double
+                fprintf(out, "    fstp qword [%s]\n", get_stack_pointer());    // Store as double
                 fprintf(out, "    push fmt_float\n");      // Format string
                 fprintf(out, "    call printf\n");
-                fprintf(out, "    add esp, 12\n");         // Clean up (4 + 8)
+                emit_stack_cleanup_with_comment(out, 12, "Clean up (4 + 8)");
                 break;
             } else if (strcmp(node->as.func_call.name, "read_int") == 0 && node->as.func_call.arg_count == 0) {
                 // Call read_int function (returns result in eax)
@@ -931,36 +1436,34 @@ static void emit_node(ASTNode *node, FILE *out) {
             } else if (strcmp(node->as.func_call.name, "print_num") == 0 && node->as.func_call.arg_count == 1) {
                 // Call print_num function with formatted output
                 emit_node(node->as.func_call.args[0], out);  // Load value to FPU stack
-                fprintf(out, "    sub esp, 4\n");           // Space for float (32-bit)
-                fprintf(out, "    fstp dword [esp]\n");     // Store as single precision float
+                fprintf(out, "    sub %s, 4\n", get_stack_pointer());           // Space for float (32-bit)
+                fprintf(out, "    fstp dword [%s]\n", get_stack_pointer());     // Store as single precision float
                 fprintf(out, "    call print_num\n");
-                fprintf(out, "    add esp, 4\n");           // Clean up (4 bytes)
+                emit_stack_cleanup_with_comment(out, 4, "Clean up (4 bytes)");
                 break;
             } else if (strcmp(node->as.func_call.name, "print_clean") == 0 && node->as.func_call.arg_count == 1) {
                 // Call print_clean function with string literal
                 ASTNode *arg = node->as.func_call.args[0];
                 if (arg->type == AST_LITERAL && arg->as.literal.type == VALUE_STRING) {
-                    int idx = find_string_index(arg->as.literal.as.str_val);
-                    if (idx >= 0) {
-                        fprintf(out, "    push msg_%d\n", idx);
-                        fprintf(out, "    call print_clean\n");
-                        fprintf(out, "    add esp, 4\n");
-                    }
+                    int idx = find_or_add_string(arg->as.literal.as.str_val);
+                    fprintf(out, "    push msg_%d\n", idx);
+                    fprintf(out, "    call print_clean\n");
+                    emit_stack_cleanup(out, 4);
                 }
                 break;
             } else if (strcmp(node->as.func_call.name, "print_bool") == 0 && node->as.func_call.arg_count == 1) {
                 // Evaluate the argument and put result in eax
                 emit_node(node->as.func_call.args[0], out);
-                fprintf(out, "    push eax\n");
+                fprintf(out, "    push %s\n", get_int_register());
                 fprintf(out, "    call print_bool\n");
-                fprintf(out, "    add esp, 4\n");
+                emit_stack_cleanup(out, 4);
                 break;
             } else if (strcmp(node->as.func_call.name, "print_bool_clean") == 0 && node->as.func_call.arg_count == 1) {
                 // Evaluate the argument and put result in eax
                 emit_node(node->as.func_call.args[0], out);
-                fprintf(out, "    push eax\n");
+                fprintf(out, "    push %s\n", get_int_register());
                 fprintf(out, "    call print_bool_clean\n");
-                fprintf(out, "    add esp, 4\n");
+                emit_stack_cleanup(out, 4);
                 break;
             } else if (strcmp(node->as.func_call.name, "print_bool_numeric") == 0 && node->as.func_call.arg_count == 1) {
                 // Evaluate the argument and put result in eax
@@ -984,11 +1487,11 @@ static void emit_node(ASTNode *node, FILE *out) {
                 // Check if this argument is a float type
                 if (is_float_type(arg)) {
                     // For float arguments, store from FPU stack to memory, then push
-                    fprintf(out, "    sub esp, 4\n");           // Reserve space on stack
-                    fprintf(out, "    fstp dword [esp]  ; push float argument %d\n", i);
+                    fprintf(out, "    sub %s, 4\n", get_stack_pointer());           // Reserve space on stack
+                    fprintf(out, "    fstp dword [%s]  ; push float argument %d\n", get_stack_pointer(), i);
                 } else {
                     // For integer arguments, push EAX
-                    fprintf(out, "    push eax  ; push argument %d\n", i);
+                    fprintf(out, "    push %s  ; push argument %d\n", get_int_register(), i);
                 }
             }
             
@@ -996,8 +1499,14 @@ static void emit_node(ASTNode *node, FILE *out) {
             
             // Clean up stack (remove pushed arguments)
             if (node->as.func_call.arg_count > 0) {
-                fprintf(out, "    add esp, %ld  ; clean up %ld arguments\n", 
-                       node->as.func_call.arg_count * 4, node->as.func_call.arg_count);
+                int cleanup_bytes = (int)(node->as.func_call.arg_count * 4);
+                if (current_config && current_config->target_arch == ARCH_64BIT) {
+                    fprintf(out, "    add rsp, %d  ; clean up %ld arguments\n", 
+                           cleanup_bytes * 2, node->as.func_call.arg_count);
+                } else {
+                    fprintf(out, "    add esp, %d  ; clean up %ld arguments\n", 
+                           cleanup_bytes, node->as.func_call.arg_count);
+                }
             }
             
             // Handle return value based on function return type
@@ -1033,7 +1542,13 @@ static void emit_node(ASTNode *node, FILE *out) {
             current_stack_offset = 0;
             
             fprintf(out, "%s:\n", node->as.func_def.name);
-            fprintf(out, "    push ebp\n    mov ebp, esp\n");
+            
+            // Generate architecture-specific function prologue
+            if (current_config && current_config->target_arch == ARCH_64BIT) {
+                fprintf(out, "    push rbp\n    mov rbp, rsp\n");
+            } else {
+                fprintf(out, "    push ebp\n    mov ebp, esp\n");
+            }
             
             // Count all local variables recursively (including those in nested structures)
             int local_vars = 0;
@@ -1043,9 +1558,16 @@ static void emit_node(ASTNode *node, FILE *out) {
             
             // Allocate stack space for local variables (if any) - align to 16 bytes
             if (local_vars > 0) {
-                int stack_space = ((local_vars * 4) + 15) & ~15; // Round up to 16-byte boundary, 4 bytes per var for 32-bit
-                fprintf(out, "    sub esp, %d  ; allocate space for %d local variables\n", 
-                       stack_space, local_vars);
+                int var_size = (current_config && current_config->target_arch == ARCH_64BIT) ? 8 : 4;
+                int stack_space = ((local_vars * var_size) + 15) & ~15; // Round up to 16-byte boundary
+                
+                if (current_config && current_config->target_arch == ARCH_64BIT) {
+                    fprintf(out, "    sub rsp, %d  ; allocate space for %d local variables\n", 
+                           stack_space, local_vars);
+                } else {
+                    fprintf(out, "    sub esp, %d  ; allocate space for %d local variables\n", 
+                           stack_space, local_vars);
+                }
             }
             
             // Check if function has explicit return statement
@@ -1061,8 +1583,14 @@ static void emit_node(ASTNode *node, FILE *out) {
             
             // Only emit epilogue if there's no explicit return
             if (!has_explicit_return) {
-                fprintf(out, "    mov rsp, rbp  ; restore stack pointer\n");
-                fprintf(out, "    pop ebp\n    ret\n");
+                // Generate architecture-specific function epilogue
+                if (current_config && current_config->target_arch == ARCH_64BIT) {
+                    fprintf(out, "    mov rsp, rbp  ; restore stack pointer\n");
+                    fprintf(out, "    pop rbp\n    ret\n");
+                } else {
+                    fprintf(out, "    mov esp, ebp  ; restore stack pointer\n");
+                    fprintf(out, "    pop ebp\n    ret\n");
+                }
             }
             
             // Restore previous function context and stack offset
@@ -1128,8 +1656,14 @@ static void emit_node(ASTNode *node, FILE *out) {
                 // Function epilogue will handle the actual return
             }
             // For void returns, no value to load
-            fprintf(out, "    mov esp, ebp  ; restore stack pointer\n");
-            fprintf(out, "    pop ebp\n");
+            // Generate architecture-specific return epilogue
+            if (current_config && current_config->target_arch == ARCH_64BIT) {
+                fprintf(out, "    mov rsp, rbp  ; restore stack pointer\n");
+                fprintf(out, "    pop rbp\n");
+            } else {
+                fprintf(out, "    mov esp, ebp  ; restore stack pointer\n");
+                fprintf(out, "    pop ebp\n");
+            }
             fprintf(out, "    ret\n");
             break;
 
@@ -1171,7 +1705,8 @@ static void emit_node(ASTNode *node, FILE *out) {
 }
 
 // --- Main entry: generate_code() ---
-void generate_code(AST *ast, FILE *out) {
+void generate_code(AST *ast, FILE *out, CompilationConfig *config) {
+    current_config = config;  // Store for use in helper functions
     string_literal_count = 0;
     float_const_count = 0;
     float_var_count = 0;
@@ -1212,8 +1747,13 @@ void generate_code(AST *ast, FILE *out) {
     // Emit .bss section for variables if needed
     if (var_map_count > 0) {
         fprintf(out, "section .bss\n");
-        fprintf(out, "    align 4\n");
-        fprintf(out, "    temp_int: resd 1  ; temporary for int to float conversion\n");
+        if (current_config && current_config->target_arch == ARCH_64BIT) {
+            fprintf(out, "    align 8\n");
+            fprintf(out, "    temp_int: resq 1  ; temporary for int to float conversion\n");
+        } else {
+            fprintf(out, "    align 4\n");
+            fprintf(out, "    temp_int: resd 1  ; temporary for int to float conversion\n");
+        }
         
         // Emit float variables
         for (int i = 0; i < var_map_count; i++) {
@@ -1225,7 +1765,11 @@ void generate_code(AST *ast, FILE *out) {
         // Emit integer variables
         for (int i = 0; i < var_map_count; i++) {
             if (var_types[i] == 0 && var_locations[i] == 0) { // global int
-                fprintf(out, "    int_var_%d: resd 1  ; %s\n", var_indices[i], var_names[i]);
+                if (current_config && current_config->target_arch == ARCH_64BIT) {
+                    fprintf(out, "    int_var_%d: resq 1  ; %s\n", var_indices[i], var_names[i]);
+                } else {
+                    fprintf(out, "    int_var_%d: resd 1  ; %s\n", var_indices[i], var_names[i]);
+                }
             }
         }
         
@@ -1233,8 +1777,13 @@ void generate_code(AST *ast, FILE *out) {
     } else {
         // Always emit temp_int for mixed arithmetic
         fprintf(out, "section .bss\n");
-        fprintf(out, "    align 4\n");
-        fprintf(out, "    temp_int: resd 1  ; temporary for int to float conversion\n");
+        if (current_config && current_config->target_arch == ARCH_64BIT) {
+            fprintf(out, "    align 8\n");
+            fprintf(out, "    temp_int: resq 1  ; temporary for int to float conversion\n");
+        } else {
+            fprintf(out, "    align 4\n");
+            fprintf(out, "    temp_int: resd 1  ; temporary for int to float conversion\n");
+        }
         fprintf(out, "\n");
     }
 
@@ -1268,4 +1817,7 @@ void generate_code(AST *ast, FILE *out) {
     }
 
     // Top-level statements are emitted in the function bodies
+    
+    // Clean up dynamic memory
+    cleanup_dynamic_arrays();
 }
