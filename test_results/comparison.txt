@@ -1,9 +1,0 @@
-=== ARITHMETIC RESULT COMPARISON ===
-32-bit Max i32:
-64-bit Max i32:
-32-bit Pi value:
-64-bit Pi value:
-32-bit Factorial of 5:
-120
-64-bit Factorial of 5:
-timeout: the monitored command dumped core

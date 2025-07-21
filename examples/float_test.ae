@@ -1,7 +1,0 @@
-func main(): void {
-    let a: f32 = 2.5;
-    let b: f32 = 3.0;
-    let mul: f32 = a * b;
-    let div: f32 = mul / 2.0;
-    print_float(div);
-}

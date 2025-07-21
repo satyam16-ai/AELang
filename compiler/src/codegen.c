@@ -12,6 +12,7 @@ static CompilationConfig *current_config = NULL;
 // Forward declarations
 static const char* get_function_return_type(const char* func_name);
 static int is_float_return_type(const char* return_type);
+static int is_float_type(ASTNode *node);
 static int find_or_add_string(const char *str);
 static void emit_node(ASTNode *node, FILE *out);
 static void emit_function_call_64bit(FILE *out, const char *func_name, ASTNode **args, int arg_count);
@@ -56,6 +57,7 @@ static const char* get_word_size(void) {
     return (current_config && current_config->target_arch == ARCH_64BIT) ? "qword" : "dword";
 }
 
+static const char* get_data_directive(void) __attribute__((unused));
 static const char* get_data_directive(void) {
     return (current_config && current_config->target_arch == ARCH_64BIT) ? "dq" : "dd";
 }
@@ -69,7 +71,7 @@ static const char* get_int_size_specifier(void) {
 }
 
 static const char* get_int_register_32bit(void) {
-    return (current_config && current_config->target_arch == ARCH_64BIT) ? "eax" : "eax";
+    return "eax";  // Always eax - this is specifically for 32-bit register operations
 }
 
 static void emit_stack_cleanup(FILE* out, int bytes) {
@@ -89,6 +91,7 @@ static void emit_stack_cleanup_with_comment(FILE* out, int bytes, const char* co
 }
 
 // 64-bit calling convention helper functions
+static const char* get_arg_register(int arg_index) __attribute__((unused));
 static const char* get_arg_register(int arg_index) {
     if (current_config && current_config->target_arch == ARCH_64BIT) {
         // System V AMD64 ABI - arguments passed in registers
@@ -143,8 +146,31 @@ static void emit_function_call_64bit(FILE *out, const char *func_name, ASTNode *
             return;
         }
         
-        // Generic handling for other functions (if needed)
+        // Generic handling for user-defined functions
+        // Push arguments in reverse order (right-to-left for standard calling convention)
+        for (int i = arg_count - 1; i >= 0; i--) {
+            ASTNode *arg = args[i];
+            emit_node(arg, out);
+            
+            // Check if this argument is a float type
+            if (is_float_type(arg)) {
+                // For float arguments, store from FPU stack to memory, then push
+                fprintf(out, "    sub rsp, 8\n");           // Reserve 8 bytes on stack for 64-bit
+                fprintf(out, "    fstp dword [rsp]  ; push float argument %d\n", i);
+            } else {
+                // For integer arguments, push the full register
+                fprintf(out, "    push rax  ; push argument %d (64-bit)\n", i);
+            }
+        }
+        
         fprintf(out, "    call %s\n", func_name);
+        
+        // Clean up stack (remove pushed arguments)
+        if (arg_count > 0) {
+            int cleanup_bytes = arg_count * 8;  // 8 bytes per argument in 64-bit
+            fprintf(out, "    add rsp, %d  ; clean up %d arguments (64-bit)\n", 
+                   cleanup_bytes, arg_count);
+        }
     }
 }
 
@@ -572,17 +598,18 @@ static void emit_int_var_load(const char *name, FILE *out) {
         if (strcmp(var_names[i], name) == 0 && var_types[i] == 0) {
             if (var_locations[i] == 1) {  // Stack-based
                 if (current_config && current_config->target_arch == ARCH_64BIT) {
-                    // In 64-bit mode, mov eax automatically zeros the upper 32 bits of rax
-                    fprintf(out, "    mov eax, %s [%s%d]  ; load %s (stack)\n", 
-                           get_int_size_specifier(), get_base_pointer(), var_offsets[i], name);
+                    // In 64-bit mode, use sign extension for signed integers
+                    fprintf(out, "    movsx %s, %s [%s%d]  ; load %s (stack, sign-extended)\n", 
+                           get_int_register(), get_int_size_specifier(), get_base_pointer(), var_offsets[i], name);
                 } else {
                     fprintf(out, "    mov %s, %s [%s%d]  ; load %s (stack)\n", 
                            get_int_register(), get_int_size_specifier(), get_base_pointer(), var_offsets[i], name);
                 }
             } else {  // Global
                 if (current_config && current_config->target_arch == ARCH_64BIT) {
-                    fprintf(out, "    mov eax, %s [int_var_%d]  ; load %s\n", 
-                           get_int_size_specifier(), var_indices[i], name);
+                    // In 64-bit mode, use sign extension for signed integers
+                    fprintf(out, "    movsx %s, %s [int_var_%d]  ; load %s (sign-extended)\n", 
+                           get_int_register(), get_int_size_specifier(), var_indices[i], name);
                 } else {
                     fprintf(out, "    mov %s, %s [int_var_%d]  ; load %s\n", 
                            get_int_register(), get_int_size_specifier(), var_indices[i], name);
@@ -903,8 +930,8 @@ static void emit_node(ASTNode *node, FILE *out) {
                         fprintf(out, "    fstp dword [float_var_%d]  ; store %s (global float)\n", 
                                var_idx, node->as.var_decl.name);
                     } else {
-                        // Value is in EAX, need to convert to float
-                        fprintf(out, "    mov [temp_int], eax\n");
+                        // Value is in architecture-appropriate register, need to convert to float
+                        fprintf(out, "    mov [temp_int], %s\n", get_int_register_32bit());
                         fprintf(out, "    fild dword [temp_int]  ; convert int to float\n");
                         fprintf(out, "    fstp dword [float_var_%d]  ; store %s (global float, converted)\n", 
                                var_idx, node->as.var_decl.name);
@@ -993,8 +1020,8 @@ static void emit_node(ASTNode *node, FILE *out) {
                                     fprintf(out, "    fstp dword [float_var_%d]  ; store %s (global float)\n", 
                                            var_indices[i], target_name);
                                 } else {
-                                    // Value is in EAX, need to convert to float
-                                    fprintf(out, "    mov [temp_int], eax\n");
+                                    // Value is in architecture-appropriate register, need to convert to float
+                                    fprintf(out, "    mov [temp_int], %s\n", get_int_register_32bit());
                                     fprintf(out, "    fild dword [temp_int]  ; convert int to float\n");
                                     fprintf(out, "    fstp dword [float_var_%d]  ; store %s (global float, converted)\n", 
                                            var_indices[i], target_name);
@@ -1035,8 +1062,8 @@ static void emit_node(ASTNode *node, FILE *out) {
                     fprintf(out, "    mov rax, %lld  ; i64 full precision\n", 
                            (long long)node->as.literal.as.i64_val);
                 } else {
-                    fprintf(out, "    mov eax, %lld  ; i64 truncated to 32-bit\n", 
-                           (long long)node->as.literal.as.i64_val);
+                    fprintf(out, "    mov %s, %lld  ; i64 truncated to 32-bit\n", 
+                           get_int_register(), (long long)node->as.literal.as.i64_val);
                 }
             } else if (node->as.literal.type == VALUE_U8) {
                 fprintf(out, "    %s %s, %u\n", get_mov_instruction(), get_int_register(), (unsigned int)node->as.literal.as.u8_val);
@@ -1050,8 +1077,8 @@ static void emit_node(ASTNode *node, FILE *out) {
                     fprintf(out, "    mov rax, %llu  ; u64 full precision\n", 
                            (unsigned long long)node->as.literal.as.u64_val);
                 } else {
-                    fprintf(out, "    mov eax, %llu  ; u64 truncated to 32-bit\n", 
-                           (unsigned long long)node->as.literal.as.u64_val);
+                    fprintf(out, "    mov %s, %llu  ; u64 truncated to 32-bit\n", 
+                           get_int_register(), (unsigned long long)node->as.literal.as.u64_val);
                 }
             } 
             // Handle new floating point types
@@ -1086,21 +1113,22 @@ static void emit_node(ASTNode *node, FILE *out) {
             // Handle string and character types
             else if (node->as.literal.type == VALUE_STR) {
                 int idx = find_or_add_string(node->as.literal.as.str_val);
-                fprintf(out, "    mov eax, msg_%d\n", idx);
+                fprintf(out, "    mov %s, msg_%d\n", get_int_register(), idx);
             } else if (node->as.literal.type == VALUE_CHAR) {
                 char c = node->as.literal.as.char_val;
+                const char* int_reg = get_int_register();
                 if (c == '\n') {
-                    fprintf(out, "    mov eax, %d  ; char newline\n", (int)c);
+                    fprintf(out, "    mov %s, %d  ; char newline\n", int_reg, (int)c);
                 } else if (c == '\t') {
-                    fprintf(out, "    mov eax, %d  ; char tab\n", (int)c);
+                    fprintf(out, "    mov %s, %d  ; char tab\n", int_reg, (int)c);
                 } else if (c == '\r') {
-                    fprintf(out, "    mov eax, %d  ; char carriage-return\n", (int)c);
+                    fprintf(out, "    mov %s, %d  ; char carriage-return\n", int_reg, (int)c);
                 } else if (c == '\0') {
-                    fprintf(out, "    mov eax, %d  ; char null\n", (int)c);
+                    fprintf(out, "    mov %s, %d  ; char null\n", int_reg, (int)c);
                 } else if (c >= 32 && c <= 126) {
-                    fprintf(out, "    mov eax, %d  ; char '%c'\n", (int)c, c);
+                    fprintf(out, "    mov %s, %d  ; char '%c'\n", int_reg, (int)c, c);
                 } else {
-                    fprintf(out, "    mov eax, %d  ; char (ASCII %d)\n", (int)c, (int)c);
+                    fprintf(out, "    mov %s, %d  ; char (ASCII %d)\n", int_reg, (int)c, (int)c);
                 }
             }
             // Legacy support
@@ -1125,12 +1153,15 @@ static void emit_node(ASTNode *node, FILE *out) {
                     }
                 } else {
                     // Treat as integer
-                    fprintf(out, "    mov eax, %d\n", node->as.literal.as.num_val.value.int_val);
+                    const char* int_reg = get_int_register();
+                    fprintf(out, "    mov %s, %d\n", int_reg, node->as.literal.as.num_val.value.int_val);
                 }
             } else if (node->as.literal.type == VALUE_INT) {
-                fprintf(out, "    mov eax, %d\n", node->as.literal.as.int_val);
+                const char* int_reg = get_int_register();
+                fprintf(out, "    mov %s, %d\n", int_reg, node->as.literal.as.int_val);
             } else if (node->as.literal.type == VALUE_BOOL) {
-                fprintf(out, "    mov eax, %d\n", node->as.literal.as.bool_val);
+                const char* int_reg = get_int_register();
+                fprintf(out, "    mov %s, %d\n", int_reg, node->as.literal.as.bool_val);
             }
             break;
 
@@ -1151,8 +1182,8 @@ static void emit_node(ASTNode *node, FILE *out) {
                     emit_node(left, out);   // Already puts value on FPU stack
                 } else {
                     // Convert integer to float
-                    emit_node(left, out);   // Puts value in EAX
-                    fprintf(out, "    mov [temp_int], eax\n");
+                    emit_node(left, out);   // Puts value in architecture-appropriate register
+                    fprintf(out, "    mov [temp_int], %s\n", get_int_register_32bit());
                     fprintf(out, "    fild dword [temp_int]  ; convert int to float\n");
                 }
                 
@@ -1161,8 +1192,8 @@ static void emit_node(ASTNode *node, FILE *out) {
                     emit_node(right, out);  // Already puts value on FPU stack
                 } else {
                     // Convert integer to float
-                    emit_node(right, out);  // Puts value in EAX
-                    fprintf(out, "    mov [temp_int], eax\n");
+                    emit_node(right, out);  // Puts value in architecture-appropriate register
+                    fprintf(out, "    mov [temp_int], %s\n", get_int_register_32bit());
                     fprintf(out, "    fild dword [temp_int]  ; convert int to float\n");
                 }
                 
@@ -1217,24 +1248,24 @@ static void emit_node(ASTNode *node, FILE *out) {
                     fprintf(out, "    imul %s, %s\n", get_int_register(), get_int_register_b());
                 } else if (strcmp(op, "/") == 0) {
                     if (current_config && current_config->target_arch == ARCH_64BIT) {
-                        fprintf(out, "    xor rdx, rdx\n");
+                        fprintf(out, "    cqo\n");           // Sign-extend RAX into RDX:RAX
                         fprintf(out, "    mov rcx, %s\n", get_int_register_b());
-                        fprintf(out, "    div rcx\n");
+                        fprintf(out, "    idiv rcx\n");      // Signed divide RDX:RAX by RCX
                     } else {
-                        fprintf(out, "    xor edx, edx\n");
+                        fprintf(out, "    cdq\n");           // Sign-extend EAX into EDX:EAX
                         fprintf(out, "    mov ecx, %s\n", get_int_register_b());
-                        fprintf(out, "    div ecx\n");
+                        fprintf(out, "    idiv ecx\n");      // Signed divide EDX:EAX by ECX
                     }
                 } else if (strcmp(op, "%") == 0) {
                     if (current_config && current_config->target_arch == ARCH_64BIT) {
-                        fprintf(out, "    xor rdx, rdx\n");  // Clear RDX for division
+                        fprintf(out, "    cqo\n");           // Sign-extend RAX into RDX:RAX
                         fprintf(out, "    mov rcx, %s\n", get_int_register_b());  // Move divisor to RCX
-                        fprintf(out, "    div rcx\n");       // Divide RAX by RCX, remainder in RDX
+                        fprintf(out, "    idiv rcx\n");      // Signed divide RDX:RAX by RCX, remainder in RDX
                         fprintf(out, "    mov rax, rdx\n");  // Move remainder to RAX
                     } else {
-                        fprintf(out, "    xor edx, edx\n");  // Clear EDX for division
+                        fprintf(out, "    cdq\n");           // Sign-extend EAX into EDX:EAX
                         fprintf(out, "    mov ecx, %s\n", get_int_register_b());  // Move divisor to ECX
-                        fprintf(out, "    div ecx\n");       // Divide EAX by ECX, remainder in EDX
+                        fprintf(out, "    idiv ecx\n");      // Signed divide EDX:EAX by ECX, remainder in EDX
                         fprintf(out, "    mov eax, edx\n");  // Move remainder to EAX
                     }
                 } else if (strcmp(op, "==") == 0) {
@@ -1321,13 +1352,21 @@ static void emit_node(ASTNode *node, FILE *out) {
                     }
                 } else if (strcmp(op, "^^") == 0) {
                     // Logical XOR: exactly one operand must be non-zero
-                    fprintf(out, "    test eax, eax\n");    // Test left operand
+                    fprintf(out, "    test %s, %s\n", get_int_register(), get_int_register());    // Test left operand
                     fprintf(out, "    setne al\n");         // Set AL = 1 if left != 0
-                    fprintf(out, "    movzx eax, al\n");    // Zero-extend to EAX
-                    fprintf(out, "    test ebx, ebx\n");    // Test right operand
-                    fprintf(out, "    setne bl\n");         // Set BL = 1 if right != 0
-                    fprintf(out, "    movzx ebx, bl\n");    // Zero-extend to EBX
-                    fprintf(out, "    xor eax, ebx\n");     // EAX = left ^^ right
+                    if (current_config && current_config->target_arch == ARCH_64BIT) {
+                        fprintf(out, "    movzx rax, al\n");    // Zero-extend to RAX
+                        fprintf(out, "    test %s, %s\n", get_int_register_b(), get_int_register_b());    // Test right operand
+                        fprintf(out, "    setne bl\n");         // Set BL = 1 if right != 0
+                        fprintf(out, "    movzx rbx, bl\n");    // Zero-extend to RBX
+                        fprintf(out, "    xor rax, rbx\n");     // RAX = left ^^ right
+                    } else {
+                        fprintf(out, "    movzx eax, al\n");    // Zero-extend to EAX
+                        fprintf(out, "    test %s, %s\n", get_int_register_b(), get_int_register_b());    // Test right operand
+                        fprintf(out, "    setne bl\n");         // Set BL = 1 if right != 0
+                        fprintf(out, "    movzx ebx, bl\n");    // Zero-extend to EBX
+                        fprintf(out, "    xor eax, ebx\n");     // EAX = left ^^ right
+                    }
                 } else {
                     fprintf(out, "; Unsupported binary operator: %s\n", op);
                 }
@@ -1466,11 +1505,11 @@ static void emit_node(ASTNode *node, FILE *out) {
                 emit_stack_cleanup(out, 4);
                 break;
             } else if (strcmp(node->as.func_call.name, "print_bool_numeric") == 0 && node->as.func_call.arg_count == 1) {
-                // Evaluate the argument and put result in eax
+                // Evaluate the argument and put result in architecture-appropriate register
                 emit_node(node->as.func_call.args[0], out);
-                fprintf(out, "    push eax\n");
+                fprintf(out, "    push %s\n", get_int_register());
                 fprintf(out, "    call print_bool_numeric\n");
-                fprintf(out, "    add esp, 4\n");
+                emit_stack_cleanup(out, 4);
                 break;
             } else if (strcmp(node->as.func_call.name, "read_bool_safe") == 0 && node->as.func_call.arg_count == 0) {
                 // Call read_bool_safe function (returns result in eax)
@@ -1487,11 +1526,20 @@ static void emit_node(ASTNode *node, FILE *out) {
                 // Check if this argument is a float type
                 if (is_float_type(arg)) {
                     // For float arguments, store from FPU stack to memory, then push
-                    fprintf(out, "    sub %s, 4\n", get_stack_pointer());           // Reserve space on stack
-                    fprintf(out, "    fstp dword [%s]  ; push float argument %d\n", get_stack_pointer(), i);
+                    if (current_config && current_config->target_arch == ARCH_64BIT) {
+                        fprintf(out, "    sub rsp, 8\n");           // Reserve 8 bytes on stack for 64-bit
+                        fprintf(out, "    fstp dword [rsp]  ; push float argument %d\n", i);
+                    } else {
+                        fprintf(out, "    sub esp, 4\n");           // Reserve 4 bytes on stack for 32-bit
+                        fprintf(out, "    fstp dword [esp]  ; push float argument %d\n", i);
+                    }
                 } else {
-                    // For integer arguments, push EAX
-                    fprintf(out, "    push %s  ; push argument %d\n", get_int_register(), i);
+                    // For integer arguments, push the full register
+                    if (current_config && current_config->target_arch == ARCH_64BIT) {
+                        fprintf(out, "    push rax  ; push argument %d (64-bit)\n", i);
+                    } else {
+                        fprintf(out, "    push eax  ; push argument %d (32-bit)\n", i);
+                    }
                 }
             }
             
@@ -1499,12 +1547,13 @@ static void emit_node(ASTNode *node, FILE *out) {
             
             // Clean up stack (remove pushed arguments)
             if (node->as.func_call.arg_count > 0) {
-                int cleanup_bytes = (int)(node->as.func_call.arg_count * 4);
                 if (current_config && current_config->target_arch == ARCH_64BIT) {
-                    fprintf(out, "    add rsp, %d  ; clean up %ld arguments\n", 
-                           cleanup_bytes * 2, node->as.func_call.arg_count);
+                    int cleanup_bytes = (int)(node->as.func_call.arg_count * 8);  // 8 bytes per argument in 64-bit
+                    fprintf(out, "    add rsp, %d  ; clean up %ld arguments (64-bit)\n", 
+                           cleanup_bytes, node->as.func_call.arg_count);
                 } else {
-                    fprintf(out, "    add esp, %d  ; clean up %ld arguments\n", 
+                    int cleanup_bytes = (int)(node->as.func_call.arg_count * 4);  // 4 bytes per argument in 32-bit
+                    fprintf(out, "    add esp, %d  ; clean up %ld arguments (32-bit)\n", 
                            cleanup_bytes, node->as.func_call.arg_count);
                 }
             }
@@ -1608,18 +1657,27 @@ static void emit_node(ASTNode *node, FILE *out) {
                     for (size_t i = 0; i < current_function->as.func_def.param_count; i++) {
                         if (strcmp(current_function->as.func_def.param_names[i], node->as.ident) == 0) {
                             // This is a function parameter - access it from stack
-                            // Parameters are at [ebp+8], [ebp+12], [ebp+16], etc.
-                            // (ebp+4 is return address, ebp+0 is saved ebp)
-                            int offset = 8 + (i * 4);
+                            // Parameters are at [rbp+16], [rbp+24], [rbp+32], etc. for 64-bit
+                            // Parameters are at [ebp+8], [ebp+12], [ebp+16], etc. for 32-bit
+                            // (bp+8/16 is return address, bp+0 is saved bp)
+                            int offset;
+                            const char* base_ptr = get_base_pointer();
+                            const char* int_reg = get_int_register();
+                            
+                            if (current_config && current_config->target_arch == ARCH_64BIT) {
+                                offset = 16 + (i * 8);  // 64-bit: 8-byte alignment
+                            } else {
+                                offset = 8 + (i * 4);   // 32-bit: 4-byte alignment
+                            }
                             
                             // Check if this parameter is a float type
                             if (current_function->as.func_def.param_types && 
                                 is_param_float_type(current_function->as.func_def.param_types[i])) {
-                                fprintf(out, "    fld dword [ebp+%d]  ; load float parameter %s\n", 
-                                       offset, node->as.ident);
+                                fprintf(out, "    fld dword [%s+%d]  ; load float parameter %s\n", 
+                                       base_ptr, offset, node->as.ident);
                             } else {
-                                fprintf(out, "    mov eax, [ebp+%d]  ; load parameter %s\n", 
-                                       offset, node->as.ident);
+                                fprintf(out, "    mov %s, [%s+%d]  ; load parameter %s\n", 
+                                       int_reg, base_ptr, offset, node->as.ident);
                             }
                             found = 1;
                             break;
@@ -1690,7 +1748,7 @@ static void emit_node(ASTNode *node, FILE *out) {
                 } else {
                     // Integer negation
                     emit_node(node->as.unary_op.expr, out);
-                    fprintf(out, "    neg eax\n");               // Two's complement negation
+                    fprintf(out, "    neg %s\n", get_int_register());  // Two's complement negation (architecture-aware)
                 }
             } else {
                 fprintf(out, "; Unsupported unary operator: %c\n", op);

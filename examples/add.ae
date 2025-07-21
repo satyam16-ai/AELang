@@ -1,4 +1,5 @@
 extern print(msg: str);
+extern print_i32(val: i32);
 
 func add(a: i32, b: i32): i32 {
     return a + b;
@@ -8,5 +9,5 @@ func main(): void {
     let x: i32 = 5;
     let y: i32 = 7;
     let sum: i32 = add(x, y);
-    print("Sum is 12");
+    print_i32(sum);
 }
