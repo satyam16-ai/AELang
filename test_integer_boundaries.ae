@@ -1,0 +1,69 @@
+extern print_int(val: i32);
+extern print_clean(msg: str);
+
+func main(): void {
+    print_clean("=== INTEGER BOUNDARY EDGE CASES ===\n");
+    
+    // Test maximum positive i32 value
+    let max_i32: i32 = 2147483647;
+    print_clean("Max i32 value: ");
+    print_int(max_i32);
+    print_clean("\n");
+    
+    // Test minimum negative i32 value  
+    let min_i32: i32 = -2147483648;
+    print_clean("Min i32 value: ");
+    print_int(min_i32);
+    print_clean("\n");
+    
+    // Test zero
+    let zero: i32 = 0;
+    print_clean("Zero: ");
+    print_int(zero);
+    print_clean("\n");
+    
+    // Test arithmetic near boundaries
+    let near_max: i32 = 2147483646;
+    let result1: i32 = near_max + 1;
+    print_clean("Near max + 1: ");
+    print_int(result1);
+    print_clean("\n");
+    
+    let near_min: i32 = -2147483647;
+    let result2: i32 = near_min - 1;
+    print_clean("Near min - 1: ");
+    print_int(result2);
+    print_clean("\n");
+    
+    // Test multiplication overflow scenarios
+    let large1: i32 = 46340;
+    let large2: i32 = 46341;
+    let mult_result: i32 = large1 * large2;
+    print_clean("Large multiplication: ");
+    print_int(mult_result);
+    print_clean("\n");
+    
+    // Test division edge cases (avoiding undefined behavior)
+    // Note: min_i32 / -1 causes overflow (undefined behavior), so we test a safer case
+    let div_test: i32 = min_i32 / 2;
+    print_clean("Min i32 / 2: ");
+    print_int(div_test);
+    print_clean("\n");
+    
+    // Test modulo edge cases
+    let mod_result1: i32 = -10 % 3;
+    print_clean("Negative modulo (-10 % 3): ");
+    print_int(mod_result1);
+    print_clean("\n");
+    
+    let mod_result2: i32 = 10 % -3;
+    print_clean("Positive mod negative (10 % -3): ");
+    print_int(mod_result2);
+    print_clean("\n");
+    
+    // Test powers of 2
+    let power_of_2: i32 = 1073741824; // 2^30
+    print_clean("2^30: ");
+    print_int(power_of_2);
+    print_clean("\n");
+}

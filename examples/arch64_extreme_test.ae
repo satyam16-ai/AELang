@@ -1,0 +1,227 @@
+// ÆLang 64-bit Architecture Extreme Edge Case Test
+// This test focuses on 64-bit precision and extreme values
+
+// Test 64-bit integer boundary values
+let max_i64: i64 = 9223372036854775807;  // Maximum i64 value
+let min_i64: i64 = -9223372036854775808; // Minimum i64 value
+let max_u64: u64 = 18446744073709551615; // Maximum u64 value
+
+// Test large intermediate values
+let big_i64: i64 = 1000000000000000000;  // 1 quintillion
+let huge_u64: u64 = 10000000000000000000; // 10 quintillion
+
+// Test 64-bit floating point precision limits
+let f64_max: f64 = 179769313486231570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.0;     // Near f64 maximum
+let f64_min: f64 = -179769313486231570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.0;    // Near f64 minimum
+let f64_tiny: f64 = 0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002225073858507201;   // Near f64 minimum positive
+let f64_epsilon: f64 = 0.0000000000000002220446049250313;  // f64 machine epsilon
+
+// Scientific notation extremes
+let scientific_large: f64 = 123456789012345000000000000000000000000000000000000000000000000000000000000000000000000000000000000.0;
+let scientific_small: f64 = 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000009876543210987654;
+
+// Test all integer sizes at their 64-bit context
+let extreme_i8: i8 = 127;
+let extreme_i16: i16 = 32767;
+let extreme_i32: i32 = 2147483647;
+let extreme_u8: u8 = 255;
+let extreme_u16: u16 = 65535;
+let extreme_u32: u32 = 4294967295;
+
+// Test precision comparison between f32 and f64
+let precision_f32: f32 = 0.123456789012345;
+let precision_f64: f64 = 0.123456789012345678901234567890;
+
+// Test character extremes with extended ASCII
+let ascii_low: char = '!';              // ASCII 33
+let ascii_mid: char = 'M';              // ASCII 77
+let ascii_high: char = '~';             // ASCII 126
+let ascii_zero: char = '0';             // ASCII 48
+let ascii_nine: char = '9';             // ASCII 57
+
+// Test long strings for 64-bit memory handling
+let long_str: str = "This is a very long string designed to test 64-bit string handling capabilities in ÆLang";
+let unicode_like_str: str = "åæøé üöä ñç";  // Extended characters
+let hex_str: str = "0x1234567890ABCDEF";     // Hexadecimal representation
+
+// Test boolean in 64-bit context
+let bool_true: bool = true;
+let bool_false: bool = false;
+
+// Print header for 64-bit test
+print_str("=== ÆLang 64-bit Architecture Extreme Edge Case Test ===");
+print_char('\n');
+
+// Test 64-bit integer extremes
+print_str("64-bit Integer Extremes:");
+print_char('\n');
+print_str("Max i64: ");
+print_i64(max_i64);
+print_char('\n');
+print_str("Min i64: ");
+print_i64(min_i64);
+print_char('\n');
+print_str("Max u64: ");
+print_u64(max_u64);
+print_char('\n');
+
+// Test large values
+print_str("\nLarge 64-bit Values:");
+print_char('\n');
+print_str("Big i64 (1 quintillion): ");
+print_i64(big_i64);
+print_char('\n');
+print_str("Huge u64 (10 quintillion): ");
+print_u64(huge_u64);
+print_char('\n');
+
+// Test all integer sizes in 64-bit context
+print_str("\nAll Integer Types at Maximum:");
+print_char('\n');
+print_str("Max i8: ");
+print_i8(extreme_i8);
+print_char('\n');
+print_str("Max i16: ");
+print_i16(extreme_i16);
+print_char('\n');
+print_str("Max i32: ");
+print_i32(extreme_i32);
+print_char('\n');
+print_str("Max u8: ");
+print_u8(extreme_u8);
+print_char('\n');
+print_str("Max u16: ");
+print_u16(extreme_u16);
+print_char('\n');
+print_str("Max u32: ");
+print_u32(extreme_u32);
+print_char('\n');
+
+// Test 64-bit float extremes
+print_str("\n64-bit Float Extremes:");
+print_char('\n');
+print_str("f64 max: ");
+print_f64(f64_max);
+print_char('\n');
+print_str("f64 min: ");
+print_f64(f64_min);
+print_char('\n');
+print_str("f64 tiny: ");
+print_f64(f64_tiny);
+print_char('\n');
+print_str("f64 epsilon: ");
+print_f64(f64_epsilon);
+print_char('\n');
+
+// Test scientific notation
+print_str("\nScientific Notation Extremes:");
+print_char('\n');
+print_str("Large scientific: ");
+print_f64(scientific_large);
+print_char('\n');
+print_str("Small scientific: ");
+print_f64(scientific_small);
+print_char('\n');
+
+// Test precision comparison
+print_str("\nPrecision Comparison:");
+print_char('\n');
+print_str("f32 precision: ");
+print_f32(precision_f32);
+print_char('\n');
+print_str("f64 precision: ");
+print_f64(precision_f64);
+print_char('\n');
+
+// Test character range
+print_str("\nCharacter Range Test:");
+print_char('\n');
+print_str("ASCII low (!): [");
+print_char(ascii_low);
+print_str("]");
+print_char('\n');
+print_str("ASCII mid (M): [");
+print_char(ascii_mid);
+print_str("]");
+print_char('\n');
+print_str("ASCII high (~): [");
+print_char(ascii_high);
+print_str("]");
+print_char('\n');
+print_str("ASCII zero (0): [");
+print_char(ascii_zero);
+print_str("]");
+print_char('\n');
+print_str("ASCII nine (9): [");
+print_char(ascii_nine);
+print_str("]");
+print_char('\n');
+
+// Test long string handling
+print_str("\n64-bit String Handling:");
+print_char('\n');
+print_str("Long string: ");
+print_str(long_str);
+print_char('\n');
+print_str("Unicode-like: ");
+print_str(unicode_like_str);
+print_char('\n');
+print_str("Hex string: ");
+print_str(hex_str);
+print_char('\n');
+
+// Test boolean in 64-bit
+print_str("\n64-bit Boolean Values:");
+print_char('\n');
+print_str("True: ");
+print_bool(bool_true);
+print_char('\n');
+print_str("False: ");
+print_bool(bool_false);
+print_char('\n');
+
+// Test extreme arithmetic operations
+print_str("\n64-bit Arithmetic Edge Cases:");
+print_char('\n');
+
+// Large number arithmetic
+let arithmetic_large: i64 = 9000000000000000000;
+print_str("Very large i64: ");
+print_i64(arithmetic_large);
+print_char('\n');
+
+// Unsigned large arithmetic
+let arithmetic_u64: u64 = 18000000000000000000;
+print_str("Very large u64: ");
+print_u64(arithmetic_u64);
+print_char('\n');
+
+// High precision float
+let high_precision: f64 = 3.141592653589793238462643383279;
+print_str("High precision pi: ");
+print_f64(high_precision);
+print_char('\n');
+
+// Memory boundary test with different sizes
+print_str("\nMemory Boundary Tests:");
+print_char('\n');
+let boundary_i8: i8 = 127;
+let boundary_i16: i16 = 32767;  
+let boundary_i32: i32 = 2147483647;
+let boundary_i64: i64 = 9223372036854775807;
+
+print_str("i8 boundary: ");
+print_i8(boundary_i8);
+print_char('\n');
+print_str("i16 boundary: ");
+print_i16(boundary_i16);
+print_char('\n');
+print_str("i32 boundary: ");
+print_i32(boundary_i32);
+print_char('\n');
+print_str("i64 boundary: ");
+print_i64(boundary_i64);
+print_char('\n');
+
+print_str("\n=== 64-bit Architecture Test Complete ===");
+print_char('\n');

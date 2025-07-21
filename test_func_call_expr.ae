@@ -1,0 +1,11 @@
+extern print_int(val: i32);
+
+func add_one(x: i32): i32 {
+    return x + 1;
+}
+
+func main(): void {
+    let n: i32 = 5;
+    let result: i32 = add_one(n - 1);
+    print_int(result);
+}

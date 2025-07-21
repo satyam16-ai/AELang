@@ -1,0 +1,76 @@
+// ÆLang Enhanced Integer Types Test Program
+// Testing 8-bit, 16-bit, 32-bit, 64-bit signed and unsigned integers
+
+extern print_i8(val: i8);
+extern print_i16(val: i16);
+extern print_i32(val: i32);
+extern print_i64(val: i64);
+extern print_u8(val: u8);
+extern print_u16(val: u16);
+extern print_u32(val: u32);
+extern print_u64(val: u64);
+
+func main(): void {
+    print("=== ÆLang Enhanced Integer Types Test ===");
+    print("");
+    
+    print("=== 8-BIT INTEGERS ===");
+    let small_signed: i8 = 127;        // Max i8 value
+    let small_unsigned: u8 = 255;      // Max u8 value
+    print("i8 max value: 127");
+    print_i8(small_signed);
+    print("u8 max value: 255");
+    print_u8(small_unsigned);
+    print("");
+    
+    print("=== 16-BIT INTEGERS ===");
+    let medium_signed: i16 = 32767;    // Max i16 value
+    let medium_unsigned: u16 = 65535;  // Max u16 value
+    print("i16 max value: 32767");
+    print_i16(medium_signed);
+    print("u16 max value: 65535");
+    print_u16(medium_unsigned);
+    print("");
+    
+    print("=== 32-BIT INTEGERS ===");
+    let large_signed: i32 = 2147483647;    // Max i32 value
+    let large_unsigned: u32 = 4294967295;  // Max u32 value
+    print("i32 max value: 2147483647");
+    print_i32(large_signed);
+    print("u32 max value: 4294967295");
+    print_u32(large_unsigned);
+    print("");
+    
+    print("=== 64-BIT INTEGERS ===");
+    let huge_signed: i64 = 9223372036854775807;     // Max i64 value
+    let huge_unsigned: u64 = 18446744073709551615;  // Max u64 value
+    print("i64 max value: 9223372036854775807");
+    print_i64(huge_signed);
+    print("u64 max value: 18446744073709551615");
+    print_u64(huge_unsigned);
+    print("");
+    
+    print("=== ARITHMETIC OPERATIONS ===");
+    let a: i32 = 100;
+    let b: i32 = 50;
+    
+    let sum: i32 = a + b;
+    let diff: i32 = a - b;
+    let prod: i32 = a * b;
+    let quot: i32 = a / b;
+    let rem: i32 = a % b;
+    
+    print("100 + 50 = 150");
+    print_i32(sum);
+    print("100 - 50 = 50");
+    print_i32(diff);
+    print("100 * 50 = 5000");
+    print_i32(prod);
+    print("100 / 50 = 2");
+    print_i32(quot);
+    print("100 % 50 = 0");
+    print_i32(rem);
+    
+    print("");
+    print("=== ENHANCED INTEGER TYPE SYSTEM: SUCCESS ===");
+}

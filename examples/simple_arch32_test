@@ -1,0 +1,168 @@
+; Generated NASM by ÆLang Compiler
+section .rodata
+    align 4
+msg_0 db "32-bit test",0
+msg_1 db "=== Simple 32-bit Architecture Test ===",0
+msg_2 db "Max i32: ",0
+msg_3 db "Max u32: ",0
+msg_4 db "f32 value: ",0
+msg_5 db "Character: ",0
+msg_6 db "String: ",0
+msg_7 db "Boolean: ",0
+msg_8 db "=== 32-bit Test Complete ===",0
+float_0: dd 0x42f6e979  ; 123.456001
+fmt_float: db "%f", 10, 0
+
+section .bss
+    align 4
+    temp_int: resd 1  ; temporary for int to float conversion
+
+section .text
+    global main
+    extern printf
+    extern print
+    extern read_int
+    extern read_float
+    extern read_num
+    extern read_num_safe
+    extern print_num
+    extern print_clean
+    extern print_num_precision
+    extern print_num_scientific
+    extern print_currency
+    extern print_percentage
+    extern print_num_engineering
+    extern print_hex
+    extern read_num_validated
+    extern read_num_with_prompt
+    extern read_positive_num
+    extern read_integer_only
+    extern print_i8
+    extern print_i16
+    extern print_i32
+    extern print_i64
+    extern print_u8
+    extern print_u16
+    extern print_u32
+    extern print_u64
+    extern print_f32
+    extern print_f64
+    extern print_str
+    extern print_char
+    extern print_bool
+
+; CODEGEN TEST MARKER: emitting function main
+main:
+    push ebp
+    mov ebp, esp
+    sub esp, 32  ; allocate space for 6 local variables
+; let test_i32:i32 = 2147483647
+    mov eax, 2147483647
+    mov [ebp-4], eax  ; store test_i32 (local int)
+; let test_u32:u32 = -1
+    mov eax, -1
+    mov [ebp-8], eax  ; store test_u32 (local int)
+; let test_f32:f32 = 0.000000
+; Error: f32 constant not found
+    fstp dword [ebp-12]  ; store test_f32 (local float)
+; let test_char:char = 'A'
+    mov eax, 65  ; char 'A'
+    mov [ebp-16], eax  ; store test_char (local int)
+; let test_str:str = "32-bit test"
+    mov eax, msg_0
+    mov [ebp-20], eax  ; store test_str (local int)
+; let test_bool:bool = 1
+    mov eax, 1
+    mov [ebp-24], eax  ; store test_bool (local int)
+    mov eax, msg_1
+    push eax  ; push argument 0
+    call print_str
+    add esp, 4  ; clean up 1 arguments
+    mov eax, 10  ; char newline
+    push eax  ; push argument 0
+    call print_char
+    add esp, 4  ; clean up 1 arguments
+    mov eax, msg_2
+    push eax  ; push argument 0
+    call print_str
+    add esp, 4  ; clean up 1 arguments
+    mov eax, [ebp-4]  ; load test_i32 (stack)
+    push eax  ; push argument 0
+    call print_i32
+    add esp, 4  ; clean up 1 arguments
+    mov eax, 10  ; char newline
+    push eax  ; push argument 0
+    call print_char
+    add esp, 4  ; clean up 1 arguments
+    mov eax, msg_3
+    push eax  ; push argument 0
+    call print_str
+    add esp, 4  ; clean up 1 arguments
+    mov eax, [ebp-8]  ; load test_u32 (stack)
+    push eax  ; push argument 0
+    call print_u32
+    add esp, 4  ; clean up 1 arguments
+    mov eax, 10  ; char newline
+    push eax  ; push argument 0
+    call print_char
+    add esp, 4  ; clean up 1 arguments
+    mov eax, msg_4
+    push eax  ; push argument 0
+    call print_str
+    add esp, 4  ; clean up 1 arguments
+    fld dword [ebp-12]  ; load test_f32 (stack)
+    sub esp, 4
+    fstp dword [esp]  ; push float argument 0
+    call print_f32
+    add esp, 4  ; clean up 1 arguments
+    mov eax, 10  ; char newline
+    push eax  ; push argument 0
+    call print_char
+    add esp, 4  ; clean up 1 arguments
+    mov eax, msg_5
+    push eax  ; push argument 0
+    call print_str
+    add esp, 4  ; clean up 1 arguments
+    mov eax, [ebp-16]  ; load test_char (stack)
+    push eax  ; push argument 0
+    call print_char
+    add esp, 4  ; clean up 1 arguments
+    mov eax, 10  ; char newline
+    push eax  ; push argument 0
+    call print_char
+    add esp, 4  ; clean up 1 arguments
+    mov eax, msg_6
+    push eax  ; push argument 0
+    call print_str
+    add esp, 4  ; clean up 1 arguments
+    mov eax, [ebp-20]  ; load test_str (stack)
+    push eax  ; push argument 0
+    call print_str
+    add esp, 4  ; clean up 1 arguments
+    mov eax, 10  ; char newline
+    push eax  ; push argument 0
+    call print_char
+    add esp, 4  ; clean up 1 arguments
+    mov eax, msg_7
+    push eax  ; push argument 0
+    call print_str
+    add esp, 4  ; clean up 1 arguments
+    mov eax, [ebp-24]  ; load test_bool (stack)
+    push eax
+    call print_bool
+    add esp, 4
+    mov eax, 10  ; char newline
+    push eax  ; push argument 0
+    call print_char
+    add esp, 4  ; clean up 1 arguments
+    mov eax, msg_8
+    push eax  ; push argument 0
+    call print_str
+    add esp, 4  ; clean up 1 arguments
+    mov eax, 10  ; char newline
+    push eax  ; push argument 0
+    call print_char
+    add esp, 4  ; clean up 1 arguments
+    mov esp, ebp  ; restore stack pointer
+    pop ebp
+    ret

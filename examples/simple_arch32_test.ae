@@ -1,0 +1,40 @@
+// Simple 32-bit Architecture Test
+
+func main(): void {
+    let test_i32: i32 = 2147483647;          // Max i32 value
+    let test_u32: u32 = 4294967295;          // Max u32 value  
+    let test_f32: f32 = 123.456;             // Simple f32 value
+    let test_char: char = 'A';               // Character test
+    let test_str: str = "32-bit test";       // String test
+    let test_bool: bool = true;              // Boolean test
+
+    print_str("=== Simple 32-bit Architecture Test ===");
+    print_char('\n');
+
+    print_str("Max i32: ");
+    print_i32(test_i32);
+    print_char('\n');
+
+    print_str("Max u32: ");
+    print_u32(test_u32);
+    print_char('\n');
+
+    print_str("f32 value: ");
+    print_f32(test_f32);
+    print_char('\n');
+
+    print_str("Character: ");
+    print_char(test_char);
+    print_char('\n');
+
+    print_str("String: ");
+    print_str(test_str);
+    print_char('\n');
+
+    print_str("Boolean: ");
+    print_bool(test_bool);
+    print_char('\n');
+
+    print_str("=== 32-bit Test Complete ===");
+    print_char('\n');
+}

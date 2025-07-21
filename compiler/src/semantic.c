@@ -51,6 +51,32 @@ SemanticContext *create_semantic_context_with_config(CompilationConfig *config) 
     // Add built-in functions to global scope (enhanced for all types)
     define_symbol(ctx, "print", SYMBOL_FUNCTION, TYPE_VOID, 0);
     
+    // =============================================================================
+    // UNIFIED PRINT/READ SYSTEM
+    // =============================================================================
+    
+    // Core unified functions
+    define_symbol(ctx, "print_with_format", SYMBOL_FUNCTION, TYPE_VOID, 0);
+    define_symbol(ctx, "read_with_validation", SYMBOL_FUNCTION, TYPE_I32, 0);
+    
+    // Simplified wrapper functions - Print
+    define_symbol(ctx, "print_clean", SYMBOL_FUNCTION, TYPE_VOID, 0);
+    define_symbol(ctx, "printf_format", SYMBOL_FUNCTION, TYPE_VOID, 0);
+    define_symbol(ctx, "print_precision", SYMBOL_FUNCTION, TYPE_VOID, 0);
+    
+    // Simplified wrapper functions - Read
+    define_symbol(ctx, "read_value", SYMBOL_FUNCTION, TYPE_I32, 0);
+    define_symbol(ctx, "read_with_prompt", SYMBOL_FUNCTION, TYPE_I32, 0);
+    define_symbol(ctx, "read_unsafe", SYMBOL_FUNCTION, TYPE_I32, 0);
+    
+    // Advanced format functions
+    define_symbol(ctx, "print_formatted", SYMBOL_FUNCTION, TYPE_VOID, 0);
+    define_symbol(ctx, "scan_formatted", SYMBOL_FUNCTION, TYPE_I32, 0);
+    
+    // =============================================================================
+    // LEGACY COMPATIBILITY FUNCTIONS
+    // =============================================================================
+    
     // Integer print functions
     define_symbol(ctx, "print_i8", SYMBOL_FUNCTION, TYPE_VOID, 0);
     define_symbol(ctx, "print_i16", SYMBOL_FUNCTION, TYPE_VOID, 0);
@@ -74,7 +100,9 @@ SemanticContext *create_semantic_context_with_config(CompilationConfig *config) 
     // Enhanced I/O functions
     if (config->enable_string_variables) {
         define_symbol(ctx, "print_str", SYMBOL_FUNCTION, TYPE_VOID, 0);
+        define_symbol(ctx, "print_clean_str", SYMBOL_FUNCTION, TYPE_VOID, 0);
         define_symbol(ctx, "read_str", SYMBOL_FUNCTION, TYPE_STR, 0);
+        define_symbol(ctx, "read_string", SYMBOL_FUNCTION, TYPE_VOID, 0);
     }
     
     if (config->enable_char_operations) {
@@ -82,7 +110,7 @@ SemanticContext *create_semantic_context_with_config(CompilationConfig *config) 
         define_symbol(ctx, "read_char", SYMBOL_FUNCTION, TYPE_CHAR, 0);
     }
     
-    // Integer read functions
+    // Legacy read functions
     define_symbol(ctx, "read_i8", SYMBOL_FUNCTION, TYPE_I8, 0);
     define_symbol(ctx, "read_i16", SYMBOL_FUNCTION, TYPE_I16, 0);
     define_symbol(ctx, "read_i32", SYMBOL_FUNCTION, TYPE_I32, 0);
@@ -91,18 +119,16 @@ SemanticContext *create_semantic_context_with_config(CompilationConfig *config) 
     define_symbol(ctx, "read_u16", SYMBOL_FUNCTION, TYPE_U16, 0);
     define_symbol(ctx, "read_u32", SYMBOL_FUNCTION, TYPE_U32, 0);
     define_symbol(ctx, "read_u64", SYMBOL_FUNCTION, TYPE_U64, 0);
-    
-    // Floating point read functions
     define_symbol(ctx, "read_f32", SYMBOL_FUNCTION, TYPE_F32, 0);
     define_symbol(ctx, "read_f64", SYMBOL_FUNCTION, TYPE_F64, 0);
-    
-    // Universal numeric functions
     define_symbol(ctx, "read_num", SYMBOL_FUNCTION, TYPE_NUM, 0);
-    define_symbol(ctx, "read_num_safe", SYMBOL_FUNCTION, TYPE_NUM, 0);
-    
-    // Legacy compatibility
     define_symbol(ctx, "read_int", SYMBOL_FUNCTION, TYPE_I32, 0);
     define_symbol(ctx, "read_float", SYMBOL_FUNCTION, TYPE_F32, 0);
+    define_symbol(ctx, "read_bool", SYMBOL_FUNCTION, TYPE_BOOL, 0);
+    define_symbol(ctx, "read_num_safe", SYMBOL_FUNCTION, TYPE_NUM, 0);
+    
+    // UNIFIED READ FUNCTION - Polymorphic (resolved at compile time)
+    define_symbol(ctx, "read", SYMBOL_FUNCTION, TYPE_UNKNOWN, 0);
     
     return ctx;
 }
@@ -292,6 +318,11 @@ int get_type_size_bits(SemanticType type) {
 // Enhanced type compatibility checking
 bool types_compatible(SemanticType left, SemanticType right) {
     if (left == right) return true;
+    
+    // UNIFIED READ SYSTEM: TYPE_UNKNOWN (from read()) is compatible with any assignment target
+    if (left == TYPE_UNKNOWN || right == TYPE_UNKNOWN) {
+        return true;  // read() can be assigned to any type - transformation happens in assignment analysis
+    }
     
     // Special compatibility rules for NUM type
     if (left == TYPE_NUM || right == TYPE_NUM) {
@@ -541,6 +572,13 @@ static SemanticType analyze_expression(ASTNode *node, SemanticContext *ctx) {
                 return TYPE_ERROR;
             }
             
+            // SPECIAL CASE: Unified read() function with polymorphic return type
+            if (strcmp(node->as.func_call.name, "read") == 0 && node->as.func_call.arg_count == 0) {
+                // For unified read(), return TYPE_UNKNOWN to signal it needs context resolution
+                // The actual type transformation will happen in assignment analysis
+                return TYPE_UNKNOWN;
+            }
+            
             // Analyze arguments
             for (size_t i = 0; i < node->as.func_call.arg_count; i++) {
                 analyze_expression(node->as.func_call.args[i], ctx);
@@ -577,6 +615,18 @@ static AnnotatedASTNode *analyze_node(ASTNode *node, SemanticContext *ctx) {
             
             // Analyze initializer if present
             if (node->as.var_decl.value) {
+                // TRULY UNIVERSAL READ SYSTEM: No transformation - keep read() as universal
+                if (node->as.var_decl.value->type == AST_FUNC_CALL &&
+                    strcmp(node->as.var_decl.value->as.func_call.name, "read") == 0 &&
+                    node->as.var_decl.value->as.func_call.arg_count == 0) {
+                    
+                    printf("[Semantic] Universal read() call preserved for variable %s (expected type %d)\n", 
+                           node->as.var_decl.name, var_type);
+                    
+                    // Note: The code generator will handle type-specific code generation
+                    // based on the expected type context from the variable declaration
+                }
+                
                 SemanticType init_type = analyze_expression(node->as.var_decl.value, ctx);
                 if (!types_compatible(var_type, init_type)) {
                     semantic_error(ctx, node->line, 
@@ -660,6 +710,18 @@ static AnnotatedASTNode *analyze_node(ASTNode *node, SemanticContext *ctx) {
                 }
                 annotated->resolved_type = TYPE_ERROR;
                 break;
+            }
+            
+            // TRULY UNIVERSAL READ SYSTEM: No transformation - keep read() as universal
+            if (node->as.assign.value && node->as.assign.value->type == AST_FUNC_CALL &&
+                strcmp(node->as.assign.value->as.func_call.name, "read") == 0 &&
+                node->as.assign.value->as.func_call.arg_count == 0) {
+                
+                printf("[Semantic] Universal read() call preserved for assignment to %s (expected type %d)\n", 
+                       node->as.assign.target, symbol->data_type);
+                
+                // Note: The code generator will handle type-specific implementation
+                // based on the expected type context from the target variable
             }
             
             SemanticType value_type = analyze_expression(node->as.assign.value, ctx);

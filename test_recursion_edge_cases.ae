@@ -1,0 +1,68 @@
+extern print_int(val: i32);
+extern print_clean(msg: str);
+
+func deep_recursion(n: i32, depth: i32): i32 {
+    if depth <= 0 {
+        return n;
+    } else {
+        return deep_recursion(n + 1, depth - 1);
+    }
+}
+
+func mutual_recursion_a(n: i32): i32 {
+    if n <= 0 {
+        return 0;
+    } else {
+        return mutual_recursion_b(n - 1) + 1;
+    }
+}
+
+func mutual_recursion_b(n: i32): i32 {
+    if n <= 0 {
+        return 0;
+    } else {
+        return mutual_recursion_a(n - 1) + 2;
+    }
+}
+
+func fibonacci(n: i32): i32 {
+    if n <= 1 {
+        return n;
+    } else {
+        return fibonacci(n - 1) + fibonacci(n - 2);
+    }
+}
+
+func main(): void {
+    print_clean("=== RECURSION EDGE CASES ===\n");
+    
+    print_clean("Deep recursion (100 levels): ");
+    let deep_result: i32 = deep_recursion(0, 100);
+    print_int(deep_result);
+    print_clean("\n");
+    
+    print_clean("Mutual recursion A(5): ");
+    let mutual_a: i32 = mutual_recursion_a(5);
+    print_int(mutual_a);
+    print_clean("\n");
+    
+    print_clean("Mutual recursion B(5): ");
+    let mutual_b: i32 = mutual_recursion_b(5);
+    print_int(mutual_b);
+    print_clean("\n");
+    
+    print_clean("Fibonacci(8): ");
+    let fib_result: i32 = fibonacci(8);
+    print_int(fib_result);
+    print_clean("\n");
+    
+    print_clean("Edge case: fibonacci(0): ");
+    let fib_zero: i32 = fibonacci(0);
+    print_int(fib_zero);
+    print_clean("\n");
+    
+    print_clean("Edge case: fibonacci(1): ");
+    let fib_one: i32 = fibonacci(1);
+    print_int(fib_one);
+    print_clean("\n");
+}

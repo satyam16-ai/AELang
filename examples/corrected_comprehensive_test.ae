@@ -1,0 +1,299 @@
+// Comprehensive Test Suite for ÆLang - Corrected Syntax
+// Testing core features on both 32-bit and 64-bit architectures
+// Author: AI Assistant
+// Date: 2025-07-20
+
+extern print(msg: str);
+extern print_int(val: i32);
+extern print_num(val: f32);
+
+func test_basic_integers(): i32 {
+    print("=== BASIC INTEGER TESTS ===");
+    
+    let a: i32 = 42;
+    let b: i32 = 24;
+    
+    print("Addition (42 + 24):");
+    let sum: i32 = a + b;
+    print_int(sum);
+    
+    print("Subtraction (42 - 24):");
+    let diff: i32 = a - b;
+    print_int(diff);
+    
+    print("Multiplication (42 * 24):");
+    let prod: i32 = a * b;
+    print_int(prod);
+    
+    print("Division (42 / 2):");
+    let quotient: i32 = a / 2;
+    print_int(quotient);
+    
+    return sum;
+}
+
+func test_basic_floats(): f32 {
+    print("=== BASIC FLOAT TESTS ===");
+    
+    let x: f32 = 3.14;
+    let y: f32 = 2.71;
+    
+    print("Float addition (3.14 + 2.71):");
+    let sum: f32 = x + y;
+    print_num(sum);
+    
+    print("Float subtraction (3.14 - 2.71):");
+    let diff: f32 = x - y;
+    print_num(diff);
+    
+    print("Float multiplication (3.14 * 2.71):");
+    let prod: f32 = x * y;
+    print_num(prod);
+    
+    print("Float division (3.14 / 2.0):");
+    let quotient: f32 = x / 2.0;
+    print_num(quotient);
+    
+    return sum;
+}
+
+func test_comparisons(): bool {
+    print("=== COMPARISON TESTS ===");
+    
+    let a: i32 = 10;
+    let b: i32 = 20;
+    
+    print("10 == 10:");
+    print_int(a == 10);
+    
+    print("10 != 20:");
+    print_int(a != b);
+    
+    print("10 < 20:");
+    print_int(a < b);
+    
+    print("20 > 10:");
+    print_int(b > a);
+    
+    print("10 <= 10:");
+    print_int(a <= a);
+    
+    print("20 >= 20:");
+    print_int(b >= b);
+    
+    return true;
+}
+
+func test_logical_operations(): bool {
+    print("=== LOGICAL TESTS ===");
+    
+    let t: bool = true;
+    let f: bool = false;
+    
+    print("true && true:");
+    print_int(t && t);
+    
+    print("true && false:");
+    print_int(t && f);
+    
+    print("true || false:");
+    print_int(t || f);
+    
+    print("false || false:");
+    print_int(f || f);
+    
+    print("!true:");
+    print_int(!t);
+    
+    print("!false:");
+    print_int(!f);
+    
+    return true;
+}
+
+func test_control_flow(): i32 {
+    print("=== CONTROL FLOW TESTS ===");
+    
+    let result: i32 = 0;
+    let x: i32 = 15;
+    
+    if x > 10 {
+        print("x is greater than 10");
+        result = result + 1;
+    }
+    
+    if x < 5 {
+        print("x is less than 5 (should not print)");
+        result = result + 100;
+    } else {
+        print("x is not less than 5");
+        result = result + 2;
+    }
+    
+    let y: i32 = 0;
+    if y {
+        print("y is true (should not print)");
+    } else {
+        print("y is false (zero)");
+        result = result + 4;
+    }
+    
+    return result;
+}
+
+func factorial(n: i32): i32 {
+    if n <= 1 {
+        return 1;
+    } else {
+        return n * factorial(n - 1);
+    }
+}
+
+func test_recursion(): i32 {
+    print("=== RECURSION TESTS ===");
+    
+    print("Factorial of 5:");
+    let fact5: i32 = factorial(5);
+    print_int(fact5);
+    
+    print("Factorial of 6:");
+    let fact6: i32 = factorial(6);
+    print_int(fact6);
+    
+    print("Factorial of 0:");
+    let fact0: i32 = factorial(0);
+    print_int(fact0);
+    
+    return fact5 + fact6;
+}
+
+func test_variables(): i32 {
+    print("=== VARIABLE TESTS ===");
+    
+    let local1: i32 = 100;
+    let local2: i32 = 200;
+    let local3: f32 = 3.5;
+    let local4: f32 = 7.2;
+    
+    print("Local integer sum:");
+    let int_sum: i32 = local1 + local2;
+    print_int(int_sum);
+    
+    print("Local float sum:");
+    let float_sum: f32 = local3 + local4;
+    print_num(float_sum);
+    
+    return int_sum;
+}
+
+func test_expressions(): i32 {
+    print("=== EXPRESSION TESTS ===");
+    
+    let a: i32 = 2;
+    let b: i32 = 3;
+    let c: i32 = 4;
+    
+    print("2 + 3 * 4 (should be 14):");
+    let expr1: i32 = a + b * c;
+    print_int(expr1);
+    
+    print("(2 + 3) * 4 (should be 20):");
+    let expr2: i32 = (a + b) * c;
+    print_int(expr2);
+    
+    print("2 * 3 + 4 (should be 10):");
+    let expr3: i32 = a * b + c;
+    print_int(expr3);
+    
+    return expr1 + expr2 + expr3;
+}
+
+func test_edge_cases(): i32 {
+    print("=== EDGE CASE TESTS ===");
+    
+    print("Max i32:");
+    let max_int: i32 = 2147483647;
+    print_int(max_int);
+    
+    print("Min i32:");
+    let min_int: i32 = -2147483648;
+    print_int(min_int);
+    
+    print("Zero:");
+    let zero: i32 = 0;
+    print_int(zero);
+    
+    print("Large float:");
+    let big_float: f32 = 999999.5;
+    print_num(big_float);
+    
+    print("Small float:");
+    let tiny_float: f32 = 0.000001;
+    print_num(tiny_float);
+    
+    return 42;
+}
+
+func test_mixed_arithmetic(): f32 {
+    print("=== MIXED ARITHMETIC TESTS ===");
+    
+    print("Integer to float conversion:");
+    let int_val: i32 = 42;
+    let float_result: f32 = 42.0 + 3.14;
+    print_num(float_result);
+    
+    print("Float operations:");
+    let x: f32 = 10.5;
+    let y: f32 = 2.5;
+    let mixed_sum: f32 = x + y;
+    print_num(mixed_sum);
+    
+    return mixed_sum;
+}
+
+func main(): void{
+    print("=======================================================");
+    print("        COMPREHENSIVE TEST SUITE FOR ÆLANG");
+    print("                Architecture Test");
+    print("=======================================================");
+    
+    let r1: i32 = test_basic_integers();
+    let r2: f32 = test_basic_floats();
+    let r3: bool = test_comparisons();
+    let r4: bool = test_logical_operations();
+    let r5: i32 = test_control_flow();
+    let r6: i32 = test_recursion();
+    let r7: i32 = test_variables();
+    let r8: i32 = test_expressions();
+    let r9: i32 = test_edge_cases();
+    let r10: f32 = test_mixed_arithmetic();
+    
+    print("=======================================================");
+    print("                  TEST SUMMARY");
+    print("=======================================================");
+    
+    print("Integer result:");
+    print_int(r1);
+    print("Float result:");
+    print_num(r2);
+    print("Comparison result:");
+    print_int(r3);
+    print("Logical result:");
+    print_int(r4);
+    print("Control flow result:");
+    print_int(r5);
+    print("Recursion result:");
+    print_int(r6);
+    print("Variable result:");
+    print_int(r7);
+    print("Expression result:");
+    print_int(r8);
+    print("Edge case result:");
+    print_int(r9);
+    print("Mixed arithmetic result:");
+    print_num(r10);
+    
+    print("🎯 COMPREHENSIVE TEST SUITE COMPLETED!");
+    print("=======================================================");
+    
+}

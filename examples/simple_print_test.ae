@@ -1,0 +1,9 @@
+extern print(msg:str);
+extern print_int(value:i32);
+
+fn main() {
+    print("Simple test");
+    let x = 42;
+    print_int(x);
+    print("Done");
+}

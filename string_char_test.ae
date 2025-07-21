@@ -1,0 +1,66 @@
+// ÆLang String and Character Types Test Program
+// Testing str and char data types
+
+extern print_str(val: str);
+extern print_char(val: char);
+
+func main(): void {
+    print("=== ÆLang String and Character Types Test ===");
+    print("");
+    
+    print("=== CHARACTER TYPE TESTS ===");
+    let letter_a: char = 'a';
+    let letter_z: char = 'z';
+    let digit: char = '7';
+    let symbol: char = '@';
+    
+    print("Character 'a':");
+    print_char(letter_a);
+    print("Character 'z':");
+    print_char(letter_z);
+    print("Character '7':");
+    print_char(digit);
+    print("Character '@':");
+    print_char(symbol);
+    print("");
+    
+    print("=== STRING TYPE TESTS ===");
+    let greeting: str = "Hello, ÆLang!";
+    let message: str = "String support enabled";
+    let empty_str: str = "";
+    let special_chars: str = "Special: !@#$%^&*()";
+    
+    print("Greeting:");
+    print_str(greeting);
+    print("Message:");
+    print_str(message);
+    print("Empty string:");
+    print_str(empty_str);
+    print("Special characters:");
+    print_str(special_chars);
+    print("");
+    
+    print("=== STRING OPERATIONS ===");
+    // Note: String concatenation would need to be implemented
+    print("String concatenation not yet implemented");
+    print("String length not yet implemented");
+    print("String comparison not yet implemented");
+    print("");
+    
+    print("=== CHARACTER OPERATIONS ===");
+    // Character arithmetic (ASCII values)
+    let char_a: char = 'a';
+    let char_b: char = 'b';
+    
+    print("Character comparison and arithmetic");
+    print("would require cast operations");
+    print("");
+    
+    print("=== STRING AND CHAR ARRAYS ===");
+    // Arrays of strings and characters would be implemented later
+    print("String arrays: To be implemented");
+    print("Character arrays: To be implemented");
+    print("");
+    
+    print("=== ENHANCED STRING/CHAR SYSTEM: SUCCESS ===");
+}

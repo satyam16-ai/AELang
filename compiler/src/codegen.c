@@ -70,6 +70,30 @@ static const char* get_int_size_specifier(void) {
     return "dword";  // Always dword for i32 in both 32-bit and 64-bit modes
 }
 
+static const char* get_type_size_specifier(const char* type_name) {
+    if (strcmp(type_name, "i64") == 0 || strcmp(type_name, "u64") == 0) {
+        return "qword";
+    } else if (strcmp(type_name, "i32") == 0 || strcmp(type_name, "u32") == 0) {
+        return "dword";
+    } else if (strcmp(type_name, "i16") == 0 || strcmp(type_name, "u16") == 0) {
+        return "word";
+    } else if (strcmp(type_name, "i8") == 0 || strcmp(type_name, "u8") == 0) {
+        return "byte";
+    } else {
+        return "dword"; // default
+    }
+}
+
+static const char* get_float_storage_specifier(const char* type_name) {
+    if (strcmp(type_name, "f64") == 0 || strcmp(type_name, "num") == 0) {
+        return "qword";
+    } else if (strcmp(type_name, "f32") == 0) {
+        return "dword";
+    } else {
+        return "dword"; // default
+    }
+}
+
 static const char* get_int_register_32bit(void) {
     return "eax";  // Always eax - this is specifically for 32-bit register operations
 }
@@ -112,19 +136,71 @@ static void emit_function_call_64bit(FILE *out, const char *func_name, ASTNode *
     if (current_config && current_config->target_arch == ARCH_64BIT) {
         // 64-bit System V AMD64 calling convention
         
-        // For print functions with string arguments, handle specially
-        if (strcmp(func_name, "print") == 0 && arg_count == 1) {
-            ASTNode *arg = args[0];
-            if (arg->type == AST_LITERAL && arg->as.literal.type == VALUE_STRING) {
-                int idx = find_or_add_string(arg->as.literal.as.str_val);
-                fprintf(out, "    mov rdi, msg_%d\n", idx);
-                fprintf(out, "    call %s\n", func_name);
-                return;
+        // Handle variadic print function (print with format specifiers)
+        if (strcmp(func_name, "print") == 0) {
+            // System V AMD64 ABI for variadic functions:
+            // Integer/pointer args: RDI, RSI, RDX, RCX, R8, R9, then stack
+            // Float args: XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, then stack
+            // AL contains number of SSE registers used for variadic functions
+            
+            int int_reg_count = 0;
+            int float_reg_count = 0;
+            const char* int_regs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+            
+            // For variadic functions, we need to set AL to number of float regs used
+            fprintf(out, "    mov al, 0  ; variadic function: 0 float regs used initially\n");
+            
+            // Process arguments left to right (System V AMD64)
+            for (int i = 0; i < arg_count; i++) {
+                ASTNode *arg = args[i];
+                
+                if (arg->type == AST_LITERAL && arg->as.literal.type == VALUE_STRING) {
+                    // String literal argument - use integer register
+                    int idx = find_or_add_string(arg->as.literal.as.str_val);
+                    if (int_reg_count < 6) {
+                        fprintf(out, "    mov %s, msg_%d  ; string arg %d\n", int_regs[int_reg_count], idx, i);
+                        int_reg_count++;
+                    } else {
+                        fprintf(out, "    push msg_%d  ; string arg %d (stack)\n", idx, i);
+                    }
+                } else if (is_float_type(arg)) {
+                    // Float argument - MUST be promoted to double for variadic functions
+                    emit_node(arg, out);  // Load to FPU stack
+                    if (float_reg_count < 8) {
+                        fprintf(out, "    sub rsp, 8\n");
+                        fprintf(out, "    fstp qword [rsp]  ; promote float to double\n");
+                        fprintf(out, "    movsd xmm%d, [rsp]  ; double arg %d (promoted)\n", float_reg_count, i);
+                        fprintf(out, "    add rsp, 8\n");
+                        float_reg_count++;
+                        fprintf(out, "    mov al, %d  ; update float reg count\n", float_reg_count);
+                    } else {
+                        fprintf(out, "    sub rsp, 8\n");
+                        fprintf(out, "    fstp qword [rsp]  ; double arg %d (stack, promoted)\n", i);
+                    }
+                } else {
+                    // Integer argument - use integer register or stack
+                    emit_node(arg, out);  // Result in RAX
+                    if (int_reg_count < 6) {
+                        fprintf(out, "    mov %s, rax  ; int arg %d\n", int_regs[int_reg_count], i);
+                        int_reg_count++;
+                    } else {
+                        fprintf(out, "    push rax  ; int arg %d (stack)\n", i);
+                    }
+                }
             }
-        } else if (strcmp(func_name, "print_clean") == 0 && arg_count == 1) {
-            ASTNode *arg = args[0];
-            if (arg->type == AST_LITERAL && arg->as.literal.type == VALUE_STRING) {
-                int idx = find_or_add_string(arg->as.literal.as.str_val);
+            
+            fprintf(out, "    call %s\n", func_name);
+            
+            // Clean up stack arguments if any
+            int stack_args = (arg_count > 6) ? (arg_count - 6) : 0;
+            if (stack_args > 0) {
+                fprintf(out, "    add rsp, %d  ; clean up %d stack args\n", stack_args * 8, stack_args);
+            }
+            return;
+        } else if (strcmp(func_name, "print_clean") == 0) {
+            // Handle print_clean variadic function similarly
+            if (arg_count == 1 && args[0]->type == AST_LITERAL && args[0]->as.literal.type == VALUE_STRING) {
+                int idx = find_or_add_string(args[0]->as.literal.as.str_val);
                 fprintf(out, "    mov rdi, msg_%d\n", idx);
                 fprintf(out, "    call %s\n", func_name);
                 return;
@@ -144,32 +220,105 @@ static void emit_function_call_64bit(FILE *out, const char *func_name, ASTNode *
             fprintf(out, "    call %s\n", func_name);
             fprintf(out, "    add rsp, 16\n");                   // Clean up stack
             return;
+        } else if (strcmp(func_name, "read") == 0 && arg_count == 0) {
+            // Unified read function - returns integer representation that compiler converts
+            fprintf(out, "    call %s\n", func_name);
+            return;
+        } else if (strcmp(func_name, "read_as_float") == 0 && arg_count == 0) {
+            // Unified read for float assignments
+            fprintf(out, "    call %s\n", func_name);
+            return;
+        } else if (strcmp(func_name, "read_int") == 0 && arg_count == 0) {
+            // Call read_int function (returns result in rax for 64-bit)
+            fprintf(out, "    call %s\n", func_name);
+            return;
+        } else if (strcmp(func_name, "read_float") == 0 && arg_count == 0) {
+            // Call read_float function (returns result on FPU stack, need to convert to XMM for 64-bit)
+            fprintf(out, "    call %s\n", func_name);
+            return;
+        } else if (strcmp(func_name, "read_bool") == 0 && arg_count == 0) {
+            // Call read_bool function (returns result in rax for 64-bit)
+            fprintf(out, "    call %s\n", func_name);
+            return;
+        } else if (strcmp(func_name, "read_int_safe") == 0 && arg_count == 0) {
+            // Call read_int_safe function
+            fprintf(out, "    call %s\n", func_name);
+            return;
+        } else if (strcmp(func_name, "read_float_safe") == 0 && arg_count == 0) {
+            // Call read_float_safe function
+            fprintf(out, "    call %s\n", func_name);
+            return;
+        } else if (strcmp(func_name, "read_bool_safe") == 0 && arg_count == 0) {
+            // Call read_bool_safe function
+            fprintf(out, "    call %s\n", func_name);
+            return;
+        } else if (strcmp(func_name, "read_f32") == 0 && arg_count == 0) {
+            // Call read_f32 function - returns float in XMM0, need to convert to FPU stack
+            fprintf(out, "    call %s\n", func_name);
+            fprintf(out, "    sub rsp, 4\n");              // Allocate space for float
+            fprintf(out, "    movss dword [rsp], xmm0\n");  // Store XMM0 as float
+            fprintf(out, "    fld dword [rsp]\n");          // Load to FPU stack
+            fprintf(out, "    add rsp, 4\n");               // Clean up stack space
+            return;
+        } else if (strcmp(func_name, "read_f64") == 0 && arg_count == 0) {
+            // Call read_f64 function - returns double in XMM0, need to convert to FPU stack
+            fprintf(out, "    call %s\n", func_name);
+            fprintf(out, "    sub rsp, 8\n");               // Allocate space for double
+            fprintf(out, "    movsd qword [rsp], xmm0\n");  // Store XMM0 as double
+            fprintf(out, "    fld qword [rsp]\n");          // Load to FPU stack
+            fprintf(out, "    add rsp, 8\n");               // Clean up stack space
+            return;
+        } else if (strcmp(func_name, "read_num") == 0 && arg_count == 0) {
+            // Call read_num function - returns double in XMM0, need to convert to FPU stack
+            fprintf(out, "    call %s\n", func_name);
+            fprintf(out, "    sub rsp, 8\n");               // Allocate space for double
+            fprintf(out, "    movsd qword [rsp], xmm0\n");  // Store XMM0 as double
+            fprintf(out, "    fld qword [rsp]\n");          // Load to FPU stack
+            fprintf(out, "    add rsp, 8\n");               // Clean up stack space
+            return;
         }
         
-        // Generic handling for user-defined functions
-        // Push arguments in reverse order (right-to-left for standard calling convention)
-        for (int i = arg_count - 1; i >= 0; i--) {
+        // Generic handling for other functions using System V AMD64 ABI
+        int int_reg_count = 0;
+        int float_reg_count = 0;
+        const char* int_regs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+        
+        // Process arguments left to right for System V AMD64
+        for (int i = 0; i < arg_count; i++) {
             ASTNode *arg = args[i];
-            emit_node(arg, out);
             
-            // Check if this argument is a float type
             if (is_float_type(arg)) {
-                // For float arguments, store from FPU stack to memory, then push
-                fprintf(out, "    sub rsp, 8\n");           // Reserve 8 bytes on stack for 64-bit
-                fprintf(out, "    fstp dword [rsp]  ; push float argument %d\n", i);
+                // Float argument - promote to double for System V AMD64 ABI
+                emit_node(arg, out);  // Load to FPU stack
+                if (float_reg_count < 8) {
+                    fprintf(out, "    sub rsp, 8\n");
+                    fprintf(out, "    fstp qword [rsp]  ; promote float to double\n");
+                    fprintf(out, "    movsd xmm%d, [rsp]  ; double arg %d\n", float_reg_count, i);
+                    fprintf(out, "    add rsp, 8\n");
+                    float_reg_count++;
+                } else {
+                    fprintf(out, "    sub rsp, 8\n");
+                    fprintf(out, "    fstp qword [rsp]  ; double arg %d (stack)\n", i);
+                }
             } else {
-                // For integer arguments, push the full register
-                fprintf(out, "    push rax  ; push argument %d (64-bit)\n", i);
+                // Integer/pointer argument - use integer register or stack
+                emit_node(arg, out);  // Result in RAX
+                if (int_reg_count < 6) {
+                    fprintf(out, "    mov %s, rax  ; int arg %d\n", int_regs[int_reg_count], i);
+                    int_reg_count++;
+                } else {
+                    fprintf(out, "    push rax  ; int arg %d (stack)\n", i);
+                }
             }
         }
         
         fprintf(out, "    call %s\n", func_name);
         
-        // Clean up stack (remove pushed arguments)
-        if (arg_count > 0) {
-            int cleanup_bytes = arg_count * 8;  // 8 bytes per argument in 64-bit
-            fprintf(out, "    add rsp, %d  ; clean up %d arguments (64-bit)\n", 
-                   cleanup_bytes, arg_count);
+        // Clean up stack arguments if any (beyond 6 int args or 8 float args)
+        int max_reg_args = (int_reg_count > float_reg_count) ? int_reg_count : float_reg_count;
+        int stack_cleanup = (arg_count > max_reg_args) ? (arg_count - max_reg_args) * 8 : 0;
+        if (stack_cleanup > 0) {
+            fprintf(out, "    add rsp, %d  ; clean up %d stack arguments\n", stack_cleanup, arg_count - max_reg_args);
         }
     }
 }
@@ -293,6 +442,7 @@ static int float_var_count = 0;    // Counter for float variables
 
 // Simple variable mapping (Dynamic)
 static const char **var_names = NULL;
+static const char **var_type_names = NULL;  // Store actual type names (i8, i16, i32, i64, f32, f64, etc.)
 static int *var_indices = NULL;
 static int *var_types = NULL;  // 0 = int, 1 = float
 static int *var_locations = NULL;   // 0 = global, 1 = stack
@@ -338,12 +488,13 @@ static void ensure_var_capacity(int needed_capacity) {
         }
         
         var_names = realloc(var_names, new_capacity * sizeof(const char*));
+        var_type_names = realloc(var_type_names, new_capacity * sizeof(const char*));
         var_indices = realloc(var_indices, new_capacity * sizeof(int));
         var_types = realloc(var_types, new_capacity * sizeof(int));
         var_locations = realloc(var_locations, new_capacity * sizeof(int));
         var_offsets = realloc(var_offsets, new_capacity * sizeof(int));
         
-        if (!var_names || !var_indices || !var_types || !var_locations || !var_offsets) {
+        if (!var_names || !var_type_names || !var_indices || !var_types || !var_locations || !var_offsets) {
             fprintf(stderr, "Fatal error: Failed to allocate memory for variable tables\n");
             exit(1);
         }
@@ -372,6 +523,7 @@ static void ensure_float_constants_capacity(int needed_capacity) {
 static void cleanup_dynamic_arrays() {
     free(string_literals);
     free(var_names);
+    free(var_type_names);
     free(var_indices);
     free(var_types);
     free(var_locations);
@@ -380,6 +532,7 @@ static void cleanup_dynamic_arrays() {
     
     string_literals = NULL;
     var_names = NULL;
+    var_type_names = NULL;
     var_indices = NULL;
     var_types = NULL;
     var_locations = NULL;
@@ -507,7 +660,7 @@ static int is_float_type(ASTNode *node) {
 }
 
 // Helper to store a variable (both int and float)
-static int store_var(const char *name, int is_float) {
+static int store_var(const char *name, int is_float, const char *type_name) {
     // Check if variable already exists
     for (int i = 0; i < var_map_count; i++) {
         if (strcmp(var_names[i], name) == 0) {
@@ -527,6 +680,7 @@ static int store_var(const char *name, int is_float) {
     ensure_var_capacity(var_map_count + 1);
     
     var_names[var_map_count] = strdup(name);
+    var_type_names[var_map_count] = strdup(type_name);  // Store the actual type name
     var_indices[var_map_count] = idx;
     var_types[var_map_count] = is_float ? 1 : 0;
     var_locations[var_map_count] = 0;  // Default to global
@@ -537,7 +691,7 @@ static int store_var(const char *name, int is_float) {
 }
 
 // Helper to store a stack-based local variable
-static int store_local_var(const char *name, int is_float) {
+static int store_local_var(const char *name, int is_float, const char *type_name) {
     // Check if variable already exists
     for (int i = 0; i < var_map_count; i++) {
         if (strcmp(var_names[i], name) == 0) {
@@ -545,14 +699,20 @@ static int store_local_var(const char *name, int is_float) {
         }
     }
     
-    // Allocate stack space (4 bytes for 32-bit, 8 bytes for 64-bit)
-    current_stack_offset -= get_word_size_bytes();
+    // Allocate stack space based on type
+    if (strcmp(type_name, "i64") == 0 || strcmp(type_name, "u64") == 0 || 
+        strcmp(type_name, "f64") == 0 || strcmp(type_name, "num") == 0) {
+        current_stack_offset -= 8;  // 64-bit types need 8 bytes
+    } else {
+        current_stack_offset -= get_word_size_bytes();  // Other types use default size
+    }
     
     // Ensure we have enough capacity
     ensure_var_capacity(var_map_count + 1);
     
     // Add new variable to mapping
     var_names[var_map_count] = strdup(name);
+    var_type_names[var_map_count] = strdup(type_name);  // Store the actual type name
     var_indices[var_map_count] = var_map_count;  // Use map index as identifier
     var_types[var_map_count] = is_float ? 1 : 0;
     var_locations[var_map_count] = 1;  // Stack-based
@@ -562,29 +722,37 @@ static int store_local_var(const char *name, int is_float) {
 }
 
 // Helper to store a float variable
-static int store_float_var(const char *name) {
-    return store_var(name, 1);  // 1 = float
+static int store_float_var(const char *name, const char *type_name) {
+    return store_var(name, 1, type_name);  // 1 = float
 }
 
 // Helper to store an integer variable
-static int store_int_var(const char *name) {
-    return store_var(name, 0);  // 0 = int
+static int store_int_var(const char *name, const char *type_name) {
+    return store_var(name, 0, type_name);  // 0 = int
 }
 
-// Helper to emit float variable load
+// Helper to emit float variable load - now type-aware
 static void emit_float_var_load(const char *name, FILE *out) {
     for (int i = 0; i < var_map_count; i++) {
         if (strcmp(var_names[i], name) == 0 && var_types[i] == 1) {
+            // Determine the size based on the variable's type name
+            const char* var_type = var_type_names[i];
+            const char* float_size = get_float_storage_specifier(var_type);
+            
             if (var_locations[i] == 1) {  // Stack-based
-                if (current_config && current_config->target_arch == ARCH_64BIT) {
-                    fprintf(out, "    fld dword [%s%d]  ; load %s (stack)\n", 
+                if (strcmp(float_size, "qword") == 0) {
+                    fprintf(out, "    fld qword [%s%d]  ; load %s (stack, f64/double)\n", 
                            get_base_pointer(), var_offsets[i], name);
                 } else {
-                    fprintf(out, "    fld dword [%s%d]  ; load %s (stack)\n", 
+                    fprintf(out, "    fld dword [%s%d]  ; load %s (stack, f32/float)\n", 
                            get_base_pointer(), var_offsets[i], name);
                 }
             } else {  // Global
-                fprintf(out, "    fld dword [float_var_%d]  ; load %s\n", var_indices[i], name);
+                if (strcmp(float_size, "qword") == 0) {
+                    fprintf(out, "    fld qword [float_var_%d]  ; load %s (f64/double)\n", var_indices[i], name);
+                } else {
+                    fprintf(out, "    fld dword [float_var_%d]  ; load %s (f32/float)\n", var_indices[i], name);
+                }
             }
             return;
         }
@@ -592,27 +760,92 @@ static void emit_float_var_load(const char *name, FILE *out) {
     fprintf(stderr, "Warning: float var %s not found\n", name);
 }
 
-// Helper to emit integer variable load
+// Helper to emit integer variable load - now type and architecture aware
 static void emit_int_var_load(const char *name, FILE *out) {
     for (int i = 0; i < var_map_count; i++) {
         if (strcmp(var_names[i], name) == 0 && var_types[i] == 0) {
+            // Determine the size and register based on the variable's type
+            const char* var_type = var_type_names[i];
+            const char* int_size = get_type_size_specifier(var_type);
+            const char* target_reg;
+            
+            // Select the appropriate register for loading based on the target architecture
+            if (strcmp(int_size, "qword") == 0) {
+                target_reg = get_int_register();  // rax for 64-bit load
+            } else {
+                target_reg = get_int_register();  // Use full register for loading, will be sign-extended
+            }
+            
             if (var_locations[i] == 1) {  // Stack-based
-                if (current_config && current_config->target_arch == ARCH_64BIT) {
-                    // In 64-bit mode, use sign extension for signed integers
-                    fprintf(out, "    movsx %s, %s [%s%d]  ; load %s (stack, sign-extended)\n", 
-                           get_int_register(), get_int_size_specifier(), get_base_pointer(), var_offsets[i], name);
-                } else {
-                    fprintf(out, "    mov %s, %s [%s%d]  ; load %s (stack)\n", 
-                           get_int_register(), get_int_size_specifier(), get_base_pointer(), var_offsets[i], name);
+                if (strcmp(int_size, "qword") == 0) {
+                    // 64-bit load
+                    fprintf(out, "    mov %s, %s [%s%d]  ; load %s (stack, 64-bit)\n", 
+                           target_reg, int_size, get_base_pointer(), var_offsets[i], name);
+                } else if (strcmp(int_size, "dword") == 0) {
+                    // 32-bit load - check if unsigned type
+                    if (strstr(var_type, "u32") || strstr(var_type, "u16") || strstr(var_type, "u8")) {
+                        // For unsigned 32-bit values, just use mov - it automatically zero-extends in 64-bit
+                        fprintf(out, "    mov %s, %s [%s%d]  ; load %s (stack, zero-extended to 64-bit)\n", 
+                               "eax", int_size, get_base_pointer(), var_offsets[i], name);
+                    } else {
+                        // Sign-extend for signed types
+                        if (current_config && current_config->target_arch == ARCH_64BIT) {
+                            fprintf(out, "    movsx %s, %s [%s%d]  ; load %s (stack, sign-extended to 64-bit)\n", 
+                                   get_int_register(), int_size, get_base_pointer(), var_offsets[i], name);
+                        } else {
+                            fprintf(out, "    mov %s, %s [%s%d]  ; load %s (stack)\n", 
+                                   target_reg, int_size, get_base_pointer(), var_offsets[i], name);
+                        }
+                    }
+                } else if (strcmp(int_size, "word") == 0) {
+                    // 16-bit load - check if unsigned type
+                    if (strstr(var_type, "u16")) {
+                        fprintf(out, "    movzx %s, %s [%s%d]  ; load %s (stack, 16-bit zero-extended)\n", 
+                               target_reg, int_size, get_base_pointer(), var_offsets[i], name);
+                    } else {
+                        fprintf(out, "    movsx %s, %s [%s%d]  ; load %s (stack, 16-bit sign-extended)\n", 
+                               target_reg, int_size, get_base_pointer(), var_offsets[i], name);
+                    }
+                } else if (strcmp(int_size, "byte") == 0) {
+                    // 8-bit load - check if unsigned type
+                    if (strstr(var_type, "u8")) {
+                        fprintf(out, "    movzx %s, %s [%s%d]  ; load %s (stack, 8-bit zero-extended)\n", 
+                               target_reg, int_size, get_base_pointer(), var_offsets[i], name);
+                    } else {
+                        fprintf(out, "    movsx %s, %s [%s%d]  ; load %s (stack, 8-bit sign-extended)\n", 
+                               target_reg, int_size, get_base_pointer(), var_offsets[i], name);
+                    }
                 }
             } else {  // Global
-                if (current_config && current_config->target_arch == ARCH_64BIT) {
-                    // In 64-bit mode, use sign extension for signed integers
-                    fprintf(out, "    movsx %s, %s [int_var_%d]  ; load %s (sign-extended)\n", 
-                           get_int_register(), get_int_size_specifier(), var_indices[i], name);
+                if (strcmp(int_size, "qword") == 0) {
+                    // 64-bit global load
+                    fprintf(out, "    mov %s, %s [int_var_%d]  ; load %s (64-bit)\n", 
+                           target_reg, int_size, var_indices[i], name);
+                } else if (strcmp(int_size, "dword") == 0) {
+                    // 32-bit global load - check if unsigned type
+                    if (strstr(var_type, "u32") || strstr(var_type, "u16") || strstr(var_type, "u8")) {
+                        // For unsigned 32-bit values, just use mov - it automatically zero-extends in 64-bit
+                        fprintf(out, "    mov %s, %s [int_var_%d]  ; load %s (zero-extended to 64-bit)\n", 
+                               "eax", int_size, var_indices[i], name);
+                    } else {
+                        // Sign-extend for signed types
+                        if (current_config && current_config->target_arch == ARCH_64BIT) {
+                            fprintf(out, "    movsx %s, %s [int_var_%d]  ; load %s (sign-extended to 64-bit)\n", 
+                                   get_int_register(), int_size, var_indices[i], name);
+                        } else {
+                            fprintf(out, "    mov %s, %s [int_var_%d]  ; load %s\n", 
+                                   target_reg, int_size, var_indices[i], name);
+                        }
+                    }
                 } else {
-                    fprintf(out, "    mov %s, %s [int_var_%d]  ; load %s\n", 
-                           get_int_register(), get_int_size_specifier(), var_indices[i], name);
+                    // 16-bit and 8-bit global loads - check if unsigned type
+                    if (strstr(var_type, "u16") || strstr(var_type, "u8")) {
+                        fprintf(out, "    movzx %s, %s [int_var_%d]  ; load %s (zero-extended)\n", 
+                               target_reg, int_size, var_indices[i], name);
+                    } else {
+                        fprintf(out, "    movsx %s, %s [int_var_%d]  ; load %s (sign-extended)\n", 
+                               target_reg, int_size, var_indices[i], name);
+                    }
                 }
             }
             return;
@@ -785,6 +1018,24 @@ static const char* get_function_return_type(const char* func_name) {
     if (strcmp(func_name, "print_bool") == 0) return "void";
     if (strcmp(func_name, "print_num") == 0) return "void";
     if (strcmp(func_name, "print") == 0) return "void";
+    
+    // Type-specific read functions
+    if (strcmp(func_name, "read_i8") == 0) return "i8";
+    if (strcmp(func_name, "read_i16") == 0) return "i16";
+    if (strcmp(func_name, "read_i32") == 0) return "i32";
+    if (strcmp(func_name, "read_i64") == 0) return "i64";
+    if (strcmp(func_name, "read_u8") == 0) return "u8";
+    if (strcmp(func_name, "read_u16") == 0) return "u16";
+    if (strcmp(func_name, "read_u32") == 0) return "u32";
+    if (strcmp(func_name, "read_u64") == 0) return "u64";
+    if (strcmp(func_name, "read_f32") == 0) return "f32";
+    if (strcmp(func_name, "read_f64") == 0) return "f64";
+    if (strcmp(func_name, "read_bool") == 0) return "bool";
+    if (strcmp(func_name, "read_char") == 0) return "char";
+    if (strcmp(func_name, "read_str") == 0) return "str";
+    if (strcmp(func_name, "read_num") == 0) return "num";
+    
+    // Legacy functions for compatibility
     if (strcmp(func_name, "read_int") == 0) return "i32";
     if (strcmp(func_name, "read_float") == 0) return "f32";
     if (strcmp(func_name, "read_num_safe") == 0) return "f32";
@@ -853,6 +1104,7 @@ static const char* get_function_return_type(const char* func_name) {
 // Helper to check if a return type is float
 static int is_float_return_type(const char* return_type) {
     return (strcmp(return_type, "f32") == 0 || 
+            strcmp(return_type, "f64") == 0 ||
             strcmp(return_type, "num") == 0);
 }
 
@@ -868,18 +1120,19 @@ static void emit_node(ASTNode *node, FILE *out) {
             // Determine if this is a local variable (inside a function) or global
             int is_local = (current_function != NULL);
             int is_float = strstr(node->as.var_decl.type_name, "f32") || 
+                          strstr(node->as.var_decl.type_name, "f64") ||
                           strstr(node->as.var_decl.type_name, "num");
             
             int var_idx;
             if (is_local) {
                 // Store as local variable on the stack
-                var_idx = store_local_var(node->as.var_decl.name, is_float);
+                var_idx = store_local_var(node->as.var_decl.name, is_float, node->as.var_decl.type_name);
             } else {
                 // Store as global variable
                 if (is_float) {
-                    var_idx = store_float_var(node->as.var_decl.name);
+                    var_idx = store_float_var(node->as.var_decl.name, node->as.var_decl.type_name);
                 } else {
-                    var_idx = store_int_var(node->as.var_decl.name);
+                    var_idx = store_int_var(node->as.var_decl.name, node->as.var_decl.type_name);
                 }
             }
             
@@ -903,8 +1156,9 @@ static void emit_node(ASTNode *node, FILE *out) {
                         if (strcmp(var_names[i], node->as.var_decl.name) == 0 && var_locations[i] == 1) {
                             if (value_is_float) {
                                 // Value is already on FPU stack
-                                fprintf(out, "    fstp dword [%s%d]  ; store %s (local float)\n", 
-                                       get_base_pointer(), var_offsets[i], node->as.var_decl.name);
+                                const char* float_size = get_float_storage_specifier(node->as.var_decl.type_name);
+                                fprintf(out, "    fstp %s [%s%d]  ; store %s (local float)\n", 
+                                       float_size, get_base_pointer(), var_offsets[i], node->as.var_decl.name);
                             } else {
                                 // Value is in register, need to convert to float
                                 fprintf(out, "    %s [temp_int], %s\n", get_mov_instruction(), get_int_register());
@@ -913,8 +1167,9 @@ static void emit_node(ASTNode *node, FILE *out) {
                                 } else {
                                     fprintf(out, "    fild dword [temp_int]  ; convert int to float\n");
                                 }
-                                fprintf(out, "    fstp dword [%s%d]  ; store %s (local float, converted)\n", 
-                                       get_base_pointer(), var_offsets[i], node->as.var_decl.name);
+                                const char* float_size = get_float_storage_specifier(node->as.var_decl.type_name);
+                                fprintf(out, "    fstp %s [%s%d]  ; store %s (local float, converted)\n", 
+                                       float_size, get_base_pointer(), var_offsets[i], node->as.var_decl.name);
                             }
                             found_local = 1;
                             break;
@@ -943,8 +1198,24 @@ static void emit_node(ASTNode *node, FILE *out) {
                     int found_local = 0;
                     for (int i = 0; i < var_map_count; i++) {
                         if (strcmp(var_names[i], node->as.var_decl.name) == 0 && var_locations[i] == 1) {
+                            const char* int_size = get_type_size_specifier(node->as.var_decl.type_name);
+                            const char* reg;
+                            
+                            // Select the appropriate register based on storage size
+                            if (strcmp(int_size, "qword") == 0) {
+                                reg = get_int_register();  // rax for 64-bit
+                            } else if (strcmp(int_size, "dword") == 0) {
+                                reg = get_int_register_32bit();  // eax for 32-bit
+                            } else if (strcmp(int_size, "word") == 0) {
+                                reg = "ax";  // ax for 16-bit
+                            } else if (strcmp(int_size, "byte") == 0) {
+                                reg = "al";  // al for 8-bit
+                            } else {
+                                reg = get_int_register_32bit();  // default
+                            }
+                            
                             fprintf(out, "    mov %s [%s%d], %s  ; store %s (local int)\n", 
-                                   get_int_size_specifier(), get_base_pointer(), var_offsets[i], get_int_register_32bit(), node->as.var_decl.name);
+                                   int_size, get_base_pointer(), var_offsets[i], reg, node->as.var_decl.name);
                             found_local = 1;
                             break;
                         }
@@ -1515,6 +1786,52 @@ static void emit_node(ASTNode *node, FILE *out) {
                 // Call read_bool_safe function (returns result in eax)
                 fprintf(out, "    call read_bool_safe\n");
                 break;
+            // Type-specific read functions for unified I/O system
+            } else if (strcmp(node->as.func_call.name, "read_i8") == 0 && node->as.func_call.arg_count == 0) {
+                fprintf(out, "    call read_i8\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "read_i16") == 0 && node->as.func_call.arg_count == 0) {
+                fprintf(out, "    call read_i16\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "read_i32") == 0 && node->as.func_call.arg_count == 0) {
+                fprintf(out, "    call read_i32\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "read_i64") == 0 && node->as.func_call.arg_count == 0) {
+                fprintf(out, "    call read_i64\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "read_u8") == 0 && node->as.func_call.arg_count == 0) {
+                fprintf(out, "    call read_u8\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "read_u16") == 0 && node->as.func_call.arg_count == 0) {
+                fprintf(out, "    call read_u16\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "read_u32") == 0 && node->as.func_call.arg_count == 0) {
+                fprintf(out, "    call read_u32\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "read_u64") == 0 && node->as.func_call.arg_count == 0) {
+                fprintf(out, "    call read_u64\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "read_f32") == 0 && node->as.func_call.arg_count == 0) {
+                // Float functions return on FPU stack
+                fprintf(out, "    call read_f32\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "read_f64") == 0 && node->as.func_call.arg_count == 0) {
+                // Float functions return on FPU stack
+                fprintf(out, "    call read_f64\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "read_bool") == 0 && node->as.func_call.arg_count == 0) {
+                fprintf(out, "    call read_bool\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "read_char") == 0 && node->as.func_call.arg_count == 0) {
+                fprintf(out, "    call read_char\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "read_str") == 0 && node->as.func_call.arg_count == 0) {
+                fprintf(out, "    call read_str\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "read_num") == 0 && node->as.func_call.arg_count == 0) {
+                // Numeric functions return on FPU stack
+                fprintf(out, "    call read_num\n");
+                break;
             }
 
             // Handle other function calls (user-defined functions)
@@ -1762,6 +2079,31 @@ static void emit_node(ASTNode *node, FILE *out) {
     }
 }
 
+// Helper function to convert escape sequences for assembly output
+static void write_escaped_string(FILE *out, const char *str) {
+    while (*str) {
+        if (*str == '\\' && *(str + 1) == 'n') {
+            fprintf(out, "\",10,\"");  // 10 is ASCII for newline
+            str += 2;
+        } else if (*str == '\\' && *(str + 1) == 't') {
+            fprintf(out, "\",9,\"");   // 9 is ASCII for tab
+            str += 2;
+        } else if (*str == '\\' && *(str + 1) == 'r') {
+            fprintf(out, "\",13,\"");  // 13 is ASCII for carriage return
+            str += 2;
+        } else if (*str == '\\' && *(str + 1) == '\\') {
+            fprintf(out, "\\\\");      // Literal backslash
+            str += 2;
+        } else if (*str == '"') {
+            fprintf(out, "\\\"");      // Escaped quote
+            str++;
+        } else {
+            fputc(*str, out);
+            str++;
+        }
+    }
+}
+
 // --- Main entry: generate_code() ---
 void generate_code(AST *ast, FILE *out, CompilationConfig *config) {
     current_config = config;  // Store for use in helper functions
@@ -1786,9 +2128,12 @@ void generate_code(AST *ast, FILE *out, CompilationConfig *config) {
         fprintf(out, "section .rodata\n");
         fprintf(out, "    align 4\n");
         
-        // String literals
-        for (int i = 0; i < string_literal_count; ++i)
-            fprintf(out, "msg_%d db \"%s\",0\n", i, string_literals[i]);
+        // String literals with proper escape sequence handling
+        for (int i = 0; i < string_literal_count; ++i) {
+            fprintf(out, "msg_%d db \"", i);
+            write_escaped_string(out, string_literals[i]);
+            fprintf(out, "\",0\n");
+        }
         
         // Float constants
         for (int i = 0; i < float_constants_count; i++) {
@@ -1865,7 +2210,21 @@ void generate_code(AST *ast, FILE *out, CompilationConfig *config) {
     fprintf(out, "    extern read_num_validated\n");
     fprintf(out, "    extern read_num_with_prompt\n");
     fprintf(out, "    extern read_positive_num\n");
-    fprintf(out, "    extern read_integer_only\n\n");
+    fprintf(out, "    extern read_integer_only\n");
+    // Unified type-specific read functions
+    fprintf(out, "    extern read_i8\n");
+    fprintf(out, "    extern read_i16\n");
+    fprintf(out, "    extern read_i32\n");
+    fprintf(out, "    extern read_i64\n");
+    fprintf(out, "    extern read_u8\n");
+    fprintf(out, "    extern read_u16\n");
+    fprintf(out, "    extern read_u32\n");
+    fprintf(out, "    extern read_u64\n");
+    fprintf(out, "    extern read_f32\n");
+    fprintf(out, "    extern read_f64\n");
+    fprintf(out, "    extern read_bool\n");
+    fprintf(out, "    extern read_char\n");
+    fprintf(out, "    extern read_str\n\n");
 
     // First emit all externs and function definitions
     for (size_t i = 0; i < ast->count; ++i) {

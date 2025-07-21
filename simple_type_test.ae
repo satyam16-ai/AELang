@@ -1,0 +1,7 @@
+// Simple type test
+extern print_u8(val: u8);
+
+func main(): void {
+    let x: u8 = 255;
+    print_u8(x);
+}

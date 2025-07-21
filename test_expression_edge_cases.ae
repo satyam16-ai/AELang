@@ -1,0 +1,55 @@
+extern print_int(val: i32);
+extern print_clean(msg: str);
+
+func complex_expressions(a: i32, b: i32, c: i32): i32 {
+    return ((a + b) * c - (a - b)) / ((c + 1) % 3 + 1);
+}
+
+func nested_calls(x: i32): i32 {
+    return complex_expressions(x + 1, x - 1, x * 2);
+}
+
+func chain_operations(start: i32): i32 {
+    let step1: i32 = nested_calls(start);
+    let step2: i32 = complex_expressions(step1, start, 3);
+    let step3: i32 = nested_calls(step2);
+    return step3;
+}
+
+func main(): void {
+    print_clean("=== COMPLEX EXPRESSION EDGE CASES ===\n");
+    
+    print_clean("Complex expression (5,3,2): ");
+    let result1: i32 = complex_expressions(5, 3, 2);
+    print_int(result1);
+    print_clean("\n");
+    
+    print_clean("Nested function calls (4): ");
+    let result2: i32 = nested_calls(4);
+    print_int(result2);
+    print_clean("\n");
+    
+    print_clean("Chain operations (2): ");
+    let result3: i32 = chain_operations(2);
+    print_int(result3);
+    print_clean("\n");
+    
+    print_clean("Edge case: Division by minimal value: ");
+    let edge1: i32 = complex_expressions(1, 0, 0);
+    print_int(edge1);
+    print_clean("\n");
+    
+    print_clean("Edge case: Negative numbers: ");
+    let edge2: i32 = complex_expressions(-5, -3, 2);
+    print_int(edge2);
+    print_clean("\n");
+    
+    print_clean("Multiple nested expressions: ");
+    let multi: i32 = complex_expressions(
+        nested_calls(2), 
+        complex_expressions(1, 2, 3), 
+        chain_operations(1)
+    );
+    print_int(multi);
+    print_clean("\n");
+}
