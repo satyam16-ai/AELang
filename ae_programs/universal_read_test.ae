@@ -1,0 +1,25 @@
+// Test: Truly Universal Read System
+// This test verifies that read() calls are preserved without transformation
+
+extern print(format: str, ...);
+extern read();
+
+func main(): void {
+    print("Enter your age: ");
+    let age: i32 = read();
+    
+    print("Enter your height: ");
+    let height: f32 = read(); 
+    
+    print("Are you a student? (true/false): ");
+    let is_student: bool = read();
+    
+    print("Enter your name: ");
+    let name: str = read();
+
+    print("Results:\n");
+    print("Age: %d\n", age);
+    print("Height: %.2f\n", height);
+    print("Student: %t\n", is_student);
+    print("Name: %s\n", name);
+}

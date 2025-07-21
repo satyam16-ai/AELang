@@ -1,0 +1,9 @@
+extern print(format: str, ...);
+extern read();
+
+func main(): void {
+    let x: i64 = 5;
+    let y: i64 = 7;
+    let sum: i64 = x + y;
+    print("Sum: %ld\n", sum);
+}

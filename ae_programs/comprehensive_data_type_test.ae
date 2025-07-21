@@ -1,0 +1,174 @@
+// Comprehensive Data Type Test for ÆLang
+// Tests all data types, universal read system, I/O operations, and arithmetic
+
+// Test all integer types
+let age: i32 = read()
+let tiny_num: i8 = read()  
+let small_num: i16 = read()
+let big_num: i64 = read()
+
+// Test all unsigned integer types  
+let unsigned_age: u32 = read()
+let unsigned_tiny: u8 = read()
+let unsigned_small: u16 = read() 
+let unsigned_big: u64 = read()
+
+// Test floating point types
+let height: f32 = read()
+let precise_height: f64 = read()
+let weight: num = read()
+
+// Test boolean type
+let is_student: bool = read()
+
+// Test character type  
+let grade: char = read()
+
+// Test string type
+let name: str = read()
+
+// Print header
+print("=== ÆLang Comprehensive Data Type Test ===\n")
+
+// Test integer arithmetic and printing
+print("Integer Types:\n")
+print("Age (i32): %d\n", age)
+print("Tiny Number (i8): %d\n", tiny_num)
+print("Small Number (i16): %d\n", small_num) 
+print("Big Number (i64): %lld\n", big_num)
+
+// Test unsigned integer printing
+print("\nUnsigned Integer Types:\n")
+print("Unsigned Age (u32): %u\n", unsigned_age)
+print("Unsigned Tiny (u8): %u\n", unsigned_tiny)
+print("Unsigned Small (u16): %u\n", unsigned_small)
+print("Unsigned Big (u64): %llu\n", unsigned_big)
+
+// Test floating point arithmetic and printing  
+print("\nFloating Point Types:\n")
+print("Height (f32): %.2f\n", height)
+print("Precise Height (f64): %.6f\n", precise_height)
+print("Weight (num): %.3f\n", weight)
+
+// Test boolean printing
+print("\nBoolean Type:\n")
+if (is_student) {
+    print("Student Status: true\n")
+} else {
+    print("Student Status: false\n") 
+}
+
+// Test character and string printing
+print("\nCharacter and String Types:\n")
+print("Grade (char): %c\n", grade)
+print("Name (str): %s\n", name)
+
+// Test arithmetic operations with different types
+print("\n=== Arithmetic Operations ===\n")
+
+// Integer arithmetic
+let int_sum: i32 = age + tiny_num
+let int_product: i32 = age * small_num
+print("Integer Sum (age + tiny): %d\n", int_sum)
+print("Integer Product (age * small): %d\n", int_product)
+
+// Floating point arithmetic
+let float_sum: f32 = height + weight
+let float_product: f32 = height * precise_height  
+print("Float Sum (height + weight): %.2f\n", float_sum)
+print("Float Product (height * precise_height): %.2f\n", float_product)
+
+// Mixed arithmetic (should promote to float)
+let mixed_calc: f32 = age + height
+print("Mixed Calculation (age + height): %.2f\n", mixed_calc)
+
+// Test comparison operations
+print("\n=== Comparison Operations ===\n")
+
+if (age > tiny_num) {
+    print("Age is greater than tiny number\n")
+}
+
+if (height < weight) {
+    print("Height is less than weight\n")  
+} else {
+    print("Height is greater than or equal to weight\n")
+}
+
+if (unsigned_age == age) {
+    print("Unsigned age equals signed age\n")
+}
+
+// Test complex expressions
+print("\n=== Complex Expressions ===\n")
+
+let complex_int: i32 = (age * 2) + (tiny_num * 3) - small_num
+print("Complex Integer Expression: %d\n", complex_int)
+
+let complex_float: f32 = (height * 2.5) + (weight / 3.0) - precise_height
+print("Complex Float Expression: %.3f\n", complex_float)
+
+// Test type boundaries and edge cases
+print("\n=== Type Boundaries and Edge Cases ===\n")
+
+// Test large numbers
+let max_i32: i32 = 2147483647
+let max_u32: u32 = 4294967295
+print("Max i32: %d\n", max_i32)
+print("Max u32: %u\n", max_u32)
+
+// Test small floating point numbers
+let small_float: f32 = 0.00001
+let very_precise: f64 = 0.123456789012345
+print("Small Float: %.8f\n", small_float)
+print("Very Precise Double: %.15f\n", very_precise)
+
+// Test boolean logic
+print("\n=== Boolean Logic ===\n")
+
+let bool_and: bool = is_student && (age > 18)
+let bool_or: bool = is_student || (grade == 'A')
+let bool_not: bool = !is_student
+
+if (bool_and) {
+    print("Student AND age > 18: true\n")
+} else {
+    print("Student AND age > 18: false\n")
+}
+
+if (bool_or) {
+    print("Student OR grade == 'A': true\n") 
+} else {
+    print("Student OR grade == 'A': false\n")
+}
+
+if (bool_not) {
+    print("NOT student: true\n")
+} else {
+    print("NOT student: false\n") 
+}
+
+// Test all data types in calculations
+print("\n=== Grand Finale - All Types Together ===\n")
+
+let grand_total: f64 = age + tiny_num + small_num + big_num + 
+                      unsigned_age + unsigned_tiny + unsigned_small + unsigned_big +
+                      height + precise_height + weight
+
+print("Sum of ALL numeric values: %.6f\n", grand_total)
+
+// Test string operations and character conversion
+print("\nPersonal Summary:\n") 
+print("Name: %s\n", name)
+print("Age: %d years old\n", age) 
+print("Height: %.2f units\n", height)
+print("Weight: %.2f units\n", weight)
+print("Grade: %c\n", grade)
+
+if (is_student) {
+    print("Status: Currently a student\n")
+} else {
+    print("Status: Not currently a student\n")
+}
+
+print("\n=== Test Complete - All Data Types Exercised ===\n")

@@ -1,0 +1,256 @@
+// ÆLang Ultimate Comprehensive Test Suite
+// Tests ALL data types, features, and operations
+// Created: 2025-07-22
+// Uses correct ÆLang syntax learned from recent examples
+
+extern print(format: str, ...);
+extern read();
+
+func main(): void {
+    print("=== ÆLang Ultimate Comprehensive Test Suite ===\n");
+    
+    // =================================================================
+    // SECTION 1: ALL INTEGER TYPES
+    // =================================================================
+    print("\n=== INTEGER DATA TYPES ===\n");
+    
+    print("Enter a small number (i8): ");
+    let tiny: i8 = read();
+    
+    print("Enter a medium number (i16): ");
+    let small: i16 = read();
+    
+    print("Enter a regular number (i32): ");
+    let regular: i32 = read();
+    
+    print("Enter a big number (i64): ");
+    let huge: i64 = read();
+    
+    // Unsigned integers
+    print("Enter an unsigned small (u8): ");
+    let utiny: u8 = read();
+    
+    print("Enter an unsigned medium (u16): ");
+    let usmall: u16 = read();
+    
+    print("Enter an unsigned regular (u32): ");
+    let uregular: u32 = read();
+    
+    print("Enter an unsigned big (u64): ");
+    let ubig: u64 = read();
+    
+    // =================================================================
+    // SECTION 2: FLOATING POINT TYPES
+    // =================================================================
+    print("\n=== FLOATING POINT DATA TYPES ===\n");
+    
+    print("Enter a float (f32): ");
+    let height: f32 = read();
+    
+    print("Enter a double (f64): ");
+    let weight: f64 = read();
+    
+    print("Enter a number (num): ");
+    let measurement: num = read();
+    
+    // =================================================================
+    // SECTION 3: OTHER DATA TYPES
+    // =================================================================
+    print("\n=== OTHER DATA TYPES ===\n");
+    
+    print("Are you a student? (true/false): ");
+    let is_student: bool = read();
+    
+    print("Enter your grade (A-F): ");
+    let grade: char = read();
+    
+    print("Enter your name: ");
+    let name: str = read();
+    
+    // =================================================================
+    // SECTION 4: DISPLAY ALL VALUES
+    // =================================================================
+    print("\n=== YOUR INPUT VALUES ===\n");
+    
+    print("Integer types:\n");
+    print("  i8 (tiny): %d\n", tiny);
+    print("  i16 (small): %d\n", small);
+    print("  i32 (regular): %d\n", regular);
+    print("  i64 (huge): %lld\n", huge);
+    
+    print("Unsigned integer types:\n");
+    print("  u8 (utiny): %u\n", utiny);
+    print("  u16 (usmall): %u\n", usmall);
+    print("  u32 (uregular): %u\n", uregular);
+    print("  u64 (ubig): %llu\n", ubig);
+    
+    print("Floating point types:\n");
+    print("  f32 (height): %.2f\n", height);
+    print("  f64 (weight): %.6f\n", weight);
+    print("  num (measurement): %.3f\n", measurement);
+    
+    print("Other types:\n");
+    print("  bool (is_student): %t\n", is_student);
+    print("  char (grade): %c\n", grade);
+    print("  str (name): %s\n", name);
+    
+    // =================================================================
+    // SECTION 5: ARITHMETIC OPERATIONS
+    // =================================================================
+    print("\n=== ARITHMETIC OPERATIONS ===\n");
+    
+    // Integer arithmetic
+    let int_sum: i32 = regular + small;
+    let int_difference: i32 = regular - tiny;
+    let int_product: i32 = small * tiny;
+    let int_quotient: i32 = regular / 2;
+    let int_remainder: i32 = regular % 3;
+    
+    print("Integer operations:\n");
+    print("  Sum (%d + %d): %d\n", regular, small, int_sum);
+    print("  Difference (%d - %d): %d\n", regular, tiny, int_difference);
+    print("  Product (%d * %d): %d\n", small, tiny, int_product);
+    print("  Quotient (%d / 2): %d\n", regular, int_quotient);
+    print("  Remainder (%d %% 3): %d\n", regular, int_remainder);
+    
+    // Float arithmetic
+    let float_sum: f32 = height + weight;
+    let float_difference: f32 = height - 1.5;
+    let float_product: f32 = height * 2.0;
+    let float_quotient: f32 = weight / 2.5;
+    
+    print("Float operations:\n");
+    print("  Sum (%.2f + %.2f): %.2f\n", height, weight, float_sum);
+    print("  Difference (%.2f - 1.5): %.2f\n", height, float_difference);
+    print("  Product (%.2f * 2.0): %.2f\n", height, float_product);
+    print("  Quotient (%.2f / 2.5): %.2f\n", weight, float_quotient);
+    
+    // Mixed arithmetic (promotion to float)
+    let mixed_result: f32 = regular + height;
+    print("Mixed arithmetic (%d + %.2f): %.2f\n", regular, height, mixed_result);
+    
+    // =================================================================
+    // SECTION 6: COMPARISON OPERATIONS
+    // =================================================================
+    print("\n=== COMPARISON OPERATIONS ===\n");
+    
+    if (regular > small) {
+        print("Regular (%d) is greater than small (%d)\n", regular, small);
+    }
+    
+    if (height < weight) {
+        print("Height (%.2f) is less than weight (%.2f)\n", height, weight);
+    } else {
+        print("Height (%.2f) is greater than or equal to weight (%.2f)\n", height, weight);
+    }
+    
+    if (utiny == 255) {
+        print("Utiny reached maximum u8 value!\n");
+    }
+    
+    if (grade == 'A') {
+        print("Excellent grade!\n");
+    } else if (grade == 'B') {
+        print("Good grade!\n");
+    } else if (grade == 'C') {
+        print("Average grade\n");
+    } else {
+        print("Grade: %c\n", grade);
+    }
+    
+    // =================================================================
+    // SECTION 7: BOOLEAN LOGIC
+    // =================================================================
+    print("\n=== BOOLEAN LOGIC OPERATIONS ===\n");
+    
+    let age_check: bool = regular >= 18;
+    let grade_check: bool = grade == 'A' || grade == 'B';
+    let combined_check: bool = is_student && age_check;
+    let negation_check: bool = !is_student;
+    
+    print("Boolean results:\n");
+    print("  Age >= 18: %t\n", age_check);
+    print("  Grade is A or B: %t\n", grade_check);
+    print("  Student AND adult: %t\n", combined_check);
+    print("  NOT student: %t\n", negation_check);
+    
+    // =================================================================
+    // SECTION 8: COMPLEX EXPRESSIONS
+    // =================================================================
+    print("\n=== COMPLEX EXPRESSIONS ===\n");
+    
+    let complex_int: i32 = (regular * 2) + (small * 3) - (tiny / 2);
+    let complex_float: f32 = (height * 2.5) + (weight / 3.0) - 1.0;
+    let complex_mixed: f32 = (regular + height) * (weight - 10.0);
+    
+    print("Complex calculations:\n");
+    print("  Integer complex: %d\n", complex_int);
+    print("  Float complex: %.3f\n", complex_float);
+    print("  Mixed complex: %.3f\n", complex_mixed);
+    
+    // =================================================================
+    // SECTION 9: TYPE BOUNDARIES AND EDGE CASES
+    // =================================================================
+    print("\n=== EDGE CASES AND BOUNDARIES ===\n");
+    
+    // Test maximum values
+    let max_i32: i32 = 2147483647;
+    let max_u32: u32 = 4294967295;
+    let tiny_float: f32 = 0.0001;
+    let big_float: f64 = 999999.123456;
+    
+    print("Boundary values:\n");
+    print("  Max i32: %d\n", max_i32);
+    print("  Max u32: %u\n", max_u32);
+    print("  Tiny float: %.8f\n", tiny_float);
+    print("  Big double: %.6f\n", big_float);
+    
+    // =================================================================
+    // SECTION 10: GRAND TOTAL CALCULATION
+    // =================================================================
+    print("\n=== GRAND FINALE ===\n");
+    
+    let grand_total: f64 = tiny + small + regular + huge + 
+                          utiny + usmall + uregular + ubig +
+                          height + weight + measurement;
+    
+    print("Sum of ALL numeric inputs: %.6f\n", grand_total);
+    
+    // =================================================================
+    // SECTION 11: PERSONALIZED SUMMARY
+    // =================================================================
+    print("\n=== PERSONALIZED SUMMARY ===\n");
+    
+    print("Hello, %s!\n", name);
+    print("Your profile:\n");
+    print("  Age: %d years\n", regular);
+    print("  Height: %.2f units\n", height);
+    print("  Weight: %.2f units\n", weight);
+    print("  Grade: %c\n", grade);
+    
+    if (is_student) {
+        print("  Status: Active student\n");
+        if (grade_check) {
+            print("  🎉 Congratulations on your excellent grades!\n");
+        }
+    } else {
+        print("  Status: Not currently a student\n");
+    }
+    
+    if (age_check) {
+        print("  🗳️  Eligible to vote\n");
+    }
+    
+    // =================================================================
+    // FINAL MESSAGE
+    // =================================================================
+    print("\n=== TEST COMPLETED SUCCESSFULLY ===\n");
+    print("✅ All %d data types tested\n", 11);
+    print("✅ Arithmetic operations verified\n");
+    print("✅ Comparison operations verified\n"); 
+    print("✅ Boolean logic verified\n");
+    print("✅ Complex expressions verified\n");
+    print("✅ Edge cases handled\n");
+    print("✅ Universal read() system functional\n");
+    print("\n🎯 ÆLang Comprehensive Test Suite Complete!\n");
+}

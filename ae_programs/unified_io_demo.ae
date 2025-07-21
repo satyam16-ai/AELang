@@ -1,0 +1,39 @@
+// Unified I/O system demonstration
+extern print_int(val: i32);
+extern print_clean_str(msg: str);
+extern print_formatted(format: str, ...);
+extern read_num(): f32;
+
+func main(): void {
+    print_clean_str("=== ÆLang Unified I/O System Demo ===\n");
+    
+    // Traditional way (legacy compatibility)
+    print_clean_str("Enter a number (traditional): ");
+    let number: i32 = read_num();
+    
+    print_clean_str("You entered: ");
+    print_int(number);
+    
+    // Show different formatting options for the same number
+    print_clean_str("\n=== Different Formats for the Same Number ===\n");
+    
+    // In actual implementation, these would use the new unified system:
+    // print_with_format(DATA_INT32, &number, FORMAT_DEFAULT, -1, 1);
+    // print_with_format(DATA_INT32, &number, FORMAT_HEX, -1, 1);
+    // print_with_format(DATA_INT32, &number, FORMAT_BINARY, -1, 1);
+    // print_with_format(DATA_INT32, &number, FORMAT_CURRENCY, -1, 1);
+    
+    // For now, demonstrate with basic functions
+    print_clean_str("Default: ");
+    print_int(number);
+    
+    print_clean_str("As currency: $");
+    print_int(number);
+    print_clean_str(".00\n");
+    
+    print_clean_str("As percentage: ");
+    print_int(number);
+    print_clean_str("%\n");
+    
+    print_clean_str("\n=== Demonstration Complete ===\n");
+}

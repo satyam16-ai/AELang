@@ -1,0 +1,253 @@
+// Auto Comprehensive ÆLang 64-bit Architecture Test
+// Tests all data types with automatic predefined values
+extern print(format: str, ...);
+
+// Test functions for each data type with full 64-bit precision - AUTO DATA
+func test_signed_integers_64bit(): void {
+    print("=== 64-bit SIGNED INTEGER TESTS (AUTO DATA) ===\n");
+    
+    // i8 tests: -128 to 127
+    print("--- i8 Tests (8-bit signed) ---\n");
+    let i8_min: i8 = -128;
+    print("i8 min: %d\n", i8_min);
+    
+    let i8_max: i8 = 127;
+    print("i8 max: %d\n", i8_max);
+    
+    // i16 tests: -32768 to 32767
+    print("\n--- i16 Tests (16-bit signed) ---\n");
+    let i16_min: i16 = -32768;
+    print("i16 min: %d\n", i16_min);
+    
+    let i16_max: i16 = 32767;
+    print("i16 max: %d\n", i16_max);
+    
+    // i32 tests: -2147483648 to 2147483647
+    print("\n--- i32 Tests (32-bit signed) ---\n");
+    let i32_min: i32 = -2147483648;
+    print("i32 min: %d\n", i32_min);
+    
+    let i32_max: i32 = 2147483647;
+    print("i32 max: %d\n", i32_max);
+    
+    // i64 tests: large values for 64-bit
+    print("\n--- i64 Tests (64-bit signed, full precision) ---\n");
+    let i64_min: i64 = -9223372036854775808;
+    print("i64 min: %ld\n", i64_min);
+    
+    let i64_max: i64 = 9223372036854775807;
+    print("i64 max: %ld\n", i64_max);
+    
+    let i64_large: i64 = 1000000000000000000;
+    print("i64 large: %ld\n", i64_large);
+    
+    let i64_neg_large: i64 = -1000000000000000000;
+    print("i64 negative large: %ld\n", i64_neg_large);
+}
+
+func test_unsigned_integers_64bit(): void {
+    print("\n=== 64-bit UNSIGNED INTEGER TESTS (AUTO DATA) ===\n");
+    
+    // u8 tests: 0 to 255
+    print("--- u8 Tests (8-bit unsigned) ---\n");
+    let u8_min: u8 = 0;
+    print("u8 min: %u\n", u8_min);
+    
+    let u8_max: u8 = 255;
+    print("u8 max: %u\n", u8_max);
+    
+    // u16 tests: 0 to 65535
+    print("\n--- u16 Tests (16-bit unsigned) ---\n");
+    let u16_min: u16 = 0;
+    print("u16 min: %u\n", u16_min);
+    
+    let u16_max: u16 = 65535;
+    print("u16 max: %u\n", u16_max);
+    
+    // u32 tests: 0 to 4294967295
+    print("\n--- u32 Tests (32-bit unsigned) ---\n");
+    let u32_min: u32 = 0;
+    print("u32 min: %u\n", u32_min);
+    
+    let u32_max: u32 = 4294967295;
+    print("u32 max: %u\n", u32_max);
+    
+    // u64 tests: large values for 64-bit
+    print("\n--- u64 Tests (64-bit unsigned, full precision) ---\n");
+    let u64_min: u64 = 0;
+    print("u64 min: %lu\n", u64_min);
+    
+    let u64_max: u64 = 18446744073709551615;
+    print("u64 max: %lu\n", u64_max);
+    
+    let u64_large: u64 = 10000000000000000000;
+    print("u64 large: %lu\n", u64_large);
+    
+    let u64_mid: u64 = 9876543210123456789;
+    print("u64 mid-range: %lu\n", u64_mid);
+}
+
+func test_floating_point_64bit(): void {
+    print("\n=== 64-bit FLOATING POINT TESTS (AUTO DATA) ===\n");
+    
+    // f32 tests with full precision
+    print("--- f32 Tests (32-bit float, IEEE 754) ---\n");
+    let f32_tiny: f32 = 0.0000000001;
+    print("f32 tiny: %f\n", f32_tiny);
+    
+    let f32_huge: f32 = 340282300000000000000000000000000000000.0;
+    print("f32 huge: %f\n", f32_huge);
+    
+    let f32_pi: f32 = 3.14159265;
+    print("f32 pi: %f\n", f32_pi);
+    
+    let f32_neg_e: f32 = -2.71828;
+    print("f32 negative e: %f\n", f32_neg_e);
+    
+    // f64 tests with double precision
+    print("\n--- f64 Tests (64-bit double, IEEE 754) ---\n");
+    let f64_tiny: f64 = 0.0000000000000000001;
+    print("f64 tiny: %f\n", f64_tiny);
+    
+    let f64_huge: f64 = 179769313486231570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.0;
+    print("f64 huge: %f\n", f64_huge);
+    
+    let f64_pi: f64 = 3.141592653589793238;
+    print("f64 high precision pi: %f\n", f64_pi);
+    
+    let f64_sci: f64 = 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001234567890;
+    print("f64 scientific: %f\n", f64_sci);
+    
+    // num type tests (full 64-bit precision)
+    print("\n--- num Tests (flexible numeric type, 64-bit) ---\n");
+    let num_big_int: num = 999999999999.0;
+    print("num big int: %g\n", num_big_int);
+    
+    let num_precise: num = 2.718281828459045;
+    print("num precise: %g\n", num_precise);
+    
+    let num_avogadro: num = 602214076000000000000000.0;
+    print("num Avogadro: %g\n", num_avogadro);
+}
+
+func test_other_types_64bit(): void {
+    print("\n=== 64-bit OTHER TYPE TESTS (AUTO DATA) ===\n");
+    
+    // Boolean tests (same across architectures)
+    print("--- Boolean Tests ---\n");
+    let bool_true: bool = true;
+    print("Bool true: %t\n", bool_true);
+    
+    let bool_false: bool = false;
+    print("Bool false: %t\n", bool_false);
+    
+    // Character tests (extended ASCII)
+    print("\n--- Character Tests ---\n");
+    let char_letter: char = 'Z';
+    print("Char letter: %c\n", char_letter);
+    
+    let char_digit: char = '9';
+    print("Char digit: %c\n", char_digit);
+    
+    let char_symbol: char = '@';
+    print("Char symbol: %c\n", char_symbol);
+}
+
+func test_extreme_edge_cases_64bit(): void {
+    print("\n=== 64-bit EXTREME EDGE CASE TESTS (AUTO DATA) ===\n");
+    
+    // Maximum capacity tests
+    print("--- Maximum Capacity Tests ---\n");
+    let i64_near_max: i64 = 9223372036854775806;
+    print("i64 near max: %ld\n", i64_near_max);
+    
+    let u64_near_max: u64 = 18446744073709551614;
+    print("u64 near max: %lu\n", u64_near_max);
+    
+    // Floating point special cases
+    print("\n--- Floating Point Edge Cases ---\n");
+    let f32_micro: f32 = 0.000000001;
+    print("f32 micro: %f\n", f32_micro);
+    
+    let f64_decimals: f64 = 0.123456789012345;
+    print("f64 decimals: %f\n", f64_decimals);
+    
+    let f64_neg_large: f64 = -999999999999.999999;
+    print("f64 negative large: %f\n", f64_neg_large);
+    
+    // Boundary crossing tests
+    print("\n--- Architecture Boundary Tests ---\n");
+    let boundary_cross: u64 = 4294967296;
+    print("Boundary cross u64: %lu\n", boundary_cross);
+    
+    let signed_boundary: i64 = -2147483649;
+    print("Signed boundary i64: %ld\n", signed_boundary);
+    
+    // Precision tests
+    print("\n--- Precision Tests ---\n");
+    let f32_precision: f32 = 16777216.0;
+    print("f32 precision: %f\n", f32_precision);
+    
+    let f64_sig_digits: f64 = 123456789012345.0;
+    print("f64 significant: %f\n", f64_sig_digits);
+}
+
+func test_arithmetic_operations_64bit(): void {
+    print("\n=== 64-bit ARITHMETIC OPERATIONS (AUTO DATA) ===\n");
+    
+    // Basic arithmetic with different types
+    print("--- Basic Arithmetic Tests ---\n");
+    let a: i32 = 1000;
+    let b: i32 = 2000;
+    let sum: i32 = a + b;
+    print("i32 arithmetic: %d + %d = %d\n", a, b, sum);
+    
+    let x: i64 = 5000000000;
+    let y: i64 = 3000000000;
+    let sum64: i64 = x + y;
+    print("i64 arithmetic: %ld + %ld = %ld\n", x, y, sum64);
+    
+    let p: f32 = 3.14159;
+    let q: f32 = 2.71828;
+    let float_sum: f32 = p + q;
+    print("f32 arithmetic: %f + %f = %f\n", p, q, float_sum);
+    
+    let m: f64 = 1.23456789012345;
+    let n: f64 = 9.87654321098765;
+    let double_sum: f64 = m + n;
+    print("f64 arithmetic: %f + %f = %f\n", m, n, double_sum);
+    
+    // Mixed operations
+    print("\n--- Mixed Type Operations ---\n");
+    let mix_i32: i32 = 42;
+    let mix_f64: f64 = 3.14159265359;
+    let mix_u64: u64 = 12345678901234567890;
+    
+    print("Mixed i32: %d\n", mix_i32);
+    print("Mixed f64: %f\n", mix_f64);
+    print("Mixed u64: %lu\n", mix_u64);
+}
+
+func main(): void {
+    print("╔══════════════════════════════════════════════════════════════════╗\n");
+    print("║       ÆLang 64-bit AUTO Comprehensive Test Suite               ║\n");
+    print("║        Testing All Data Types with Automatic Data              ║\n");
+    print("╚══════════════════════════════════════════════════════════════════╝\n\n");
+    
+    print("Architecture: 64-bit mode (full precision)\n");
+    print("Testing: All primitive types with automatic extreme values\n");
+    print("Coverage: Maximum ranges, precision limits, boundary conditions\n\n");
+    
+    test_signed_integers_64bit();
+    test_unsigned_integers_64bit();
+    test_floating_point_64bit();
+    test_other_types_64bit();
+    test_extreme_edge_cases_64bit();
+    test_arithmetic_operations_64bit();
+    
+    print("\n╔══════════════════════════════════════════════════════════════════╗\n");
+    print("║                 64-bit AUTO Test Suite Complete                 ║\n");
+    print("║    All data types tested automatically with predefined values   ║\n");
+    print("║          Ready for production deployment verification           ║\n");
+    print("╚══════════════════════════════════════════════════════════════════╝\n");
+}

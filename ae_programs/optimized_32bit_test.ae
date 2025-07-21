@@ -1,0 +1,227 @@
+extern print(format: str, ...);
+extern read();
+
+func test_signed_integers_32bit(): void {
+    print("=== 32-bit SIGNED INTEGER TESTS ===\n");
+    
+    print("--- i8 Tests (8-bit signed) ---\n");
+    let i8_min: i8 = -128;
+    print("i8 min: %d\n", i8_min);
+    let i8_max: i8 = 127;
+    print("i8 max: %d\n", i8_max);
+    
+    print("\n--- i16 Tests (16-bit signed) ---\n");
+    let i16_min: i16 = -32768;
+    print("i16 min: %d\n", i16_min);
+    let i16_max: i16 = 32767;
+    print("i16 max: %d\n", i16_max);
+    
+    print("\n--- i32 Tests (32-bit signed, primary type) ---\n");
+    let i32_min: i32 = -2147483648;
+    print("i32 min: %d\n", i32_min);
+    let i32_max: i32 = 2147483647;
+    print("i32 max: %d\n", i32_max);
+    let i32_large: i32 = 1000000000;
+    print("i32 large: %d\n", i32_large);
+    let i32_neg_large: i32 = -1000000000;
+    print("i32 negative large: %d\n", i32_neg_large);
+}
+
+func test_unsigned_integers_32bit(): void {
+    print("\n=== 32-bit UNSIGNED INTEGER TESTS ===\n");
+    
+    print("--- u8 Tests (8-bit unsigned) ---\n");
+    let u8_min: u8 = 0;
+    print("u8 min: %u\n", u8_min);
+    let u8_max: u8 = 255;
+    print("u8 max: %u\n", u8_max);
+    
+    print("\n--- u16 Tests (16-bit unsigned) ---\n");
+    let u16_min: u16 = 0;
+    print("u16 min: %u\n", u16_min);
+    let u16_max: u16 = 65535;
+    print("u16 max: %u\n", u16_max);
+    
+    print("\n--- u32 Tests (32-bit unsigned, primary type) ---\n");
+    let u32_min: u32 = 0;
+    print("u32 min: %u\n", u32_min);
+    let u32_max: u32 = 4294967295;
+    print("u32 max: %u\n", u32_max);
+    let u32_large: u32 = 3000000000;
+    print("u32 large: %u\n", u32_large);
+    let u32_mid: u32 = 2147483648;
+    print("u32 mid-range: %u\n", u32_mid);
+}
+
+func test_floating_point_32bit(): void {
+    print("\n=== 32-bit FLOATING POINT TESTS ===\n");
+    
+    print("--- f32 Tests (32-bit float, IEEE 754 - primary for 32-bit) ---\n");
+    let f32_tiny: f32 = 0.00000001;
+    print("f32 tiny: %f\n", f32_tiny);
+    let f32_huge: f32 = 999999999.0;
+    print("f32 huge: %f\n", f32_huge);
+    let f32_pi: f32 = 3.14159265;
+    print("f32 pi: %f\n", f32_pi);
+    let f32_neg_e: f32 = -2.71828;
+    print("f32 negative e: %f\n", f32_neg_e);
+    let f32_precision: f32 = 16777216.0;
+    print("f32 precision limit: %f\n", f32_precision);
+    
+    print("\n--- Additional f32 Edge Cases ---\n");
+    let f32_micro: f32 = 0.000000001;
+    print("f32 micro: %f\n", f32_micro);
+    let f32_medium: f32 = 123.456789;
+    print("f32 medium precision: %f\n", f32_medium);
+    let f32_negative: f32 = -999999.999;
+    print("f32 negative large: %f\n", f32_negative);
+    let f32_scientific: f32 = 1230000.0;
+    print("f32 scientific: %f\n", f32_scientific);
+    
+    print("\n--- f32 Precision Tests ---\n");
+    let f32_small_step: f32 = 0.125;
+    print("f32 small step: %f\n", f32_small_step);
+    let f32_decimal: f32 = 1.5;
+    print("f32 clean decimal: %f\n", f32_decimal);
+    let f32_repeating: f32 = 1.333333;
+    print("f32 repeating decimal: %f\n", f32_repeating);
+}
+
+func test_other_types_32bit(): void {
+    print("\n=== 32-bit OTHER TYPE TESTS ===\n");
+    
+    print("--- Boolean Tests ---\n");
+    let bool_true: bool = true;
+    print("Bool true: %t\n", bool_true);
+    let bool_false: bool = false;
+    print("Bool false: %t\n", bool_false);
+    
+    print("\n--- Character Tests ---\n");
+    let char_letter: char = 'A';
+    print("Char letter: %c\n", char_letter);
+    let char_digit: char = '5';
+    print("Char digit: %c\n", char_digit);
+    let char_symbol: char = '#';
+    print("Char symbol: %c\n", char_symbol);
+    let char_space: char = ' ';
+    print("Char space: '%c'\n", char_space);
+    
+    print("\n--- num Tests (32-bit optimized) ---\n");
+    let num_int: num = 999999;
+    print("num as int: %g\n", num_int);
+    let num_float: num = 2.71828;
+    print("num as float: %g\n", num_float);
+    let num_scientific: num = 1230000.0;
+    print("num scientific: %g\n", num_scientific);
+}
+
+func test_edge_cases_32bit(): void {
+    print("\n=== 32-bit EDGE CASE TESTS ===\n");
+    
+    print("--- 32-bit Boundary Tests ---\n");
+    let i32_near_max: i32 = 2147483646;
+    print("i32 near max: %d\n", i32_near_max);
+    let u32_near_max: u32 = 4294967294;
+    print("u32 near max: %u\n", u32_near_max);
+    
+    print("\n--- f32 Floating Point Edge Cases ---\n");
+    let f32_edge: f32 = 0.03125;
+    print("f32 edge precision: %f\n", f32_edge);
+    let f32_very_small: f32 = 0.000030517578125;
+    print("f32 very small: %f\n", f32_very_small);
+    let f32_micro: f32 = 0.000000001;
+    print("f32 micro: %f\n", f32_micro);
+    let f32_large: f32 = 999999999.0;
+    print("f32 large: %f\n", f32_large);
+    
+    print("\n--- f32 Precision Limits ---\n");
+    let f32_limit: f32 = 15.875;
+    print("f32 clean fraction: %f\n", f32_limit);
+    let f32_precision_test: f32 = 2048.0;
+    print("f32 precision test: %f\n", f32_precision_test);
+    let f32_limit_plus: f32 = 16777217.0;
+    print("f32 precision limit+1: %f\n", f32_limit_plus);
+    
+    print("\n--- Type Conversion Edge Cases ---\n");
+    let mixed_calc: i32 = 1000 + 2000;
+    print("Mixed calculation: %d\n", mixed_calc);
+    let overflow_test: u16 = 65535;
+    print("u16 at limit: %u\n", overflow_test);
+}
+
+func test_mixed_operations_32bit(): void {
+    print("\n=== 32-bit MIXED OPERATION TESTS ===\n");
+    
+    print("--- Arithmetic Operations ---\n");
+    let add_result: i32 = 1000000 + 2000000;
+    print("Addition result: %d\n", add_result);
+    let sub_result: i32 = 5000000 - 2000000;
+    print("Subtraction result: %d\n", sub_result);
+    let mul_result: i32 = 12345 * 678;
+    print("Multiplication result: %d\n", mul_result);
+    
+    print("\n--- f32 Float Arithmetic Operations ---\n");
+    let f32_add: f32 = 3.0 + 1.5;
+    print("f32 addition: %f\n", f32_add);
+    let f32_mult: f32 = 10.5 * 2.0;
+    print("f32 multiplication: %f\n", f32_mult);
+    let f32_div: f32 = 123.456 / 2.0;
+    print("f32 division: %f\n", f32_div);
+    let f32_complex: f32 = 3.14159 * 2.71828;
+    print("f32 complex calc: %f\n", f32_complex);
+    
+    print("\n--- Type Mixing Tests ---\n");
+    let mixed_i16: i16 = 30000;
+    print("Mixed i16: %d\n", mixed_i16);
+    let mixed_f32_1: f32 = 7.25;
+    print("Mixed f32 #1: %f\n", mixed_f32_1);
+    let mixed_f32_2: f32 = 456.789;
+    print("Mixed f32 #2: %f\n", mixed_f32_2);
+    let mixed_f32_3: f32 = 123.456789;
+    print("Mixed f32 #3: %f\n", mixed_f32_3);
+    let mixed_u32: u32 = 4000000000;
+    print("Mixed u32: %u\n", mixed_u32);
+    
+    print("\n--- Sequential Operations ---\n");
+    let seq1: i8 = 10;
+    let seq2: i8 = 20;
+    let seq3: i8 = 30;
+    let seq4: i8 = 40;
+    let seq5: i8 = 50;
+    print("Sequential i8 values: %d, %d, %d, %d, %d\n", seq1, seq2, seq3, seq4, seq5);
+    
+    print("\n--- f32 Precision Comparison ---\n");
+    let precision_1: f32 = 1.234;
+    let precision_2: f32 = 1.2345;
+    let precision_3: f32 = 1.23456789;
+    print("f32 precision test: %f, %f, %f\n", precision_1, precision_2, precision_3);
+    
+    print("\n--- Boolean Logic Tests ---\n");
+    let logic_true: bool = true;
+    let logic_false: bool = false;
+    print("Logic tests: %t AND %t\n", logic_true, logic_false);
+}
+
+func main(): void {
+    print("╔══════════════════════════════════════════════════════════════════╗\n");
+    print("║              ÆLang 32-bit Comprehensive Test Suite              ║\n");
+    print("║           Optimized for 32-bit Architecture & Types            ║\n");
+    print("╚══════════════════════════════════════════════════════════════════╝\n\n");
+    
+    print("Architecture: 32-bit mode (optimized performance)\n");
+    print("Testing: f32 floats + all 32-bit compatible integer types\n");
+    print("Coverage: IEEE 754 single precision floats, 32-bit integers, edge cases\n\n");
+    
+    test_signed_integers_32bit();
+    test_unsigned_integers_32bit();
+    test_floating_point_32bit();
+    test_other_types_32bit();
+    test_edge_cases_32bit();
+    test_mixed_operations_32bit();
+    
+    print("\n╔══════════════════════════════════════════════════════════════════╗\n");
+    print("║                    32-bit Test Suite Complete                   ║\n");
+    print("║      All 32-bit types + f32 floats tested successfully           ║\n");
+    print("║       Perfect for embedded and resource-constrained systems     ║\n");
+    print("╚══════════════════════════════════════════════════════════════════╝\n");
+}

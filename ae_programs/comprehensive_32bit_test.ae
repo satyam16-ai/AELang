@@ -1,0 +1,215 @@
+// Comprehensive ÆLang 32-bit Architecture Test
+// Tests all data types with extreme values and edge cases
+extern print(format: str, ...);
+extern read();
+
+// Test functions for each data type
+func test_signed_integers_32bit(): void {
+    print("=== 32-bit SIGNED INTEGER TESTS ===\n");
+    
+    // i8 tests: -128 to 127
+    print("--- i8 Tests (8-bit signed) ---\n");
+    print("Enter i8 minimum (-128): ");
+    let i8_min: i8 = read();
+    print("i8 min: %d\n", i8_min);
+    
+    print("Enter i8 maximum (127): ");
+    let i8_max: i8 = read();
+    print("i8 max: %d\n", i8_max);
+    
+    print("Enter i8 zero (0): ");
+    let i8_zero: i8 = read();
+    print("i8 zero: %d\n", i8_zero);
+    
+    // i16 tests: -32768 to 32767
+    print("\n--- i16 Tests (16-bit signed) ---\n");
+    print("Enter i16 minimum (-32768): ");
+    let i16_min: i16 = read();
+    print("i16 min: %d\n", i16_min);
+    
+    print("Enter i16 maximum (32767): ");
+    let i16_max: i16 = read();
+    print("i16 max: %d\n", i16_max);
+    
+    // i32 tests: -2147483648 to 2147483647
+    print("\n--- i32 Tests (32-bit signed) ---\n");
+    print("Enter i32 minimum (-2147483648): ");
+    let i32_min: i32 = read();
+    print("i32 min: %d\n", i32_min);
+    
+    print("Enter i32 maximum (2147483647): ");
+    let i32_max: i32 = read();
+    print("i32 max: %d\n", i32_max);
+    
+    // i64 tests (will be truncated in 32-bit mode)
+    print("\n--- i64 Tests (64-bit signed, truncated in 32-bit) ---\n");
+    print("Enter i64 value (will be truncated): ");
+    let i64_val: i64 = read();
+    print("i64 value (32-bit): %ld\n", i64_val);
+}
+
+func test_unsigned_integers_32bit(): void {
+    print("\n=== 32-bit UNSIGNED INTEGER TESTS ===\n");
+    
+    // u8 tests: 0 to 255
+    print("--- u8 Tests (8-bit unsigned) ---\n");
+    print("Enter u8 minimum (0): ");
+    let u8_min: u8 = read();
+    print("u8 min: %u\n", u8_min);
+    
+    print("Enter u8 maximum (255): ");
+    let u8_max: u8 = read();
+    print("u8 max: %u\n", u8_max);
+    
+    // u16 tests: 0 to 65535
+    print("\n--- u16 Tests (16-bit unsigned) ---\n");
+    print("Enter u16 minimum (0): ");
+    let u16_min: u16 = read();
+    print("u16 min: %u\n", u16_min);
+    
+    print("Enter u16 maximum (65535): ");
+    let u16_max: u16 = read();
+    print("u16 max: %u\n", u16_max);
+    
+    // u32 tests: 0 to 4294967295
+    print("\n--- u32 Tests (32-bit unsigned) ---\n");
+    print("Enter u32 minimum (0): ");
+    let u32_min: u32 = read();
+    print("u32 min: %u\n", u32_min);
+    
+    print("Enter u32 maximum (4294967295): ");
+    let u32_max: u32 = read();
+    print("u32 max: %u\n", u32_max);
+    
+    // u64 tests (will be truncated in 32-bit mode)
+    print("\n--- u64 Tests (64-bit unsigned, truncated in 32-bit) ---\n");
+    print("Enter u64 value (will be truncated): ");
+    let u64_val: u64 = read();
+    print("u64 value (32-bit): %lu\n", u64_val);
+}
+
+func test_floating_point_32bit(): void {
+    print("\n=== 32-bit FLOATING POINT TESTS ===\n");
+    
+    // f32 tests
+    print("--- f32 Tests (32-bit float) ---\n");
+    print("Enter f32 very small (0.000001): ");
+    let f32_small: f32 = read();
+    print("f32 small: %f\n", f32_small);
+    
+    print("Enter f32 large (999999.999): ");
+    let f32_large: f32 = read();
+    print("f32 large: %f\n", f32_large);
+    
+    print("Enter f32 negative (-123.456): ");
+    let f32_neg: f32 = read();
+    print("f32 negative: %f\n", f32_neg);
+    
+    // f64 tests (limited precision in 32-bit)
+    print("\n--- f64 Tests (64-bit double, limited in 32-bit) ---\n");
+    print("Enter f64 value: ");
+    let f64_val: f64 = read();
+    print("f64 value: %f\n", f64_val);
+    
+    // num type tests
+    print("\n--- num Tests (flexible numeric type) ---\n");
+    print("Enter num integer (123): ");
+    let num_int: num = read();
+    print("num as int: %g\n", num_int);
+    
+    print("Enter num float (456.789): ");
+    let num_float: num = read();
+    print("num as float: %g\n", num_float);
+}
+
+func test_other_types_32bit(): void {
+    print("\n=== 32-bit OTHER TYPE TESTS ===\n");
+    
+    // Boolean tests
+    print("--- Boolean Tests ---\n");
+    print("Enter true: ");
+    let bool_true: bool = read();
+    print("Bool true: %t\n", bool_true);
+    
+    print("Enter false: ");
+    let bool_false: bool = read();
+    print("Bool false: %t\n", bool_false);
+    
+    print("Enter 1 (as bool): ");
+    let bool_one: bool = read();
+    print("Bool 1: %t\n", bool_one);
+    
+    print("Enter 0 (as bool): ");
+    let bool_zero: bool = read();
+    print("Bool 0: %t\n", bool_zero);
+    
+    // Character tests
+    print("\n--- Character Tests ---\n");
+    print("Enter ASCII printable char (A): ");
+    let char_print: char = read();
+    print("Char printable: %c\n", char_print);
+    
+    print("Enter ASCII space ( ): ");
+    let char_space: char = read();
+    print("Char space: '%c'\n", char_space);
+    
+    print("Enter ASCII number (5): ");
+    let char_num: char = read();
+    print("Char number: %c\n", char_num);
+}
+
+func test_edge_cases_32bit(): void {
+    print("\n=== 32-bit EDGE CASE TESTS ===\n");
+    
+    // Overflow/underflow tests
+    print("--- Overflow/Underflow Tests ---\n");
+    print("Enter value that overflows i8 (200): ");
+    let overflow_i8: i8 = read();
+    print("Overflow i8: %d\n", overflow_i8);
+    
+    print("Enter value that underflows i8 (-200): ");
+    let underflow_i8: i8 = read();
+    print("Underflow i8: %d\n", underflow_i8);
+    
+    // Boundary tests
+    print("\n--- Boundary Tests ---\n");
+    print("Enter i16 boundary+1 (32768): ");
+    let boundary_i16: i16 = read();
+    print("Boundary i16: %d\n", boundary_i16);
+    
+    print("Enter u16 boundary+1 (65536): ");
+    let boundary_u16: u16 = read();
+    print("Boundary u16: %u\n", boundary_u16);
+    
+    // Zero tests
+    print("\n--- Zero Value Tests ---\n");
+    print("Enter zero for f32 (0.0): ");
+    let zero_f32: f32 = read();
+    print("Zero f32: %f\n", zero_f32);
+    
+    print("Enter negative zero for f32 (-0.0): ");
+    let neg_zero_f32: f32 = read();
+    print("Negative zero f32: %f\n", neg_zero_f32);
+}
+
+func main(): void {
+    print("╔══════════════════════════════════════════════════════════════════╗\n");
+    print("║              ÆLang 32-bit Comprehensive Test Suite              ║\n");
+    print("║           Testing All Data Types with Edge Cases                ║\n");
+    print("╚══════════════════════════════════════════════════════════════════╝\n\n");
+    
+    print("Architecture: 32-bit mode\n");
+    print("Testing: All primitive types with extreme values\n");
+    print("Note: 64-bit types will be truncated to 32-bit in this mode\n\n");
+    
+    test_signed_integers_32bit();
+    test_unsigned_integers_32bit();
+    test_floating_point_32bit();
+    test_other_types_32bit();
+    test_edge_cases_32bit();
+    
+    print("\n╔══════════════════════════════════════════════════════════════════╗\n");
+    print("║                    32-bit Test Suite Complete                   ║\n");
+    print("║            All data types tested with edge cases                ║\n");
+    print("╚══════════════════════════════════════════════════════════════════╝\n");
+}
