@@ -47,6 +47,8 @@ typedef enum {
     VALUE_U64,      // 64-bit unsigned integer
     
     // Floating point value types
+    VALUE_F8,       // 8-bit custom float
+    VALUE_F16,      // 16-bit half-precision float
     VALUE_F32,      // 32-bit float (legacy VALUE_FLOAT)
     VALUE_F64,      // 64-bit double
     
@@ -86,6 +88,8 @@ typedef struct {
         uint64_t u64_val;
         
         // Floating point values
+        uint8_t f8_val;         // 8-bit float bits
+        uint16_t f16_val;       // 16-bit float bits
         float f32_val;
         double f64_val;
         

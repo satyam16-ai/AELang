@@ -408,396 +408,304 @@ void* read_input(const char* prompt, char type_spec, void* buffer, size_t buffer
 // UNIFIED READ FUNCTION
 // -----------------------------------------------------------------------------
 
-// Unified read function - automatically infers type from assignment context
-// The compiler determines the expected type and handles type checking
-int read() {
+// Type constants for universal read function
+#define AELANG_TYPE_I8    1
+#define AELANG_TYPE_I16   2  
+#define AELANG_TYPE_I32   3
+#define AELANG_TYPE_I64   4
+#define AELANG_TYPE_U8    5
+#define AELANG_TYPE_U16   6
+#define AELANG_TYPE_U32   7
+#define AELANG_TYPE_U64   8
+#define AELANG_TYPE_F8    9
+#define AELANG_TYPE_F16   10
+#define AELANG_TYPE_F32   11
+#define AELANG_TYPE_F64   12
+#define AELANG_TYPE_NUM   13
+#define AELANG_TYPE_BOOL  14
+#define AELANG_TYPE_CHAR  15
+
+// Universal read function with type validation
+// Returns a union that can hold any numeric type
+union AELangValue {
+    int8_t   i8_val;
+    int16_t  i16_val;
+    int32_t  i32_val;
+    int64_t  i64_val;
+    uint8_t  u8_val;
+    uint16_t u16_val;
+    uint32_t u32_val;
+    uint64_t u64_val;
+    float    f32_val;
+    double   f64_val;
+    double   num_val;  // For 'num' type
+    int      bool_val;
+    char     char_val;
+};
+
+// Helper function to get type name string
+const char* get_type_name(int type_id) {
+    switch(type_id) {
+        case AELANG_TYPE_I8:   return "i8";
+        case AELANG_TYPE_I16:  return "i16";
+        case AELANG_TYPE_I32:  return "i32";
+        case AELANG_TYPE_I64:  return "i64";
+        case AELANG_TYPE_U8:   return "u8";
+        case AELANG_TYPE_U16:  return "u16";
+        case AELANG_TYPE_U32:  return "u32";
+        case AELANG_TYPE_U64:  return "u64";
+        case AELANG_TYPE_F8:   return "f8";
+        case AELANG_TYPE_F16:  return "f16";
+        case AELANG_TYPE_F32:  return "f32";
+        case AELANG_TYPE_F64:  return "f64";
+        case AELANG_TYPE_NUM:  return "num";
+        case AELANG_TYPE_BOOL: return "bool";
+        case AELANG_TYPE_CHAR: return "char";
+        default: return "unknown";
+    }
+}
+
+// Universal read function with type checking and validation
+union AELangValue read_universal(int expected_type) {
+    union AELangValue result = {0};
     char input_buffer[256];
     
+    // Get input from user
     if (!fgets(input_buffer, sizeof(input_buffer), stdin)) {
-        fprintf(stderr, "Error: Failed to read input\n");
-        return 0;
+        fprintf(stderr, "Runtime Error: Failed to read input\n");
+        exit(1);
     }
     
     // Remove trailing newline
     input_buffer[strcspn(input_buffer, "\n")] = 0;
     
-    // Try to parse as integer first
+    // Handle char type first (special case)
+    if (expected_type == AELANG_TYPE_CHAR) {
+        if (strlen(input_buffer) != 1) {
+            fprintf(stderr, "Runtime Error: Invalid input '%s' for type %s. Expected single character.\n", 
+                    input_buffer, get_type_name(expected_type));
+            exit(1);
+        }
+        result.char_val = input_buffer[0];
+        return result;
+    }
+    
+    // Handle boolean types (special case)
+    if (expected_type == AELANG_TYPE_BOOL) {
+        if (strcasecmp(input_buffer, "true") == 0 || strcmp(input_buffer, "1") == 0) {
+            result.bool_val = 1;
+            return result;
+        } else if (strcasecmp(input_buffer, "false") == 0 || strcmp(input_buffer, "0") == 0) {
+            result.bool_val = 0;
+            return result;
+        } else {
+            fprintf(stderr, "Runtime Error: Invalid input '%s' for type %s. Expected 'true', 'false', '1', or '0'.\n", 
+                    input_buffer, get_type_name(expected_type));
+            exit(1);
+        }
+    }
+    
+    // Parse as number
     char* endptr;
-    long int_val = strtol(input_buffer, &endptr, 10);
     
-    if (*endptr == '\0') {
-        // Valid integer
-        return (int)int_val;
+    // Try floating-point parsing for float types
+    if (expected_type >= AELANG_TYPE_F8 && expected_type <= AELANG_TYPE_NUM) {
+        double float_val = strtod(input_buffer, &endptr);
+        
+        if (*endptr != '\0') {
+            fprintf(stderr, "Runtime Error: Invalid input '%s' for type %s. Expected a number.\n", 
+                    input_buffer, get_type_name(expected_type));
+            exit(1);
+        }
+        
+        // Validate range for specific float types and store
+        switch(expected_type) {
+            case AELANG_TYPE_F8:
+                // F8: Limited range (simulate with float but warn about precision)
+                if (float_val < -128.0 || float_val > 127.0) {
+                    fprintf(stderr, "Runtime Warning: Value %g may exceed f8 range [-128, 127]\n", float_val);
+                }
+                result.f32_val = (float)float_val;
+                break;
+            case AELANG_TYPE_F16:
+                // F16: Half precision range
+                if (float_val < -65504.0 || float_val > 65504.0) {
+                    fprintf(stderr, "Runtime Warning: Value %g may exceed f16 range\n", float_val);
+                }
+                result.f32_val = (float)float_val;
+                break;
+            case AELANG_TYPE_F32:
+                result.f32_val = (float)float_val;
+                break;
+            case AELANG_TYPE_F64:
+            case AELANG_TYPE_NUM:
+                result.f64_val = float_val;
+                break;
+        }
+        return result;
     }
     
-    // Try as float
-    double float_val = strtod(input_buffer, &endptr);
-    if (*endptr == '\0') {
-        // Valid float - store as int bits for return (compiler will handle conversion)
-        union { float f; int i; } converter;
-        converter.f = (float)float_val;
-        return converter.i;
+    // Try integer parsing for integer types
+    if (expected_type >= AELANG_TYPE_I8 && expected_type <= AELANG_TYPE_U64) {
+        // Check if input contains decimal point
+        if (strchr(input_buffer, '.') != NULL) {
+            fprintf(stderr, "Runtime Error: Invalid input '%s' for type %s. Expected an integer (no decimal point).\n", 
+                    input_buffer, get_type_name(expected_type));
+            exit(1);
+        }
+        
+        long long int_val = strtoll(input_buffer, &endptr, 10);
+        
+        if (*endptr != '\0') {
+            fprintf(stderr, "Runtime Error: Invalid input '%s' for type %s. Expected an integer.\n", 
+                    input_buffer, get_type_name(expected_type));
+            exit(1);
+        }
+        
+        // Validate range for specific integer types and store
+        switch(expected_type) {
+            case AELANG_TYPE_I8:
+                if (int_val < -128 || int_val > 127) {
+                    fprintf(stderr, "Runtime Error: Value %lld out of range for i8 [-128, 127]\n", int_val);
+                    exit(1);
+                }
+                result.i8_val = (int8_t)int_val;
+                break;
+            case AELANG_TYPE_I16:
+                if (int_val < -32768 || int_val > 32767) {
+                    fprintf(stderr, "Runtime Error: Value %lld out of range for i16 [-32768, 32767]\n", int_val);
+                    exit(1);
+                }
+                result.i16_val = (int16_t)int_val;
+                break;
+            case AELANG_TYPE_I32:
+                if (int_val < INT32_MIN || int_val > INT32_MAX) {
+                    fprintf(stderr, "Runtime Error: Value %lld out of range for i32 [%d, %d]\n", 
+                            int_val, INT32_MIN, INT32_MAX);
+                    exit(1);
+                }
+                result.i32_val = (int32_t)int_val;
+                break;
+            case AELANG_TYPE_I64:
+                result.i64_val = (int64_t)int_val;
+                break;
+            case AELANG_TYPE_U8:
+                if (int_val < 0 || int_val > 255) {
+                    fprintf(stderr, "Runtime Error: Value %lld out of range for u8 [0, 255]\n", int_val);
+                    exit(1);
+                }
+                result.u8_val = (uint8_t)int_val;
+                break;
+            case AELANG_TYPE_U16:
+                if (int_val < 0 || int_val > 65535) {
+                    fprintf(stderr, "Runtime Error: Value %lld out of range for u16 [0, 65535]\n", int_val);
+                    exit(1);
+                }
+                result.u16_val = (uint16_t)int_val;
+                break;
+            case AELANG_TYPE_U32:
+                if (int_val < 0 || int_val > UINT32_MAX) {
+                    fprintf(stderr, "Runtime Error: Value %lld out of range for u32 [0, %u]\n", 
+                            int_val, UINT32_MAX);
+                    exit(1);
+                }
+                result.u32_val = (uint32_t)int_val;
+                break;
+            case AELANG_TYPE_U64:
+                if (int_val < 0) {
+                    fprintf(stderr, "Runtime Error: Value %lld out of range for u64 (must be positive)\n", int_val);
+                    exit(1);
+                }
+                result.u64_val = (uint64_t)int_val;
+                break;
+        }
+        return result;
     }
     
-    // Try as boolean
-    if (strcasecmp(input_buffer, "true") == 0 || strcmp(input_buffer, "1") == 0) {
-        return 1;
-    } else if (strcasecmp(input_buffer, "false") == 0 || strcmp(input_buffer, "0") == 0) {
-        return 0;
-    }
-    
-    // Input doesn't match any expected format
-    fprintf(stderr, "Error: Invalid input format '%s'. Expected integer, float, or boolean.\n", input_buffer);
-    return 0;
+    // Should never reach here
+    fprintf(stderr, "Runtime Error: Unknown type %d\n", expected_type);
+    exit(1);
 }
 
-// Convenience functions that use the unified read function
-int read_with_prompt(const char* prompt, const char* format, void* result, size_t result_size) {
-    if (prompt && strlen(prompt) > 0) {
-        print("%s", prompt);
-    }
-    return read(format, result, result_size);
-}
-
-// Type-safe wrapper functions
-int read_int_safe() {
-    int value;
-    if (read("%d", &value, sizeof(value))) {
-        return value;
-    }
-    return 0; // Default on error
-}
-
-float read_float_safe() {
-    float value;
-    if (read("%f", &value, sizeof(value))) {
-        return value;
-    }
-    return 0.0f; // Default on error
-}
-
-int read_bool_safe() {
-    int value;
-    if (read("%t", &value, sizeof(value))) {
-        return value;
-    }
-    return 0; // Default on error
-}
-
-#define READ(prompt, type, var) read_input(prompt, type, &var, sizeof(var))
-
-// -----------------------------------------------------------------------------
-// UNIFIED READ FUNCTION
-// -----------------------------------------------------------------------------
-
-// Unified read function - automatically infers type from assignment context
-// The compiler determines the expected type and handles type checking
-// -----------------------------------------------------------------------------
-// UNIFIED READ SYSTEM - All Data Types
-// -----------------------------------------------------------------------------
-
-// Type-specific read functions for all ÆLang data types
+// Type-specific wrapper functions for the compiler to call
 int8_t read_i8() {
-    char input_buffer[256];
-    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) {
-        fprintf(stderr, "Error: Failed to read input\\n");
-        return 0;
-    }
-    input_buffer[strcspn(input_buffer, "\n")] = 0;
-    
-    char* endptr;
-    long val = strtol(input_buffer, &endptr, 10);
-    if (*endptr != '\0' || val < -128 || val > 127) {
-        fprintf(stderr, "Error: Invalid i8 input '%s'. Expected integer from -128 to 127.\n", input_buffer);
-        return 0;
-    }
-    return (int8_t)val;
+    union AELangValue result = read_universal(AELANG_TYPE_I8);
+    return result.i8_val;
 }
 
 int16_t read_i16() {
-    char input_buffer[256];
-    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) {
-        fprintf(stderr, "Error: Failed to read input\\n");
-        return 0;
-    }
-    input_buffer[strcspn(input_buffer, "\n")] = 0;
-    
-    char* endptr;
-    long val = strtol(input_buffer, &endptr, 10);
-
-    // Trim trailing whitespace from endptr
-    while (isspace((unsigned char)*endptr)) {
-        endptr++;
-    }
-
-    if (*endptr != '\0' || val < -32768 || val > 32767) {
-        fprintf(stderr, "Error: Invalid i16 input '%s'. Expected integer from -32768 to 32767.\\n", input_buffer);
-        return 0;
-    }
-    return (int16_t)val;
+    union AELangValue result = read_universal(AELANG_TYPE_I16);
+    return result.i16_val;
 }
 
 int32_t read_i32() {
-    char input_buffer[256];
-    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) {
-        fprintf(stderr, "Error: Failed to read input\\n");
-        return 0;
-    }
-    input_buffer[strcspn(input_buffer, "\n")] = 0;
-    
-    char* endptr;
-    long val = strtol(input_buffer, &endptr, 10);
-    if (*endptr != '\0') {
-        fprintf(stderr, "Error: Invalid i32 input '%s'. Expected integer.\n", input_buffer);
-        return 0;
-    }
-    return (int32_t)val;
+    union AELangValue result = read_universal(AELANG_TYPE_I32);
+    return result.i32_val;
 }
 
 int64_t read_i64() {
-    char input_buffer[256];
-    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) {
-        fprintf(stderr, "Error: Failed to read input\\n");
-        return 0;
-    }
-    input_buffer[strcspn(input_buffer, "\n")] = 0;
-    
-    char* endptr;
-    long long val = strtoll(input_buffer, &endptr, 10);
-    if (*endptr != '\0') {
-        fprintf(stderr, "Error: Invalid i64 input '%s'. Expected 64-bit integer.\n", input_buffer);
-        return 0;
-    }
-    return (int64_t)val;
+    union AELangValue result = read_universal(AELANG_TYPE_I64);
+    return result.i64_val;
 }
 
 uint8_t read_u8() {
-    char input_buffer[256];
-    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) {
-        fprintf(stderr, "Error: Failed to read input\\n");
-        return 0;
-    }
-    input_buffer[strcspn(input_buffer, "\n")] = 0;
-    
-    char* endptr;
-    unsigned long val = strtoul(input_buffer, &endptr, 10);
-    if (*endptr != '\0' || val > 255) {
-        fprintf(stderr, "Error: Invalid u8 input '%s'. Expected unsigned integer from 0 to 255.\n", input_buffer);
-        return 0;
-    }
-    return (uint8_t)val;
+    union AELangValue result = read_universal(AELANG_TYPE_U8);
+    return result.u8_val;
 }
 
 uint16_t read_u16() {
-    char input_buffer[256];
-    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) {
-        fprintf(stderr, "Error: Failed to read input\\n");
-        return 0;
-    }
-    input_buffer[strcspn(input_buffer, "\n")] = 0;
-    
-    char* endptr;
-    unsigned long val = strtoul(input_buffer, &endptr, 10);
-    if (*endptr != '\0' || val > 65535) {
-        fprintf(stderr, "Error: Invalid u16 input '%s'. Expected unsigned integer from 0 to 65535.\n", input_buffer);
-        return 0;
-    }
-    return (uint16_t)val;
+    union AELangValue result = read_universal(AELANG_TYPE_U16);
+    return result.u16_val;
 }
 
 uint32_t read_u32() {
-    char input_buffer[256];
-    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) {
-        fprintf(stderr, "Error: Failed to read input\\n");
-        return 0;
-    }
-    input_buffer[strcspn(input_buffer, "\n")] = 0;
-    
-    char* endptr;
-    unsigned long val = strtoul(input_buffer, &endptr, 10);
-    if (*endptr != '\0') {
-        fprintf(stderr, "Error: Invalid u32 input '%s'. Expected unsigned 32-bit integer.\n", input_buffer);
-        return 0;
-    }
-    return (uint32_t)val;
+    union AELangValue result = read_universal(AELANG_TYPE_U32);
+    return result.u32_val;
 }
 
 uint64_t read_u64() {
-    char input_buffer[256];
-    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) {
-        fprintf(stderr, "Error: Failed to read input\\n");
-        return 0;
-    }
-    input_buffer[strcspn(input_buffer, "\n")] = 0;
-    
-    char* endptr;
-    unsigned long long val = strtoull(input_buffer, &endptr, 10);
-    if (*endptr != '\0') {
-        fprintf(stderr, "Error: Invalid u64 input '%s'. Expected unsigned 64-bit integer.\n", input_buffer);
-        return 0;
-    }
-    return (uint64_t)val;
+    union AELangValue result = read_universal(AELANG_TYPE_U64);
+    return result.u64_val;
 }
 
 float read_f32() {
-    char input_buffer[256];
-    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) {
-        fprintf(stderr, "Error: Failed to read input\\n");
-        return 0.0f;
-    }
-    input_buffer[strcspn(input_buffer, "\n")] = 0;
-    
-    char* endptr;
-    double val = strtod(input_buffer, &endptr);
-    if (*endptr != '\0') {
-        fprintf(stderr, "Error: Invalid f32 input '%s'. Expected floating-point number.\n", input_buffer);
-        return 0.0f;
-    }
-    return (float)val;
+    union AELangValue result = read_universal(AELANG_TYPE_F32);
+    return result.f32_val;
 }
 
 double read_f64() {
-    char input_buffer[256];
-    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) {
-        fprintf(stderr, "Error: Failed to read input\\n");
-        return 0.0;
-    }
-    input_buffer[strcspn(input_buffer, "\n")] = 0;
-    
-    char* endptr;
-    double val = strtod(input_buffer, &endptr);
-    if (*endptr != '\0') {
-        fprintf(stderr, "Error: Invalid f64 input '%s'. Expected double-precision floating-point number.\n", input_buffer);
-        return 0.0;
-    }
-    return val;
+    union AELangValue result = read_universal(AELANG_TYPE_F64);
+    return result.f64_val;
 }
 
-char read_char() {
-    char input_buffer[256];
-    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) {
-        fprintf(stderr, "Error: Failed to read input\\n");
-        return '\0';
-    }
-    input_buffer[strcspn(input_buffer, "\n")] = 0;
-    
-    if (strlen(input_buffer) != 1) {
-        fprintf(stderr, "Error: Invalid char input '%s'. Expected single character.\\n", input_buffer);
-        return '\0';
-    }
-    return input_buffer[0];
+// F8 and F16 return as float but with validation
+float read_f8() {
+    union AELangValue result = read_universal(AELANG_TYPE_F8);
+    return result.f32_val;
+}
+
+float read_f16() {
+    union AELangValue result = read_universal(AELANG_TYPE_F16);
+    return result.f32_val;
+}
+
+double read_num() {
+    union AELangValue result = read_universal(AELANG_TYPE_NUM);
+    return result.f64_val;
 }
 
 int read_bool() {
-    char input_buffer[256];
-    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) {
-        fprintf(stderr, "Error: Failed to read input\n");
-        return 0;
-    }
-    // Remove trailing newline and whitespace
-    char* end = input_buffer + strlen(input_buffer) - 1;
-    while (end >= input_buffer && isspace((unsigned char)*end)) {
-        *end = '\0';
-        end--;
-    }
-    
-    // Convert to lowercase for comparison
-    for (int i = 0; input_buffer[i]; i++) {
-        input_buffer[i] = tolower(input_buffer[i]);
-    }
-
-    if (strcmp(input_buffer, "true") == 0 || strcmp(input_buffer, "1") == 0) {
-        return 1;
-    } else if (strcmp(input_buffer, "false") == 0 || strcmp(input_buffer, "0") == 0) {
-        return 0;
-    } else {
-        fprintf(stderr, "Error: Invalid bool input '%s'. Expected 'true', 'false', '1', or '0'.\n", input_buffer);
-        return 0;
-    }
+    union AELangValue result = read_universal(AELANG_TYPE_BOOL);
+    return result.bool_val;
 }
 
-// String input with dynamic allocation
-char* read_str() {
-    char input_buffer[1024];
-    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) {
-        fprintf(stderr, "Error: Failed to read input\\n");
-        return NULL;
-    }
-    input_buffer[strcspn(input_buffer, "\n")] = 0;
-    
-    char* result = malloc(strlen(input_buffer) + 1);
-    if (!result) {
-        fprintf(stderr, "Error: Memory allocation failed\n");
-        return NULL;
-    }
-    strcpy(result, input_buffer);
-    return result;
+char read_char() {
+    union AELangValue result = read_universal(AELANG_TYPE_CHAR);
+    return result.char_val;
 }
 
-// Universal numeric type (chooses best fit)
-double read_num() {
-    char input_buffer[256];
-    if (!fgets(input_buffer, sizeof(input_buffer), stdin)) {
-        fprintf(stderr, "Error: Failed to read input\\n");
-        return 0.0;
-    }
-    input_buffer[strcspn(input_buffer, "\n")] = 0;
-    
-    char* endptr;
-    double val = strtod(input_buffer, &endptr);
-    if (*endptr != '\0') {
-        fprintf(stderr, "Error: Invalid num input '%s'. Expected numeric value.\n", input_buffer);
-        return 0.0;
-    }
-    return val;
+// Legacy universal read function (backwards compatibility)
+double read() {
+    union AELangValue result = read_universal(AELANG_TYPE_NUM);
+    return result.f64_val;
 }
-
-// Legacy functions for backward compatibility
-void print_int(int value) {
-    print("%d\n", value);
-}
-
-void print_float(float value) {
-    print("%.6f\n", value);
-}
-
-void print_str(const char* value) {
-    print("%s\n", value);
-}
-
-void print_clean_str(const char* value) {
-    print("%s", value);
-}
-
-void print_bool(int value) {
-    print("%t\n", value);
-}
-
-void print_num(float value) {
-    if (value == (int)value) {
-        print("%.0f", value);
-    } else {
-        print("%.2f", value);
-    }
-}
-
-// -----------------------------------------------------------------------------
-// MACRO SHORTCUTS
-// -----------------------------------------------------------------------------
-
-// Convenient macros for common operations
-#define PRINT_HEX(val) print("0x%x", val)
-#define PRINT_BIN(val) print("%b", val)
-#define PRINT_BOOL(val) print("%t", val)
-#define PRINT_CURRENCY(val) print("%$", val)
-#define PRINT_PERCENT(val) print("%P", val)
-#define PRINT_ENGINEERING(val) print("%K", val)
-#define PRINTLN(format, ...) print(format "\\n", ##__VA_ARGS__)
-#define PRINT_MULTILINE(format, ...) print(format "\\nl", ##__VA_ARGS__)
-
-// Read macros
-#define READ_INT(var) READ("", 'd', var)
-#define READ_FLOAT(var) READ("", 'f', var)
-#define READ_CHAR(var) READ("", 'c', var)
-#define READ_BOOL(var) READ("", 't', var)
-#define READ_STRING(var, size) read_input("", 's', var, size)

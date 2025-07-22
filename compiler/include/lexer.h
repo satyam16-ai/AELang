@@ -80,6 +80,8 @@ typedef enum {
     TOKEN_TYPE_U64,     // 64-bit unsigned integer (0 to 2^64-1)
     
     // Floating Point Types
+    TOKEN_TYPE_F8,      // 8-bit custom float (1 sign + 4 exponent + 3 mantissa)
+    TOKEN_TYPE_F16,     // 16-bit IEEE-754 binary16 half-precision float
     TOKEN_TYPE_F32,     // 32-bit IEEE-754 float
     TOKEN_TYPE_F64,     // 64-bit IEEE-754 double
     

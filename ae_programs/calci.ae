@@ -1,0 +1,21 @@
+extern print(format: str, ...);
+extern read();
+func main(): void {
+    print("=== Calculator Program ===\n");
+    
+    // Read input from user
+    print("Enter a number: ");
+    let input: i64 = 5555555555;
+    
+    // Print the input back to the user
+    print("You entered: %ld\n", input);
+    
+    // Simple arithmetic operations
+    let a: f32 = 10.5;
+    let b: f32 = 2.5;
+    
+    print("Addition: %f\n", a + b);
+    print("Subtraction: %f\n", a - b);
+    print("Multiplication: %f\n", a * b);
+    print("Division: %f\n", a / b);
+}

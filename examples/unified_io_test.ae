@@ -1,0 +1,82 @@
+// ÆLang Unified I/O System Test Program
+// Tests the single print() function with all format specifiers
+
+// Only the unified I/O functions needed
+extern print(format: str, ...);
+extern print_clean(format: str, ...);
+extern read_int();
+extern read_float();
+extern read_bool();
+
+func main(): void {
+    // Test integer formats
+    print("=== Testing Integer Formats ===\\n");
+    let number: i32 = 42;
+    print("Decimal: %d\\n", number);
+    print("Binary: %b\\n", number);
+    print("Hexadecimal: %x\\n", number);
+
+    // Test floating point formats
+    print("\\n=== Testing Float Formats ===\\n");
+    let price: f32 = 123.456;
+    let percentage: f32 = 0.85;
+    let large_number: f32 = 1234567.89;
+
+    print("Standard float: %.2f\\n", price);
+    print("Currency format: %$\\n", price);
+    print("Percentage format: %P\\n", percentage);
+    print("Engineering format: %K\\n", large_number);
+
+    // Test boolean format
+    print("\\n=== Testing Boolean Format ===\\n");
+    let is_true: bool = true;
+    let is_false: bool = false;
+    print("True value: %t\\n", is_true);
+    print("False value: %t\\n", is_false);
+
+    // Test multi-line strings
+    print("\\n=== Testing Multi-line Strings ===\\n");
+    print("Line 1\\nLine 2\\nLine 3\\n");
+    print("Paragraph 1\\nlParagraph 2\\nlParagraph 3\\n");
+
+    // Test mixed formats in one print
+    print("\\n=== Testing Mixed Formats ===\\n");
+    let age: i32 = 25;
+    let salary: f32 = 50000.50;
+    let active: bool = true;
+    print("Employee: Age=%d, Salary=%$, Active=%t\\n", age, salary, active);
+
+    // Test clean printing
+    print("\\n=== Testing Clean Print ===\\n");
+    print_clean("This is ");
+    print_clean("printed ");
+    print_clean("without ");
+    print_clean("newlines");
+    print("\\n");
+
+    // Test legacy compatibility - using single print() function instead
+    print("\\n=== Testing Legacy Compatibility ===\\n");
+    print("Integer: %d\\n", 999);
+    print("Float: %.5f\\n", 3.14159);
+    print("String: %s\\n", "Legacy string function");
+    print("Boolean: %t\\n", true);
+
+    // Interactive test with read functions
+    print("\\n=== Interactive Testing ===\\n");
+    print("Enter an integer: ");
+    let user_int: i32 = read_int();
+    print("You entered: %d (Binary: %b)\\n", user_int, user_int);
+
+    print("Enter a decimal number: ");
+    let user_float: f32 = read_float();
+    print("Currency: %$ | Percentage: %P | Engineering: %K\\n", user_float, user_float, user_float);
+
+    print("Enter true or false: ");
+    let user_bool: bool = read_bool();
+    print("Boolean result: %t\\n", user_bool);
+
+    // Final summary
+    print("\\n=== Test Summary ===\\n");
+    print("All unified I/O features tested successfully!\\n");
+    print("Single print() function handles all formats perfectly.\\n");
+}

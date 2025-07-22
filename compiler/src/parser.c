@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <limits.h>
 
 static size_t current = 0;
 static TokenList *tokens;
@@ -41,7 +43,7 @@ static int is_type_token(TokenType type) {
            type == TOKEN_TYPE_U64 ||
            type == TOKEN_TYPE_I8 || type == TOKEN_TYPE_I16 || type == TOKEN_TYPE_I32 || 
            type == TOKEN_TYPE_I64 ||
-           type == TOKEN_TYPE_F32 || type == TOKEN_TYPE_F64 ||
+           type == TOKEN_TYPE_F8 || type == TOKEN_TYPE_F16 || type == TOKEN_TYPE_F32 || type == TOKEN_TYPE_F64 ||
            type == TOKEN_TYPE_CHAR || type == TOKEN_TYPE_NUM || type == TOKEN_TYPE_VOID;
 }
 
@@ -144,8 +146,31 @@ static ASTNode *make_node(ASTNodeType type, int line) {
 static ASTNode *parse_literal(Token tok) {
     ASTNode *node = make_node(AST_LITERAL, tok.line);
     if (tok.type == TOKEN_INT) {
-        node->as.literal.type = VALUE_INT;
-        node->as.literal.as.int_val = atoi(tok.text);
+        // Parse as 64-bit integer first to handle large values
+        long long val = atoll(tok.text);
+        
+        // Determine the appropriate integer type based on value range
+        if (val >= INT8_MIN && val <= INT8_MAX) {
+            node->as.literal.type = VALUE_I8;
+            node->as.literal.as.i8_val = (int8_t)val;
+        } else if (val >= INT16_MIN && val <= INT16_MAX) {
+            node->as.literal.type = VALUE_I16;
+            node->as.literal.as.i16_val = (int16_t)val;
+        } else if (val >= INT32_MIN && val <= INT32_MAX) {
+            node->as.literal.type = VALUE_I32;
+            node->as.literal.as.i32_val = (int32_t)val;
+        } else {
+            node->as.literal.type = VALUE_I64;
+            node->as.literal.as.i64_val = (int64_t)val;
+        }
+        
+        // Also set legacy int_val for backward compatibility
+        if (val >= INT32_MIN && val <= INT32_MAX) {
+            node->as.literal.as.int_val = (int)val;
+        } else {
+            // For values too large for int, store a truncated version
+            node->as.literal.as.int_val = (int)val;
+        }
     } else if (tok.type == TOKEN_FLOAT) {
         node->as.literal.type = VALUE_FLOAT;
         node->as.literal.as.float_val = atof(tok.text);

@@ -1,0 +1,21 @@
+// ÆLang Float Test - Debug version
+extern print(format: str, ...);
+
+func main(): void {
+    print("Testing float handling...\\n");
+    
+    // Test with simple integer converted to float
+    let test1: f32 = 123.0;
+    print("Simple float: %.2f\\n", test1);
+    
+    // Test with fractional part
+    let test2: f32 = 45.67;
+    print("Fractional float: %.2f\\n", test2);
+    
+    // Test currency format
+    print("Currency test: %$\\n", test2);
+    
+    // Test percentage
+    let percent: f32 = 0.75;
+    print("Percentage test: %P\\n", percent);
+}

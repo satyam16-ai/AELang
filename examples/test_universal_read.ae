@@ -1,0 +1,51 @@
+// Test universal read functionality with type validation
+extern print(format: str, ...);
+extern read();
+
+func main(): void {
+    // Test different integer types
+    print("Enter an i8 value: ");
+    let my_i8: i8 = read();
+    print("Entered i8 value: %d\n", my_i8);
+
+    print("Enter an i16 value: ");
+    let my_i16: i16 = read();
+    print("Entered i16 value: %d\n", my_i16);
+
+    print("Enter an i32 value: ");
+    let my_i32: i32 = read();
+    print("Entered i32 value: %d\n", my_i32);
+
+    // Test unsigned types
+    print("Enter a u8 value: ");
+    let my_u8: u8 = read();
+    print("Entered u8 value: %d\n", my_u8);
+
+    // Test floating point types
+    print("Enter an f32 value: ");
+    let my_f32: f32 = read();
+    print("Entered f32 value: %f\n", my_f32);
+
+    print("Enter an f8 value: ");
+    let my_f8: f8 = read();
+    print("Entered f8 value: %f\n", my_f8);
+
+    print("Enter an f16 value: ");
+    let my_f16: f16 = read();
+    print("Entered f16 value: %f\n", my_f16);
+
+    // Test boolean
+    print("Enter a bool value (true/false): ");
+    let my_bool: bool = read();
+    print("Entered bool value: %t\n", my_bool);
+
+    // Test char type
+    print("Enter a char value: ");
+    let my_char: char = read();
+    print("Entered char value: %c\n", my_char);
+
+    // Test num (dynamic type)
+    print("Enter a num value: ");
+    let my_num: num = read();
+    print("Entered num value: %f\n", my_num);
+}

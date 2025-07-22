@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     
     // Enhanced compilation configuration
     CompilationConfig config = {
-        .target_arch = ARCH_32BIT,           // Default to 32-bit
+        .target_arch = ARCH_INVALID,         // No default - must be explicitly set
         .enable_string_variables = true,     // Always enabled by default
         .enable_char_operations = true,      // Always enabled by default
         .strict_integer_sizes = false,       // Relaxed by default
@@ -70,10 +70,33 @@ int main(int argc, char **argv) {
         }
     }
     
+    // Validate that architecture is explicitly specified
+    if (config.target_arch == ARCH_INVALID) {
+        fprintf(stderr, "Error: Target architecture must be explicitly specified\n");
+        fprintf(stderr, "Use --arch32 for 32-bit or --arch64 for 64-bit architecture\n");
+        fprintf(stderr, "This ensures proper type handling and prevents architecture-specific bugs\n");
+        return 1;
+    }
+    
     // If no output path specified, generate default
     if (output_path == NULL) {
         fprintf(stderr, "Error: No output file specified\n");
         return 1;
+    }
+    
+    // Ensure output file has .asm extension
+    char *final_output_path = NULL;
+    size_t output_len = strlen(output_path);
+    if (output_len < 4 || strcmp(output_path + output_len - 4, ".asm") != 0) {
+        // Append .asm extension
+        final_output_path = malloc(output_len + 5); // +4 for ".asm" +1 for null terminator
+        if (!final_output_path) {
+            fprintf(stderr, "Error: Memory allocation failed\n");
+            return 1;
+        }
+        strcpy(final_output_path, output_path);
+        strcat(final_output_path, ".asm");
+        output_path = final_output_path;
     }
 
     printf("[\u2713] ÆLang Enhanced Compiler Pipeline Starting...\n");
@@ -206,6 +229,9 @@ int main(int argc, char **argv) {
     printf("  Optimization Level: %d\n", optimization_level);
 
     // Cleanup
+    if (final_output_path) {
+        free(final_output_path);
+    }
     free_ir_program(optimized_ir);
     free_annotated_ast(annotated_ast);
     free_semantic_context(sem_ctx);

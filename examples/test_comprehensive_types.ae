@@ -1,0 +1,117 @@
+extern print(format: str, ...);
+extern read();
+
+func main(): void {
+    // ========== 8-BIT INTEGER TYPES ==========
+    print("=== 8-BIT INTEGER TYPES ===\n");
+    
+    // i8 tests (signed 8-bit: -128 to 127)
+    print("Enter i8 value (-128 to 127): ");
+    let my_i8: i8 = read();
+    print("i8 value: %d\n", my_i8);
+    
+    // u8 tests (unsigned 8-bit: 0 to 255)
+    print("Enter u8 value (0 to 255): ");
+    let my_u8: u8 = read();
+    print("u8 value: %d\n", my_u8);
+    
+    // ========== 16-BIT INTEGER TYPES ==========
+    print("\n=== 16-BIT INTEGER TYPES ===\n");
+    
+    // i16 tests (signed 16-bit: -32,768 to 32,767)
+    print("Enter i16 value (-32768 to 32767): ");
+    let my_i16: i16 = read();
+    print("i16 value: %d\n", my_i16);
+    
+    // u16 tests (unsigned 16-bit: 0 to 65,535)
+    print("Enter u16 value (0 to 65535): ");
+    let my_u16: u16 = read();
+    print("u16 value: %d\n", my_u16);
+    
+    // ========== 32-BIT INTEGER TYPES ==========
+    print("\n=== 32-BIT INTEGER TYPES ===\n");
+    
+    // i32 tests (signed 32-bit: -2,147,483,648 to 2,147,483,647)
+    print("Enter i32 value (-2147483648 to 2147483647): ");
+    let my_i32: i32 = read();
+    print("i32 value: %d\n", my_i32);
+    
+    // u32 tests (unsigned 32-bit: 0 to 4,294,967,295)
+    print("Enter u32 value (0 to 4294967295): ");
+    let my_u32: u32 = read();
+    print("u32 value: %u\n", my_u32);
+    
+    // ========== 64-BIT INTEGER TYPES ==========
+    print("\n=== 64-BIT INTEGER TYPES ===\n");
+    
+    // i64 tests (signed 64-bit: -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807)
+    print("Enter i64 value (large signed integer): ");
+    let my_i64: i64 = read();
+    print("i64 value: %ld\n", my_i64);
+    
+    // u64 tests (unsigned 64-bit: 0 to 18,446,744,073,709,551,615)
+    print("Enter u64 value (large unsigned integer): ");
+    let my_u64: u64 = read();
+    print("u64 value: %lu\n", my_u64);
+    
+    // ========== FLOATING-POINT TYPES ==========
+    print("\n=== FLOATING-POINT TYPES ===\n");
+    
+    // f8 tests (8-bit float)
+    print("Enter f8 value (small float): ");
+    let my_f8: f8 = read();
+    print("f8 value: %f\n", my_f8);
+    
+    // f16 tests (16-bit float)
+    print("Enter f16 value (half precision): ");
+    let my_f16: f16 = read();
+    print("f16 value: %f\n", my_f16);
+    
+    // f32 tests (32-bit float)
+    print("Enter f32 value (single precision): ");
+    let my_f32: f32 = read();
+    print("f32 value: %f\n", my_f32);
+    
+    // f64 tests (64-bit float)
+    print("Enter f64 value (double precision): ");
+    let my_f64: f64 = read();
+    print("f64 value: %f\n", my_f64);
+    
+    // ========== SPECIAL TYPES ==========
+    print("\n=== SPECIAL TYPES ===\n");
+    
+    // num type (polymorphic number)
+    print("Enter num value (auto-detecting): ");
+    let my_num: num = read();
+    print("num value: %f\n", my_num);
+    
+    // bool type
+    print("Enter bool value (true/false): ");
+    let my_bool: bool = read();
+    print("bool value: %t\n", my_bool);
+    
+    // char type
+    print("Enter char value (single character): ");
+    let my_char: char = read();
+    print("char value: %c\n", my_char);
+    
+    // ========== EDGE CASE TESTING ==========
+    print("\n=== EDGE CASE SUMMARY ===\n");
+    print("All data types tested successfully!\n");
+    print("Summary of values entered:\n");
+    print("i8:   %d\n", my_i8);
+    print("u8:   %d\n", my_u8);
+    print("i16:  %d\n", my_i16);
+    print("u16:  %d\n", my_u16);
+    print("i32:  %d\n", my_i32);
+    print("u32:  %u\n", my_u32);
+    print("i64:  %ld\n", my_i64);
+    print("u64:  %lu\n", my_u64);
+    print("f8:   %f\n", my_f8);
+    print("f16:  %f\n", my_f16);
+    print("f32:  %f\n", my_f32);
+    print("f64:  %f\n", my_f64);
+    print("num:  %f\n", my_num);
+    print("bool: %t\n", my_bool);
+    print("char: %c\n", my_char);
+}

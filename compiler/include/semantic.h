@@ -28,6 +28,8 @@ typedef enum {
     TYPE_U64,       // 64-bit unsigned integer (0 to 2^64-1)
     
     // Floating Point Types
+    TYPE_F8,        // 8-bit custom float (1 sign + 4 exp + 3 mantissa)
+    TYPE_F16,       // 16-bit IEEE-754 binary16 half-precision
     TYPE_F32,       // 32-bit IEEE-754 single precision
     TYPE_F64,       // 64-bit IEEE-754 double precision
     
@@ -45,8 +47,9 @@ typedef enum {
 
 // Compilation target configuration
 typedef enum {
-    ARCH_32BIT,     // 32-bit target architecture
-    ARCH_64BIT      // 64-bit target architecture
+    ARCH_INVALID = -1,  // Invalid/unset architecture
+    ARCH_32BIT,         // 32-bit target architecture
+    ARCH_64BIT          // 64-bit target architecture
 } TargetArchitecture;
 
 typedef struct CompilationConfig {
@@ -123,6 +126,10 @@ SemanticType get_expression_type(AnnotatedASTNode *node, SemanticContext *ctx);
 bool types_compatible(SemanticType left, SemanticType right);
 SemanticType get_binary_op_result_type(SemanticType left, SemanticType right, const char *op);
 SemanticType string_to_semantic_type(const char *type_str);  // Convert string to semantic type
+const char* semantic_type_to_string(SemanticType type);      // Convert type to string
+
+// Architecture validation
+bool validate_type_for_architecture(SemanticType type, TargetArchitecture arch, const char *context);
 
 // Error reporting
 void semantic_error(SemanticContext *ctx, int line, const char *format, ...);

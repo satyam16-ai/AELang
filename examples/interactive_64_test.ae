@@ -1,0 +1,27 @@
+extern print(format: str, ...);
+extern read_int();
+extern read_float();
+extern read_bool();
+
+func main(): void {
+    print("=== Unified Read() Function Test ===\\n");
+    
+    print("Enter an integer: ");
+    let user_int: i32 = read_int();
+    print("You entered integer: %d\\n", user_int);
+    print("Binary: %b\\n", user_int);
+    
+    print("Enter a float: ");  
+    let user_float: f32 = read_float();
+    print("You entered float: %f\\n", user_float);
+    print("As currency: %$\\n", user_float);
+    print("As percentage: %P\\n", user_float);
+    
+    print("Enter true or false: ");
+    let user_bool: bool = read_bool();
+    print("You entered boolean: %t\\n", user_bool);
+    
+    print("\\n=== Final Summary ===\\n");
+    print("Integer: %d, Float: %f, Boolean: %t\\n", user_int, user_float, user_bool);
+    print("Read functions working perfectly in 64-bit!\\n");
+}

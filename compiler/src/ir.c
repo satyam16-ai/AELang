@@ -227,6 +227,24 @@ static IROperand *generate_expression_ir(AnnotatedASTNode *node, IRContext *ctx)
                     append_instruction(ctx, instr);
                     return temp;
                 }
+                case VALUE_F8: {
+                    IROperand *temp = create_temp_operand(ctx, TYPE_F32);  // Promote f8 to f32 for IR
+                    // f8_val contains bit pattern, need to convert to float
+                    // For now, treat as direct bit pattern (will need runtime conversion)
+                    IROperand *const_op = create_const_int_operand(ast_node->as.literal.as.f8_val);
+                    IRInstruction *instr = create_instruction(IR_LOAD_CONST, temp, const_op, NULL, ast_node->line);
+                    append_instruction(ctx, instr);
+                    return temp;
+                }
+                case VALUE_F16: {
+                    IROperand *temp = create_temp_operand(ctx, TYPE_F32);  // Promote f16 to f32 for IR
+                    // f16_val contains bit pattern, need to convert to float  
+                    // For now, treat as direct bit pattern (will need runtime conversion)
+                    IROperand *const_op = create_const_int_operand(ast_node->as.literal.as.f16_val);
+                    IRInstruction *instr = create_instruction(IR_LOAD_CONST, temp, const_op, NULL, ast_node->line);
+                    append_instruction(ctx, instr);
+                    return temp;
+                }
                 case VALUE_F64: {
                     IROperand *temp = create_temp_operand(ctx, TYPE_F32);  // Map to f32 for now
                     IROperand *const_op = create_const_float_operand((float)ast_node->as.literal.as.f64_val);

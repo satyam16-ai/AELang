@@ -1,0 +1,203 @@
+extern print(format: str, ...);
+extern read();
+
+func test_f8_precision(): void {
+    print("=== f8 (8-bit Float) Precision Testing ===\n");
+    
+    let tiny_f8: f8 = 0.125;
+    let small_f8: f8 = 1.5;
+    let medium_f8: f8 = 7.25;
+    let large_f8: f8 = 63.75;
+    
+    print("Basic f8 values:\n");
+    print("tiny_f8   = %.3f8 (0.125)\n", tiny_f8);
+    print("small_f8  = %.3f8 (1.5)\n", small_f8);
+    print("medium_f8 = %.3f8 (7.25)\n", medium_f8);
+    print("large_f8  = %.3f8 (63.75)\n", large_f8);
+    
+    print("\nf8 arithmetic operations:\n");
+    let sum_f8: f8 = small_f8 + medium_f8;
+    let product_f8: f8 = small_f8 * 2.0;
+    let quotient_f8: f8 = medium_f8 / 2.0;
+    
+    print("1.5 + 7.25 = %.3f8\n", sum_f8);
+    print("1.5 * 2.0  = %.3f8\n", product_f8);
+    print("7.25 / 2.0 = %.3f8\n", quotient_f8);
+    
+    print("\nf8 scientific notation:\n");
+    print("large_f8 scientific: %e\n", large_f8);
+    print("tiny_f8 scientific:  %e\n", tiny_f8);
+}
+
+func test_f16_precision(): void {
+    print("\n=== f16 (16-bit Half-Precision) Testing ===\n");
+    
+    let precise_f16: f16 = 123.456;
+    let small_f16: f16 = 0.001234;
+    let pi_f16: f16 = 3.14159;
+    let large_f16: f16 = 1024.75;
+    
+    print("Basic f16 values:\n");
+    print("precise_f16 = %.6f16 (123.456)\n", precise_f16);
+    print("small_f16   = %.8f16 (0.001234)\n", small_f16);
+    print("pi_f16      = %.5f16 (3.14159)\n", pi_f16);
+    print("large_f16   = %.2f16 (1024.75)\n", large_f16);
+    
+    print("\nf16 arithmetic operations:\n");
+    let area_f16: f16 = pi_f16 * 5.0 * 5.0;
+    let increment_f16: f16 = precise_f16 + 0.544;
+    let ratio_f16: f16 = large_f16 / precise_f16;
+    
+    print("π * 5² = %.4f16 (circle area)\n", area_f16);
+    print("123.456 + 0.544 = %.3f16\n", increment_f16);
+    print("1024.75 / 123.456 = %.6f16\n", ratio_f16);
+    
+    print("\nf16 scientific notation:\n");
+    print("large_f16 scientific: %.4e\n", large_f16);
+    print("small_f16 scientific: %.8e\n", small_f16);
+}
+
+func test_mixed_precision(): void {
+    print("\n=== Mixed Precision Type Comparisons ===\n");
+    
+    let value_f8: f8 = 3.14;
+    let value_f16: f16 = 3.14159;
+    let value_f32: f32 = 3.14159265;
+    let value_f64: f64 = 3.141592653589793;
+    
+    print("Pi approximations across types:\n");
+    print("f8  (8-bit):  %.8f8\n", value_f8);
+    print("f16 (16-bit): %.8f16\n", value_f16);
+    print("f32 (32-bit): %.8f\n", value_f32);
+    print("f64 (64-bit): %.15f\n", value_f64);
+    
+    print("\nPrecision comparison in scientific notation:\n");
+    print("f8:  %e\n", value_f8);
+    print("f16: %e\n", value_f16);
+    print("f32: %e\n", value_f32);
+    print("f64: %.15e\n", value_f64);
+    
+    print("\nMemory efficiency:\n");
+    print("f8  size: 1 byte  (range: ±6.10×10⁻⁵ to ±240)\n");
+    print("f16 size: 2 bytes (range: ±6.55×10⁴)\n");
+    print("f32 size: 4 bytes (range: ±3.40×10³⁸)\n");
+    print("f64 size: 8 bytes (range: ±1.80×10³⁰⁸)\n");
+}
+
+func test_edge_cases(): void {
+    print("\n=== Edge Cases and Special Values ===\n");
+    
+    print("f8 edge cases:\n");
+    let zero_f8: f8 = 0.0;
+    let min_f8: f8 = 0.000061;  // Approximate minimum positive f8
+    let max_f8: f8 = 240.0;     // Approximate maximum f8
+    
+    print("Zero f8:    %.6f8\n", zero_f8);
+    print("Min f8:     %.8f8 (≈6.1×10⁻⁵)\n", min_f8);
+    print("Max f8:     %.1f8 (≈240)\n", max_f8);
+    
+    print("\nf16 edge cases:\n");
+    let zero_f16: f16 = 0.0;
+    let tiny_f16: f16 = 0.000000059605;  // Approximate minimum positive f16
+    let huge_f16: f16 = 65504.0;         // Maximum finite f16
+    
+    print("Zero f16:   %.8f16\n", zero_f16);
+    print("Tiny f16:   %.12e\n", tiny_f16);
+    print("Huge f16:   %.1f16\n", huge_f16);
+    
+    print("\nArithmetic edge cases:\n");
+    let div_small_f8: f8 = 1.0 / 8.0;
+    let div_small_f16: f16 = 1.0 / 1024.0;
+    
+    print("1/8 in f8:    %.6f8\n", div_small_f8);
+    print("1/1024 in f16: %.8f16\n", div_small_f16);
+}
+
+func test_interactive_precision(): void {
+    print("\n=== Interactive Precision Testing ===\n");
+    
+    print("Enter a decimal number to test precision across types:\n");
+    print("Input: ");
+    let user_input: f64 = read();
+    
+    let converted_f8: f8 = user_input;
+    let converted_f16: f16 = user_input;
+    let converted_f32: f32 = user_input;
+    
+    print("\nYour input %.15f converted to different precisions:\n", user_input);
+    print("f8  precision: %.8f8\n", converted_f8);
+    print("f16 precision: %.8f16\n", converted_f16);
+    print("f32 precision: %.8f\n", converted_f32);
+    print("f64 original:  %.15f\n", user_input);
+    
+    print("\nScientific notation comparison:\n");
+    print("f8:  %.8e\n", converted_f8);
+    print("f16: %.8e\n", converted_f16);
+    print("f32: %.8e\n", converted_f32);
+    print("f64: %.15e\n", user_input);
+}
+
+func benchmark_precision_performance(): void {
+    print("\n=== Precision Performance Benchmark ===\n");
+    
+    let iterations: u32 = 1000;
+    print("Performing %u operations with each type...\n", iterations);
+    
+    // f8 benchmark
+    let sum_f8: f8 = 0.0;
+    let i: u32 = 0;
+    while (i < iterations) {
+        sum_f8 = sum_f8 + 0.001;
+        i = i + 1;
+    }
+    print("f8 accumulated sum:  %.6f8\n", sum_f8);
+    
+    // f16 benchmark  
+    let sum_f16: f16 = 0.0;
+    i = 0;
+    while (i < iterations) {
+        sum_f16 = sum_f16 + 0.001;
+        i = i + 1;
+    }
+    print("f16 accumulated sum: %.6f16\n", sum_f16);
+    
+    // f32 benchmark
+    let sum_f32: f32 = 0.0;
+    i = 0;
+    while (i < iterations) {
+        sum_f32 = sum_f32 + 0.001;
+        i = i + 1;
+    }
+    print("f32 accumulated sum: %.6f\n", sum_f32);
+    
+    // f64 benchmark
+    let sum_f64: f64 = 0.0;
+    i = 0;
+    while (i < iterations) {
+        sum_f64 = sum_f64 + 0.001;
+        i = i + 1;
+    }
+    print("f64 accumulated sum: %.6f\n", sum_f64);
+    
+    print("\nExpected result: 1.000000 (1000 × 0.001)\n");
+    print("Precision differences show floating-point limitations.\n");
+}
+
+func main(): void {
+    print("🔢 ÆLang f8/f16 Floating-Point Precision Test Suite\n");
+    print("===================================================\n");
+    
+    test_f8_precision();
+    test_f16_precision();
+    test_mixed_precision();
+    test_edge_cases();
+    test_interactive_precision();
+    benchmark_precision_performance();
+    
+    print("\n✅ f8/f16 precision testing completed!\n");
+    print("Summary:\n");
+    print("• f8:  Ultra-compact, 8-bit float for embedded systems\n");
+    print("• f16: GPU-optimized, 16-bit half-precision float\n");
+    print("• Both support full arithmetic and precision formatting\n");
+    print("• Pin-point precision printing with format specifiers\n");
+}

@@ -1,0 +1,40 @@
+// ÆLang Simple Unified I/O Test
+// Tests core functionality step by step
+
+extern print(format: str, ...);
+
+func main(): void {
+    print("=== ÆLang Unified I/O Test ===\\n");
+    
+    // Test basic integer
+    print("Integer: %d\\n", 42);
+    
+    // Test binary format
+    print("Binary: %b\\n", 42);
+    
+    // Test hex format
+    print("Hex: %x\\n", 42);
+    
+    // Test boolean
+    print("Boolean true: %t\\n", true);
+    print("Boolean false: %t\\n", false);
+    
+    // Test simple float
+    let price: f32 = 123.45;
+    print("Price: %.2f\\n", price);
+    
+    // Test currency
+    print("Currency: %$\\n", price);
+    
+    // Test percentage
+    let percent: f32 = 0.75;
+    print("Percentage: %P\\n", percent);
+    
+    // Test string
+    print("String: %s\\n", "Hello World");
+    
+    // Test newlines
+    print("Line 1\\nLine 2\\n");
+    
+    print("Test complete!\\n");
+}

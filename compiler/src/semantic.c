@@ -19,7 +19,7 @@ static unsigned int hash(const char *str) {
 // Create semantic analysis context
 SemanticContext *create_semantic_context(void) {
     CompilationConfig default_config = {
-        .target_arch = ARCH_32BIT,
+        .target_arch = ARCH_INVALID,
         .enable_string_variables = false,
         .enable_char_operations = false,
         .strict_integer_sizes = false,
@@ -150,6 +150,8 @@ SemanticType string_to_semantic_type(const char *type_str) {
     if (strcmp(type_str, "u64") == 0) return TYPE_U64;
     
     // Floating point types
+    if (strcmp(type_str, "f8") == 0) return TYPE_F8;
+    if (strcmp(type_str, "f16") == 0) return TYPE_F16;
     if (strcmp(type_str, "f32") == 0) return TYPE_F32;
     if (strcmp(type_str, "f64") == 0) return TYPE_F64;
     
@@ -177,6 +179,8 @@ static SemanticType literal_to_semantic_type(LiteralValue *literal) {
         case VALUE_U64: return TYPE_U64;
         
         // Floating point types
+        case VALUE_F8: return TYPE_F8;
+        case VALUE_F16: return TYPE_F16;
         case VALUE_F32: return TYPE_F32;  // Also handles VALUE_FLOAT
         case VALUE_F64: return TYPE_F64;
         
@@ -290,7 +294,7 @@ bool is_signed_type(SemanticType type) {
 }
 
 bool is_floating_type(SemanticType type) {
-    return type == TYPE_F32 || type == TYPE_F64;
+    return type == TYPE_F8 || type == TYPE_F16 || type == TYPE_F32 || type == TYPE_F64;
 }
 
 bool is_numeric_type(SemanticType type) {
@@ -300,9 +304,11 @@ bool is_numeric_type(SemanticType type) {
 int get_type_size_bits(SemanticType type) {
     switch (type) {
         case TYPE_I8:
-        case TYPE_U8: return 8;
+        case TYPE_U8:
+        case TYPE_F8: return 8;
         case TYPE_I16:
-        case TYPE_U16: return 16;
+        case TYPE_U16:
+        case TYPE_F16: return 16;
         case TYPE_I32:
         case TYPE_U32:
         case TYPE_F32: return 32;
@@ -375,9 +381,11 @@ SemanticType promote_numeric_types(SemanticType left, SemanticType right) {
     // NUM type takes precedence
     if (left == TYPE_NUM || right == TYPE_NUM) return TYPE_NUM;
     
-    // Floating point promotion
+    // Floating point promotion (largest precision wins)
     if (left == TYPE_F64 || right == TYPE_F64) return TYPE_F64;
     if (left == TYPE_F32 || right == TYPE_F32) return TYPE_F32;
+    if (left == TYPE_F16 || right == TYPE_F16) return TYPE_F16;
+    if (left == TYPE_F8 || right == TYPE_F8) return TYPE_F8;
     
     // Integer promotion - promote to largest type
     if (is_integer_type(left) && is_integer_type(right)) {
@@ -607,6 +615,19 @@ static AnnotatedASTNode *analyze_node(ASTNode *node, SemanticContext *ctx) {
                 break;
             }
             
+            // Architecture validation: Check if 64-bit types are used in 32-bit mode
+            if (ctx->config && ctx->config->target_arch == ARCH_32BIT) {
+                bool is_64bit_type = (var_type == TYPE_I64 || var_type == TYPE_U64 || var_type == TYPE_F64);
+                if (is_64bit_type) {
+                    semantic_error(ctx, node->line, 
+                        "64-bit type '%s' cannot be used in 32-bit architecture mode. "
+                        "Use --arch64 flag or use 32-bit equivalent types (i32, u32, f32).", 
+                        semantic_type_to_string(var_type));
+                    annotated->resolved_type = TYPE_ERROR;
+                    break;
+                }
+            }
+            
             // Check if variable already exists in current scope
             if (!define_symbol(ctx, node->as.var_decl.name, SYMBOL_VARIABLE, var_type, node->line)) {
                 annotated->resolved_type = TYPE_ERROR;
@@ -656,6 +677,19 @@ static AnnotatedASTNode *analyze_node(ASTNode *node, SemanticContext *ctx) {
                 semantic_error(ctx, node->line, "Unknown type '%s'", node->as.var_decl.type_name);
                 annotated->resolved_type = TYPE_ERROR;
                 break;
+            }
+            
+            // Architecture validation: Check if 64-bit types are used in 32-bit mode
+            if (ctx->config && ctx->config->target_arch == ARCH_32BIT) {
+                bool is_64bit_type = (const_type == TYPE_I64 || const_type == TYPE_U64 || const_type == TYPE_F64);
+                if (is_64bit_type) {
+                    semantic_error(ctx, node->line, 
+                        "64-bit type '%s' cannot be used in 32-bit architecture mode. "
+                        "Use --arch64 flag or use 32-bit equivalent types (i32, u32, f32).", 
+                        semantic_type_to_string(const_type));
+                    annotated->resolved_type = TYPE_ERROR;
+                    break;
+                }
             }
             
             // Constants must have an initializer
@@ -1022,4 +1056,64 @@ void free_annotated_ast(AnnotatedAST *ast) {
     
     free(ast->nodes);
     free(ast);
+}
+
+// Convert semantic type to string for error messages
+const char* semantic_type_to_string(SemanticType type) {
+    switch (type) {
+        case TYPE_I8: return "i8";
+        case TYPE_I16: return "i16";
+        case TYPE_I32: return "i32";
+        case TYPE_I64: return "i64";
+        case TYPE_U8: return "u8";
+        case TYPE_U16: return "u16";
+        case TYPE_U32: return "u32";
+        case TYPE_U64: return "u64";
+        case TYPE_F8: return "f8";
+        case TYPE_F16: return "f16";
+        case TYPE_F32: return "f32";
+        case TYPE_F64: return "f64";
+        case TYPE_NUM: return "num";
+        case TYPE_STR: return "str";
+        case TYPE_CHAR: return "char";
+        case TYPE_BOOL: return "bool";
+        case TYPE_VOID: return "void";
+        case TYPE_UNKNOWN: return "unknown";
+        case TYPE_ERROR: return "error";
+        default: return "unknown";
+    }
+}
+
+// Architecture-specific type validation
+bool validate_type_for_architecture(SemanticType type, TargetArchitecture arch, const char *context) {
+    bool has_64bit_types = (type == TYPE_I64 || type == TYPE_U64 || type == TYPE_F64);
+    bool has_specialized_float = (type == TYPE_F8 || type == TYPE_F16);
+    
+    if (arch == ARCH_32BIT) {
+        if (has_64bit_types) {
+            printf("Warning: Using 64-bit type (%s) in 32-bit architecture in %s\n", 
+                   semantic_type_to_string(type), context);
+            printf("  Suggestion: Consider using 32-bit equivalent or compile with --arch64\n");
+            return true; // Warning, but allowed
+        }
+        if (has_specialized_float) {
+            printf("Note: Using specialized float type (%s) in 32-bit mode in %s\n",
+                   semantic_type_to_string(type), context);
+            return true;
+        }
+    } else if (arch == ARCH_64BIT) {
+        bool has_only_32bit_types = !has_64bit_types && !has_specialized_float &&
+                                   (type == TYPE_I32 || type == TYPE_U32 || type == TYPE_F32 ||
+                                    type == TYPE_I16 || type == TYPE_U16 ||
+                                    type == TYPE_I8 || type == TYPE_U8 ||
+                                    type == TYPE_BOOL || type == TYPE_CHAR);
+        
+        if (has_only_32bit_types) {
+            printf("Note: Program uses only 32-bit types in 64-bit mode in %s\n", context);
+            printf("  Suggestion: Consider compiling with --arch32 for better performance\n");
+            return true;
+        }
+    }
+    
+    return true;
 }

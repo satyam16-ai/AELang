@@ -1,0 +1,10 @@
+// Simple float test to debug the NaN issue
+extern print(format: str, ...);
+
+func main(): void {
+    print("Testing direct float value: %f\n", 3.14);
+    print("Testing float literal assignment:\n");
+    
+    let test_float: f32 = 2.71;
+    print("Float literal: %f\n", test_float);
+}

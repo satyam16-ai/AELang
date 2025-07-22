@@ -52,6 +52,28 @@ static const char* get_call_instruction(void) {
     return "call";  // call works for both 32-bit and 64-bit
 }
 
+// Helper function to get the appropriate read function name based on variable type
+static const char* get_read_function_for_type(const char* var_type) {
+    if (strcmp(var_type, "i8") == 0) return "read_i8";
+    if (strcmp(var_type, "i16") == 0) return "read_i16";
+    if (strcmp(var_type, "i32") == 0) return "read_i32";
+    if (strcmp(var_type, "i64") == 0) return "read_i64";
+    if (strcmp(var_type, "u8") == 0) return "read_u8";
+    if (strcmp(var_type, "u16") == 0) return "read_u16";
+    if (strcmp(var_type, "u32") == 0) return "read_u32";
+    if (strcmp(var_type, "u64") == 0) return "read_u64";
+    if (strcmp(var_type, "f8") == 0) return "read_f8";
+    if (strcmp(var_type, "f16") == 0) return "read_f16";
+    if (strcmp(var_type, "f32") == 0) return "read_f32";
+    if (strcmp(var_type, "f64") == 0) return "read_f64";
+    if (strcmp(var_type, "num") == 0) return "read_num";
+    if (strcmp(var_type, "bool") == 0) return "read_bool";
+    if (strcmp(var_type, "char") == 0) return "read_char";
+    
+    // Default fallback
+    return "read";
+}
+
 static const char* get_word_size(void) __attribute__((unused));
 static const char* get_word_size(void) {
     return (current_config && current_config->target_arch == ARCH_64BIT) ? "qword" : "dword";
@@ -260,6 +282,22 @@ static void emit_function_call_64bit(FILE *out, const char *func_name, ASTNode *
             fprintf(out, "    fld dword [rsp]\n");          // Load to FPU stack
             fprintf(out, "    add rsp, 4\n");               // Clean up stack space
             return;
+        } else if (strcmp(func_name, "read_f8") == 0 && arg_count == 0) {
+            // Call read_f8 function - returns float in XMM0, need to convert to FPU stack
+            fprintf(out, "    call %s\n", func_name);
+            fprintf(out, "    sub rsp, 4\n");              // Allocate space for float
+            fprintf(out, "    movss dword [rsp], xmm0\n");  // Store XMM0 as float
+            fprintf(out, "    fld dword [rsp]\n");          // Load to FPU stack
+            fprintf(out, "    add rsp, 4\n");               // Clean up stack space
+            return;
+        } else if (strcmp(func_name, "read_f16") == 0 && arg_count == 0) {
+            // Call read_f16 function - returns float in XMM0, need to convert to FPU stack
+            fprintf(out, "    call %s\n", func_name);
+            fprintf(out, "    sub rsp, 4\n");              // Allocate space for float
+            fprintf(out, "    movss dword [rsp], xmm0\n");  // Store XMM0 as float
+            fprintf(out, "    fld dword [rsp]\n");          // Load to FPU stack
+            fprintf(out, "    add rsp, 4\n");               // Clean up stack space
+            return;
         } else if (strcmp(func_name, "read_f64") == 0 && arg_count == 0) {
             // Call read_f64 function - returns double in XMM0, need to convert to FPU stack
             fprintf(out, "    call %s\n", func_name);
@@ -378,6 +416,12 @@ static void emit_literal(FILE *out, LiteralValue val) {
             break;
         case VALUE_U64:
             fprintf(out, "%llu", (unsigned long long)val.as.u64_val);
+            break;
+        case VALUE_F8:
+            fprintf(out, "0x%02x", val.as.f8_val);  // Show as hex bits for f8
+            break;
+        case VALUE_F16:
+            fprintf(out, "0x%04x", val.as.f16_val); // Show as hex bits for f16
             break;
         case VALUE_F32:  // Also handles VALUE_FLOAT
             fprintf(out, "%f", val.as.f32_val);
@@ -604,7 +648,9 @@ static int count_local_variables(ASTNode *node) {
 
 // Helper to determine if a parameter is a float type
 static int is_param_float_type(const char *type_name) {
-    return (strstr(type_name, "f32") != NULL || 
+    return (strstr(type_name, "f8") != NULL || 
+            strstr(type_name, "f16") != NULL || 
+            strstr(type_name, "f32") != NULL || 
             strstr(type_name, "f64") != NULL || 
             strstr(type_name, "num") != NULL);
 }
@@ -614,7 +660,9 @@ static int is_float_type(ASTNode *node) {
     if (!node) return 0;
     
     if (node->type == AST_LITERAL) {
-        return (node->as.literal.type == VALUE_F32 || 
+        return (node->as.literal.type == VALUE_F8 ||
+                node->as.literal.type == VALUE_F16 ||
+                node->as.literal.type == VALUE_F32 || 
                 node->as.literal.type == VALUE_F64 ||
                 node->as.literal.type == VALUE_FLOAT ||  // Legacy support
                 (node->as.literal.type == VALUE_NUM && node->as.literal.as.num_val.is_float));
@@ -1030,10 +1078,15 @@ static const char* get_function_return_type(const char* func_name) {
     if (strcmp(func_name, "read_u64") == 0) return "u64";
     if (strcmp(func_name, "read_f32") == 0) return "f32";
     if (strcmp(func_name, "read_f64") == 0) return "f64";
+    if (strcmp(func_name, "read_f8") == 0) return "f8";
+    if (strcmp(func_name, "read_f16") == 0) return "f16";
     if (strcmp(func_name, "read_bool") == 0) return "bool";
     if (strcmp(func_name, "read_char") == 0) return "char";
     if (strcmp(func_name, "read_str") == 0) return "str";
     if (strcmp(func_name, "read_num") == 0) return "num";
+    
+    // Universal read function
+    if (strcmp(func_name, "read") == 0) return "num";
     
     // Legacy functions for compatibility
     if (strcmp(func_name, "read_int") == 0) return "i32";
@@ -1103,7 +1156,9 @@ static const char* get_function_return_type(const char* func_name) {
 
 // Helper to check if a return type is float
 static int is_float_return_type(const char* return_type) {
-    return (strcmp(return_type, "f32") == 0 || 
+    return (strcmp(return_type, "f8") == 0 || 
+            strcmp(return_type, "f16") == 0 ||
+            strcmp(return_type, "f32") == 0 || 
             strcmp(return_type, "f64") == 0 ||
             strcmp(return_type, "num") == 0);
 }
@@ -1119,7 +1174,9 @@ static void emit_node(ASTNode *node, FILE *out) {
             
             // Determine if this is a local variable (inside a function) or global
             int is_local = (current_function != NULL);
-            int is_float = strstr(node->as.var_decl.type_name, "f32") || 
+            int is_float = strstr(node->as.var_decl.type_name, "f8") || 
+                          strstr(node->as.var_decl.type_name, "f16") ||
+                          strstr(node->as.var_decl.type_name, "f32") || 
                           strstr(node->as.var_decl.type_name, "f64") ||
                           strstr(node->as.var_decl.type_name, "num");
             
@@ -1139,6 +1196,19 @@ static void emit_node(ASTNode *node, FILE *out) {
             if (var_idx < 0) {
                 fprintf(stderr, "Error: failed to store variable %s\n", node->as.var_decl.name);
                 break;
+            }
+            
+            // Check if this is a generic read() call that should be converted to type-specific
+            bool is_generic_read = node->as.var_decl.value &&
+                                   node->as.var_decl.value->type == AST_FUNC_CALL &&
+                                   strcmp(node->as.var_decl.value->as.func_call.name, "read") == 0 &&
+                                   node->as.var_decl.value->as.func_call.arg_count == 0;
+            
+            if (is_generic_read) {
+                // Replace the generic read() with the appropriate type-specific read function
+                const char* type_specific_read_func = get_read_function_for_type(node->as.var_decl.type_name);
+                // Modify the function call name to use the type-specific function
+                node->as.var_decl.value->as.func_call.name = strdup(type_specific_read_func);
             }
             
             // Generate code to store the value
@@ -1225,6 +1295,7 @@ static void emit_node(ASTNode *node, FILE *out) {
                                node->as.var_decl.name);
                     }
                 } else {
+                    // Store in global integer variable
                     fprintf(out, "    %s [int_var_%d], %s  ; store %s (global int)\n", 
                            get_mov_instruction(), var_idx, get_int_register(), node->as.var_decl.name);
                 }
@@ -1235,6 +1306,20 @@ static void emit_node(ASTNode *node, FILE *out) {
             fprintf(out, "; %s = ", node->as.assign.target);
             emit_expr(node->as.assign.value, out);
             fprintf(out, "\n");
+            
+            // Check if this is a generic read() call that should be converted to type-specific
+            bool is_assign_generic_read = node->as.assign.value &&
+                                          node->as.assign.value->type == AST_FUNC_CALL &&
+                                          strcmp(node->as.assign.value->as.func_call.name, "read") == 0 &&
+                                          node->as.assign.value->as.func_call.arg_count == 0;
+            
+            if (is_assign_generic_read) {
+                // We need to find the type of the target variable to use the right read function
+                // This is more complex since we need to look up the variable type
+                // For now, let the assignment work with generic read(), 
+                // but this could be enhanced with symbol table lookup
+            }
+            
             emit_node(node->as.assign.value, out);  // Generate actual code
             
             // Store the result back to the target variable
@@ -1819,6 +1904,14 @@ static void emit_node(ASTNode *node, FILE *out) {
                 // Float functions return on FPU stack
                 fprintf(out, "    call read_f64\n");
                 break;
+            } else if (strcmp(node->as.func_call.name, "read_f8") == 0 && node->as.func_call.arg_count == 0) {
+                // Float functions return on FPU stack
+                fprintf(out, "    call read_f8\n");
+                break;
+            } else if (strcmp(node->as.func_call.name, "read_f16") == 0 && node->as.func_call.arg_count == 0) {
+                // Float functions return on FPU stack
+                fprintf(out, "    call read_f16\n");
+                break;
             } else if (strcmp(node->as.func_call.name, "read_bool") == 0 && node->as.func_call.arg_count == 0) {
                 fprintf(out, "    call read_bool\n");
                 break;
@@ -1835,6 +1928,13 @@ static void emit_node(ASTNode *node, FILE *out) {
             }
 
             // Handle other function calls (user-defined functions)
+            // Check if this is a variadic function that requires float promotion
+            bool is_variadic = (strcmp(node->as.func_call.name, "printf") == 0) ||
+                              (strcmp(node->as.func_call.name, "fprintf") == 0) ||
+                              (strcmp(node->as.func_call.name, "sprintf") == 0) ||
+                              (strcmp(node->as.func_call.name, "snprintf") == 0) ||
+                              (strcmp(node->as.func_call.name, "print") == 0);  // ÆLang print is also variadic
+            
             // Push arguments in reverse order (right-to-left for standard calling convention)
             for (int i = node->as.func_call.arg_count - 1; i >= 0; i--) {
                 ASTNode *arg = node->as.func_call.args[i];
@@ -1842,13 +1942,24 @@ static void emit_node(ASTNode *node, FILE *out) {
                 
                 // Check if this argument is a float type
                 if (is_float_type(arg)) {
-                    // For float arguments, store from FPU stack to memory, then push
-                    if (current_config && current_config->target_arch == ARCH_64BIT) {
-                        fprintf(out, "    sub rsp, 8\n");           // Reserve 8 bytes on stack for 64-bit
-                        fprintf(out, "    fstp dword [rsp]  ; push float argument %d\n", i);
+                    // For float arguments to variadic functions, promote to double
+                    if (is_variadic) {
+                        if (current_config && current_config->target_arch == ARCH_64BIT) {
+                            fprintf(out, "    sub rsp, 8\n");           // Reserve 8 bytes on stack for 64-bit
+                            fprintf(out, "    fstp qword [rsp]  ; push float argument %d (promoted to double)\n", i);
+                        } else {
+                            fprintf(out, "    sub esp, 8\n");           // Reserve 8 bytes on stack for double
+                            fprintf(out, "    fstp qword [esp]  ; push float argument %d (promoted to double)\n", i);
+                        }
                     } else {
-                        fprintf(out, "    sub esp, 4\n");           // Reserve 4 bytes on stack for 32-bit
-                        fprintf(out, "    fstp dword [esp]  ; push float argument %d\n", i);
+                        // For non-variadic functions, keep as float
+                        if (current_config && current_config->target_arch == ARCH_64BIT) {
+                            fprintf(out, "    sub rsp, 8\n");           // Reserve 8 bytes on stack for 64-bit
+                            fprintf(out, "    fstp dword [rsp]  ; push float argument %d\n", i);
+                        } else {
+                            fprintf(out, "    sub esp, 4\n");           // Reserve 4 bytes on stack for 32-bit
+                            fprintf(out, "    fstp dword [esp]  ; push float argument %d\n", i);
+                        }
                     }
                 } else {
                     // For integer arguments, push the full register
@@ -1869,7 +1980,16 @@ static void emit_node(ASTNode *node, FILE *out) {
                     fprintf(out, "    add rsp, %d  ; clean up %ld arguments (64-bit)\n", 
                            cleanup_bytes, node->as.func_call.arg_count);
                 } else {
-                    int cleanup_bytes = (int)(node->as.func_call.arg_count * 4);  // 4 bytes per argument in 32-bit
+                    // Calculate cleanup bytes based on argument types and variadic nature
+                    int cleanup_bytes = 0;
+                    for (size_t i = 0; i < node->as.func_call.arg_count; i++) {
+                        ASTNode *arg = node->as.func_call.args[i];
+                        if (is_variadic && is_float_type(arg)) {
+                            cleanup_bytes += 8;  // Promoted float to double
+                        } else {
+                            cleanup_bytes += 4;  // Regular 32-bit argument
+                        }
+                    }
                     fprintf(out, "    add esp, %d  ; clean up %ld arguments (32-bit)\n", 
                            cleanup_bytes, node->as.func_call.arg_count);
                 }
@@ -2222,6 +2342,8 @@ void generate_code(AST *ast, FILE *out, CompilationConfig *config) {
     fprintf(out, "    extern read_u64\n");
     fprintf(out, "    extern read_f32\n");
     fprintf(out, "    extern read_f64\n");
+    fprintf(out, "    extern read_f8\n");
+    fprintf(out, "    extern read_f16\n");
     fprintf(out, "    extern read_bool\n");
     fprintf(out, "    extern read_char\n");
     fprintf(out, "    extern read_str\n\n");
