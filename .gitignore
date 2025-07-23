@@ -1,3 +1,67 @@
 build/hello.asm
 build/hello.asm
 build/hello.o
+
+# Ignore build outputs and binaries
+build/*.o
+build/*.asm
+build/*.exe
+build/*.out
+build/*_64.asm
+build/*_64.o
+ae_programs/*.o
+ae_programs/*.asm
+ae_programs/calci
+ae_programs/calci.o
+ae_programs/calci.asm
+ae_programs/aelang_unified_io.o
+calci.asm
+
+# Ignore test scripts and temporary files
+test_*.sh
+validate_output.sh
+INSTALLATION_COMPLETE.sh
+
+# Ignore test and debug files
+debug_*.ae
+debug_*.c
+test_*.ae
+test_*.c
+test_*.sh
+test_fix.sh
+
+# Ignore IDE and demo files
+ide_demo.ae
+examples/
+comprehensive_type_test.ae
+data_types_test.ae
+enhanced_floats_test.ae
+enhanced_integers_test.ae
+simple_type_test.ae
+string_char_test.ae
+
+# Ignore language server directory
+language_server/
+
+# Ignore miscellaneous files
+AELANG_IDE_DEVELOPMENT_COMPLETE.md
+test_aelang_ide.sh
+test_unified_complete.c
+test_unified_io.c
+test_unified_simple.c
+test_universal_read.ae
+test_c_division.c
+test_comparison_edge_cases.ae
+test_comprehensive_types.ae
+test_edge_cases.ae
+test_expression_edge_cases.ae
+test_float_simple.ae
+test_func_call_expr.ae
+test_integer_boundaries.ae
+test_newlines.ae
+test_recursion_edge_cases.ae
+test_stack_edge_cases.ae
+test_subtraction.ae
+
+# Ignore node_modules if present
+node_modules/
