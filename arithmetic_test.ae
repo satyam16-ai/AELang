@@ -1,0 +1,7 @@
+// Main function (entry point)
+func main(): void {
+    let a: i32 = 10;
+    let b: i32 = 5;
+    let result: i32 = a + b;
+    print(result);
+}

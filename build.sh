@@ -63,7 +63,7 @@ nasm $NASM_FLAGS $ASM_FILE -o $OBJ_FILE
 
 # Step 5: Link final binary
 echo "[4/4] Linking final binary (${ARCH_SUFFIX}-bit)..."
-gcc $ARCH_FLAGS -o $BIN_FILE $OBJ_FILE $AELANG_RUNTIME_OBJ
+gcc $ARCH_FLAGS -no-pie -o $BIN_FILE $OBJ_FILE $AELANG_RUNTIME_OBJ
 
 # Run the result
 echo -e "\n✅ Build complete (${ARCH_SUFFIX}-bit). Running ÆLang program:\n"
@@ -99,7 +99,7 @@ nasm $NASM_FLAGS $ASM_FILE -o $OBJ_FILE
 
 # Step 5: Link final binary
 echo "[4/4] Linking final binary (${ARCH_SUFFIX}-bit)..."
-gcc $ARCH_FLAGS -o $BIN_FILE $OBJ_FILE $AELANG_RUNTIME_OBJ
+gcc $ARCH_FLAGS -no-pie -o $BIN_FILE $OBJ_FILE $AELANG_RUNTIME_OBJ
 
 # Run the result
 echo -e "\n✅ Build complete (${ARCH_SUFFIX}-bit). Running ÆLang program:\n"

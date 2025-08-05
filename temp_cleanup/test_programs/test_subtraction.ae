@@ -1,7 +1,0 @@
-extern print_int(val: i32);
-
-func main(): void {
-    let n: i32 = 5;
-    let result: i32 = n - 1;
-    print_int(result);
-}

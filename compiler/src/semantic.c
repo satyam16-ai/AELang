@@ -555,7 +555,11 @@ static SemanticType analyze_expression(ASTNode *node, SemanticContext *ctx) {
             
             // Handle unary minus operator
             if (node->as.unary_op.op == '-') {
-                if (operand_type != TYPE_I32 && operand_type != TYPE_F32 && operand_type != TYPE_NUM) {
+                // Check if operand is any numeric type
+                if (operand_type != TYPE_I8 && operand_type != TYPE_I16 && operand_type != TYPE_I32 && operand_type != TYPE_I64 &&
+                    operand_type != TYPE_U8 && operand_type != TYPE_U16 && operand_type != TYPE_U32 && operand_type != TYPE_U64 &&
+                    operand_type != TYPE_F8 && operand_type != TYPE_F16 && operand_type != TYPE_F32 && operand_type != TYPE_F64 &&
+                    operand_type != TYPE_NUM) {
                     semantic_error(ctx, node->line, 
                                  "Unary minus operator '-' requires numeric operand, got %d", 
                                  operand_type);

@@ -1,0 +1,8 @@
+extern print(format: str, ...);
+extern read();
+
+func main(): void {
+    print("Hello World\\n");
+    let x: i32 = read();
+    print("You entered: %d\\n", x);
+}

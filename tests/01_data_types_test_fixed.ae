@@ -1,0 +1,50 @@
+// Comprehensive Data Types Test for ÆLang (Fixed)
+extern print(format: str, ...);
+extern read();
+
+func main(): void {
+    // ============ Integer Types Test ============
+    print("=== Integer Types Test ===\n");
+    
+    // 8-bit integers
+    let tiny_pos: i8 = 127;
+    let tiny_neg: i8 = -128;
+    let tiny_unsigned: u8 = 255;
+    print("i8 max: %d, min: %d, u8 max: %d\n", tiny_pos, tiny_neg, tiny_unsigned);
+    
+    // 16-bit integers  
+    let small_pos: i16 = 32767;
+    let small_neg: i16 = -32768;
+    let small_unsigned: u16 = 65535;
+    print("i16 max: %d, min: %d, u16 max: %d\n", small_pos, small_neg, small_unsigned);
+    
+    // 32-bit integers
+    let standard_pos: i32 = 2147483647;
+    let standard_neg: i32 = -2147483648;
+    let standard_unsigned: u32 = 4294967295;
+    print("i32 max: %d, min: %d, u32 max: %u\n", standard_pos, standard_neg, standard_unsigned);
+    
+    // ============ Floating Point Types Test ============
+    print("=== Floating Point Types Test ===\n");
+    
+    // 32-bit float
+    let float_val: f32 = 3.14159;
+    let float_negative: f32 = -2.71828;
+    print("f32 positive: %.5f, negative: %.5f\n", float_val, float_negative);
+    
+    // ============ Character and String Test ============
+    print("=== Character and String Test ===\n");
+    
+    let char_val: char = 'A';
+    print("Character: %c\n", char_val);
+    
+    let string_val: str = "Hello AELang!";
+    print("String: %s\n", string_val);
+    
+    // ============ Boolean Test ============
+    print("=== Boolean Test ===\n");
+    
+    let bool_true: bool = true;
+    let bool_false: bool = false;
+    print("Boolean true: %d, false: %d\n", bool_true, bool_false);
+}

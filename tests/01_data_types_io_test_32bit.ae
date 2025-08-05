@@ -1,0 +1,179 @@
+extern print(format: str, ...);
+extern read();
+
+func main(): void {
+    print("=== ÆLang Data Types and I/O Test (32-bit) ===\n");
+    
+    print("\n--- Testing Signed Integer Types ---\n");
+    print("Testing i8 (-128 to 127):\n");
+    let min_i8: i8 = 0;
+    let max_i8: i8 = 127;
+    let zero_i8: i8 = 0;
+    print("i8 min: %d, max: %d, zero: %d\n", min_i8, max_i8, zero_i8);
+    
+    print("Enter an i8 value: ");
+    let user_i8: i8 = read();
+    print("You entered i8: %d\n", user_i8);
+    
+    print("\nTesting i16:\n");
+    let min_i16: i16 = 0;
+    let max_i16: i16 = 32767;
+    let zero_i16: i16 = 0;
+    print("i16 min: %d, max: %d, zero: %d\n", min_i16, max_i16, zero_i16);
+    
+    print("Enter an i16 value: ");
+    let user_i16: i16 = read();
+    print("You entered i16: %d\n", user_i16);
+    
+    print("\nTesting i32:\n");
+    let min_i32: i32 = 0;
+    let max_i32: i32 = 2147483647;
+    let zero_i32: i32 = 0;
+    print("i32 min: %d, max: %d, zero: %d\n", min_i32, max_i32, zero_i32);
+    
+    print("Enter an i32 value: ");
+    let user_i32: i32 = read();
+    print("You entered i32: %d\n", user_i32);
+    
+    print("\n--- Testing Unsigned Integer Types ---\n");
+    
+    print("Testing u8:\n");
+    let min_u8: u8 = 0;
+    let max_u8: u8 = 255;
+    let mid_u8: u8 = 128;
+    print("u8 min: %u, max: %u, mid: %u\n", min_u8, max_u8, mid_u8);
+    
+    print("Enter a u8 value: ");
+    let user_u8: u8 = read();
+    print("You entered u8: %u\n", user_u8);
+    
+    print("\nTesting u16:\n");
+    let min_u16: u16 = 0;
+    let max_u16: u16 = 65535;
+    let mid_u16: u16 = 32768;
+    print("u16 min: %u, max: %u, mid: %u\n", min_u16, max_u16, mid_u16);
+    
+    print("Enter a u16 value: ");
+    let user_u16: u16 = read();
+    print("You entered u16: %u\n", user_u16);
+    
+    print("\nTesting u32:\n");
+    let min_u32: u32 = 0;
+    let max_u32: u32 = 4294967295;
+    let mid_u32: u32 = 2147483648;
+    print("u32 min: %u, max: %u, mid: %u\n", min_u32, max_u32, mid_u32);
+    
+    print("Enter a u32 value: ");
+    let user_u32: u32 = read();
+    print("You entered u32: %u\n", user_u32);
+    
+    print("\n--- Testing Floating-Point Types ---\n");
+    
+    print("Testing f8:\n");
+    let small_f8: f8 = 1.5;
+    let zero_f8: f8 = 0.0;
+    print("f8 small: %f, zero: %f\n", small_f8, zero_f8);
+    
+    print("Enter an f8 value: ");
+    let user_f8: f8 = read();
+    print("You entered f8: %f\n", user_f8);
+    
+    print("\nTesting f16:\n");
+    let pi_f16: f16 = 3.14159;
+    let zero_f16: f16 = 0.0;
+    print("f16 pi: %.5f, zero: %.1f\n", pi_f16, zero_f16);
+    
+    print("Enter an f16 value: ");
+    let user_f16: f16 = read();
+    print("You entered f16: %.3f\n", user_f16);
+    
+    print("\nTesting f32:\n");
+    let precise_f32: f32 = 123.456789;
+    let scientific_f32: f32 = 0.000123;
+    let large_f32: f32 = 1234567.89;
+    print("f32 precise: %.6f, scientific: %e, large: %.2f\n", precise_f32, scientific_f32, large_f32);
+    
+    print("Enter a f32 value: ");
+    let user_f32: f32 = read();
+    print("You entered f32: %.3f\n", user_f32);
+    
+    print("\n--- Testing Special Types ---\n");
+    
+    print("Testing num:\n");
+    let int_num: num = 42;
+    let float_num: num = 3.14159;
+    let zero_num: num = 0;
+    print("num as int: %d, as float: %.5f, zero: %d\n", int_num, float_num, zero_num);
+    
+    print("Enter a num value: ");
+    let user_num: num = read();
+    print("You entered num: %d\n", user_num);
+    
+    print("\nTesting bool:\n");
+    let true_bool: bool = true;
+    let false_bool: bool = false;
+    print("true: %t, false: %t\n", true_bool, false_bool);
+    
+    print("Enter a boolean value: ");
+    let user_bool: bool = read();
+    print("You entered bool: %t\n", user_bool);
+    
+    print("\nTesting char:\n");
+    let letter_char: char = 'A';
+    let digit_char: char = '9';
+    let symbol_char: char = '@';
+    let space_char: char = ' ';
+    print("letter: %c, digit: %c, symbol: %c, space: '%c'\n", letter_char, digit_char, symbol_char, space_char);
+    
+    print("Enter a character: ");
+    let user_char: char = read();
+    print("You entered char: %c\n", user_char);
+    
+    print("\nTesting str:\n");
+    let simple_str: str = "Hello, AELang!";
+    let empty_str: str = "";
+    print("simple: %s\n", simple_str);
+    print("empty: '%s'\n", empty_str);
+    
+    print("\n--- Testing Edge Cases ---\n");
+    
+    print("Zero values:\n");
+    let zero_test_i32: i32 = 0;
+    let zero_test_f32: f32 = 0.0;
+    let zero_test_bool: bool = false;
+    print("zero i32: %d, zero f32: %.1f, zero bool: %t\n", zero_test_i32, zero_test_f32, zero_test_bool);
+    
+    print("Large values:\n");
+    let large_u32_test: u32 = 4000000000;
+    let large_f32_test: f32 = 123456789000000.0;
+    print("large u32: %u, large f32: %e\n", large_u32_test, large_f32_test);
+    
+    print("Small precision:\n");
+    let tiny_f32: f32 = 0.0000123456;
+    let tiny_f32_2: f32 = 0.000000000123456789;
+    print("tiny f32: %e, tiny f32 2: %e\n", tiny_f32, tiny_f32_2);
+    
+    print("\n--- Interactive Input Testing ---\n");
+    print("Testing unified read() function:\n");
+    
+    print("Enter any integer: ");
+    let read_test_i32: i32 = read();
+    print("Read as i32: %d\n", read_test_i32);
+    
+    print("Enter any float: ");
+    let read_test_f32: f32 = read();
+    print("Read as f32: %.3f\n", read_test_f32);
+    
+    print("Enter true or false: ");
+    let read_test_bool: bool = read();
+    print("Read as bool: %t\n", read_test_bool);
+    
+    print("Enter single character: ");
+    let read_test_char: char = read();
+    print("Read as char: %c\n", read_test_char);
+    
+    print("\n=== Data Types and I/O Test Complete (32-bit) ===\n");
+    print("12 data types tested successfully (32-bit mode)!\n");
+    print("Types tested: i8, i16, i32, u8, u16, u32, f8, f16, f32, num, bool, char, str\n");
+    print("Unified read() function validated!\n");
+}

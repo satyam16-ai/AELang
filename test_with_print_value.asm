@@ -1,0 +1,69 @@
+; Generated NASM by ÆLang IR-to-Assembly Compiler
+; Target Architecture: 32-bit
+
+section .rodata
+    align 4
+msg_0 db "Before read_with_type",10,0
+msg_1 db "Read value: %d",10,0
+msg_2 db "After read_with_type",10,0
+
+section .bss
+    align 4
+    temp_storage: resd 1  ; temporary storage
+
+section .text
+    global main
+    extern printf
+    extern print
+    extern read
+    extern read_with_type
+
+main:
+    push ebp
+    mov ebp, esp
+    sub esp, 36
+    ; IR: LOAD_CONST dest src1
+    mov eax, msg_0
+    mov dword [ebp-8], eax
+    ; IR: PARAM src1
+    ; IR: CALL src1
+    push dword [ebp-8]
+    call printf
+    add esp, 4  ; clean up stack
+    ; IR: PARAM src1
+    ; IR: CALL dest src1
+    push 2
+    call read_with_type
+    add esp, 4  ; clean up stack
+    mov dword [ebp-16], eax
+    ; IR: STORE_VAR src1 src2
+    mov eax, dword [ebp-16]
+    mov dword [ebp-4], eax
+    ; IR: LOAD_CONST dest src1
+    mov eax, msg_1
+    mov dword [ebp-20], eax
+    ; IR: PARAM src1
+    ; IR: LOAD_VAR dest src1
+    mov eax, dword [ebp-4]
+    mov dword [ebp-24], eax
+    ; IR: PARAM src1
+    ; IR: CALL src1
+    push dword [ebp-24]
+    push dword [ebp-20]
+    call printf
+    add esp, 8  ; clean up stack
+    ; IR: LOAD_CONST dest src1
+    mov eax, msg_2
+    mov dword [ebp-32], eax
+    ; IR: PARAM src1
+    ; IR: CALL src1
+    push dword [ebp-32]
+    call printf
+    add esp, 4  ; clean up stack
+    mov eax, 0
+    mov esp, ebp
+    pop ebp
+    ret
+
+
+; End of generated code

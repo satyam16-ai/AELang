@@ -1,0 +1,171 @@
+[✓] ÆLang Enhanced Compiler Pipeline Starting...
+[1/7] Loading source code: tests/03_io_functions_test_fixed.ae
+[2/7] Lexical Analysis (Tokenization)...
+  Generated 352 tokens
+  [0] TOKEN_EXTERN: 'extern'
+  [1] TOKEN_IDENT: 'print'
+  [2] TOKEN_LPAREN: '('
+  [3] TOKEN_IDENT: 'format'
+  [4] TOKEN_COLON: ':'
+[3/7] Syntax Analysis (Parsing)...
+  Generated AST with 3 nodes
+[4/7] Semantic Analysis...
+  Target Architecture: 32-bit
+  String Variables: Enabled
+  Character Operations: Enabled
+DEBUG: Created enhanced semantic context
+[Semantic] Universal read() call preserved for variable input_i32 (expected type 2)
+[Semantic] Universal read() call preserved for variable input_i16 (expected type 1)
+[Semantic] Universal read() call preserved for variable input_i8 (expected type 0)
+[Semantic] Universal read() call preserved for variable input_u32 (expected type 6)
+[Semantic] Universal read() call preserved for variable input_u16 (expected type 5)
+[Semantic] Universal read() call preserved for variable input_u8 (expected type 4)
+[Semantic] Universal read() call preserved for variable input_f32 (expected type 10)
+[Semantic] Universal read() call preserved for variable input_char (expected type 14)
+[Semantic] Universal read() call preserved for variable input_string (expected type 13)
+[Semantic Analysis] Completed with 0 errors, 0 warnings
+DEBUG: Semantic analysis function returned
+DEBUG: Semantic analysis completed successfully
+  Semantic analysis completed (0 warnings)
+[5/7] IR Generation...
+DEBUG: About to call generate_ir
+[IR Debug] Processing statement type: 8
+[IR Debug] Processing statement type: 8
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: input_i32
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: input_i16
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: input_i8
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: input_u32
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: input_u16
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: input_u8
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: input_f32
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: input_char
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: input_string
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: test_int
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: test_float
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: test_char
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: test_str
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Generation] Generated IR with 1 functions and 170 instructions
+DEBUG: generate_ir returned
+DEBUG: IR generation completed successfully
+[6/7] Optimization (Level 1)...
+[Optimizer] Starting optimization level 1
+[Optimizer] Optimizing function 'main'
+[DCE] Starting dead code elimination
+[DCE] Allocated tracking for 104 temporaries (0-103)
+[DCE] First pass: marking used temporaries
+[DCE] Processed 170 instructions in first pass
+[DCE] Second pass: removing dead instructions
+[Optimizer] Optimization Statistics:
+  Constants folded: 0
+  Dead instructions removed: 38
+  Copies propagated: 0
+  Common subexpressions eliminated: 0
+  Algebraic simplifications: 0
+  Strength reductions: 0
+  Total optimizations: 38
+[7/7] Code Generation...
+[✓] Enhanced Compilation Complete!
+  Source: tests/03_io_functions_test_fixed.ae → Assembly: test_results/03_io_functions_test_fixed_arch32.asm
+  Optimization Level: 1

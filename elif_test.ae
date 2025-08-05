@@ -1,0 +1,25 @@
+extern print(format: str, ...);
+
+func test_elif(x: i32): void {
+    if (x < 0) {
+        print("x is negative: %d\n", x);
+    } elif (x == 0) {
+        print("x is zero: %d\n", x);
+    } elif (x < 10) {
+        print("x is single digit positive: %d\n", x);
+    } elif (x < 100) {
+        print("x is two digit: %d\n", x);
+    } else {
+        print("x is large: %d\n", x);
+    }
+}
+
+func main(): void {
+    print("=== Else-If Statement Test ===\n");
+    test_elif(-5);
+    test_elif(0);
+    test_elif(7);
+    test_elif(42);
+    test_elif(999);
+    print("=== Test Complete ===\n");
+}

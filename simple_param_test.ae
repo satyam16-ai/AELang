@@ -1,0 +1,11 @@
+extern print(format: str, ...);
+
+func main(): void {
+    print("Testing with constant: %d\n", 42);
+    
+    let x: i32 = 123;
+    print("Testing with variable: %d\n", x);
+    
+    let y: i32 = -456;
+    print("Testing with negative: %d\n", y);
+}

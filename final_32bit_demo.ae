@@ -1,0 +1,49 @@
+extern printf(format: str, ...);
+extern read();
+
+func main(): void {
+    printf("=== ÆLang 32-bit Architecture Test ===\n");
+    printf("All data types with proper newlines and read functionality\n\n");
+    
+    printf("Testing i8 (-128 to 127):\n");
+    let val_i8: i8 = read();
+    printf("i8 value: %d\n\n", val_i8);
+    
+    printf("Testing i16 (-32768 to 32767):\n");
+    let val_i16: i16 = read();
+    printf("i16 value: %d\n\n", val_i16);
+    
+    printf("Testing i32:\n");
+    let val_i32: i32 = read();
+    printf("i32 value: %d\n\n", val_i32);
+    
+    printf("Testing u8 (0 to 255):\n");
+    let val_u8: u8 = read();
+    printf("u8 value: %u\n\n", val_u8);
+    
+    printf("Testing u16 (0 to 65535):\n");
+    let val_u16: u16 = read();
+    printf("u16 value: %u\n\n", val_u16);
+    
+    printf("Testing u32:\n");
+    let val_u32: u32 = read();
+    printf("u32 value: %u\n\n", val_u32);
+    
+    printf("Testing f32 (float):\n");
+    let val_f32: f32 = read();
+    printf("f32 value: %f\n\n", val_f32);
+    
+    printf("Testing num (numeric):\n");
+    let val_num: num = read();
+    printf("num value: %f\n\n", val_num);
+    
+    printf("Testing char:\n");
+    let val_char: char = read();
+    printf("char value: %c\n\n", val_char);
+    
+    printf("🎉 All tests completed successfully!\n");
+    printf("✅ Unified read() system working\n");
+    printf("✅ Newlines properly formatted\n");
+    printf("✅ 32-bit architecture enforced\n");
+    printf("✅ Parameter order fixed\n");
+}

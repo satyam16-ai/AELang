@@ -1,0 +1,32 @@
+extern print(format: str, ...);
+
+func main(): void {
+    print("=== Comprehensive Precedence Test ===\n");
+    
+    let a: i32 = 2;
+    let b: i32 = 3;
+    let c: i32 = 4;
+    let d: i32 = 5;
+    
+    // Test complex expressions
+    let test1: i32 = a + b * c;        // Should be 2 + 12 = 14
+    let test2: i32 = a * b + c;        // Should be 6 + 4 = 10
+    let test3: i32 = a + b * c - d;    // Should be 2 + 12 - 5 = 9
+    let test4: i32 = a * b - c / d;    // Should be 6 - 0 = 6 (integer division)
+    let test5: i32 = (a + b) * c;      // Should be 5 * 4 = 20
+    let test6: i32 = a * (b + c);      // Should be 2 * 7 = 14
+    
+    print("a=%d, b=%d, c=%d, d=%d\n", a, b, c, d);
+    print("a + b * c = %d (expected: 14)\n", test1);
+    print("a * b + c = %d (expected: 10)\n", test2);
+    print("a + b * c - d = %d (expected: 9)\n", test3);
+    print("a * b - c / d = %d (expected: 6)\n", test4);
+    print("(a + b) * c = %d (expected: 20)\n", test5);
+    print("a * (b + c) = %d (expected: 14)\n", test6);
+    
+    if (test1 == 14 && test2 == 10 && test3 == 9 && test4 == 6 && test5 == 20 && test6 == 14) {
+        print("\n🎉 ALL PRECEDENCE TESTS PASSED! 🎉\n");
+    } else {
+        print("\n❌ Some precedence tests failed!\n");
+    }
+}

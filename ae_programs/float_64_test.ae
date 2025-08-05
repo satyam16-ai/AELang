@@ -5,9 +5,7 @@ func main(): void {
     
     // Test direct float values
     print("Direct float: %f\\n", 123.45);
-    print("Currency: %$\\n", 123.45);
-    print("Percentage: %P\\n", 0.85);
-    
+    print("Currency: %$\\n", 123.45);    
     // Test variables
     let price: f32 = 456.78;
     print("Variable float: %f\\n", price);

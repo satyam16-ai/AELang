@@ -81,8 +81,10 @@ void print(const char* format, ...) {
                     break;
                 }
                 case 'f': case 'F': case 'e': case 'E': case 'g': case 'G': {
-                    double val = va_arg(args, double);
-                    int written = sprintf(output_ptr, temp_fmt, val);
+                    int int_bits = va_arg(args, int);
+                    // Convert int bits back to float
+                    float val = *(float*)&int_bits;
+                    int written = sprintf(output_ptr, temp_fmt, (double)val);
                     output_ptr += written;
                     break;
                 }
@@ -212,6 +214,10 @@ void print(const char* format, ...) {
             *output_ptr++ = '\n';
             *output_ptr++ = '\n';
             fmt_ptr += strlen(MULTI_NEWLINE);
+        } else if (*fmt_ptr == '\n') {
+            // Handle actual newlines from assembly (this is the key fix!)
+            *output_ptr++ = '\n';
+            fmt_ptr++;
         } else {
             // Regular character
             *output_ptr++ = *fmt_ptr++;
@@ -708,4 +714,67 @@ char read_char() {
 double read() {
     union AELangValue result = read_universal(AELANG_TYPE_NUM);
     return result.f64_val;
+}
+
+// Enhanced context-aware read function 
+// This function will be called by the compiler with the expected type
+int read_with_type(int semantic_type) {
+    // Map from SemanticType enum (0-based) to our AELANG_TYPE constants (1-based)
+    int expected_type;
+    switch (semantic_type) {
+        case 0:  expected_type = AELANG_TYPE_I8; break;    // TYPE_I8
+        case 1:  expected_type = AELANG_TYPE_I16; break;   // TYPE_I16  
+        case 2:  expected_type = AELANG_TYPE_I32; break;   // TYPE_I32
+        case 3:  expected_type = AELANG_TYPE_I64; break;   // TYPE_I64
+        case 4:  expected_type = AELANG_TYPE_U8; break;    // TYPE_U8
+        case 5:  expected_type = AELANG_TYPE_U16; break;   // TYPE_U16
+        case 6:  expected_type = AELANG_TYPE_U32; break;   // TYPE_U32
+        case 7:  expected_type = AELANG_TYPE_U64; break;   // TYPE_U64
+        case 8:  expected_type = AELANG_TYPE_F8; break;    // TYPE_F8
+        case 9:  expected_type = AELANG_TYPE_F16; break;   // TYPE_F16
+        case 10: expected_type = AELANG_TYPE_F32; break;   // TYPE_F32
+        case 11: expected_type = AELANG_TYPE_F64; break;   // TYPE_F64
+        case 12: expected_type = AELANG_TYPE_NUM; break;   // TYPE_NUM
+        case 13: expected_type = AELANG_TYPE_CHAR; break;  // TYPE_STR (treat as char for now)
+        case 14: expected_type = AELANG_TYPE_CHAR; break;  // TYPE_CHAR
+        case 15: expected_type = AELANG_TYPE_BOOL; break;  // TYPE_BOOL
+        default:
+            printf("Runtime Error: Unknown semantic type %d\n", semantic_type);
+            exit(1);
+    }
+    
+    // Use the full universal read system
+    union AELangValue result = read_universal(expected_type);
+    
+    // For character type, return the character value directly
+    if (expected_type == AELANG_TYPE_CHAR) {
+        return (int)result.char_val;
+    }
+    
+    // For integer types, return the appropriate value
+    switch (expected_type) {
+        case AELANG_TYPE_I8:   return (int)result.i8_val;
+        case AELANG_TYPE_I16:  return (int)result.i16_val;
+        case AELANG_TYPE_I32:  return (int)result.i32_val;
+        case AELANG_TYPE_I64:  return (int)result.i64_val;  // Note: truncation for 32-bit
+        case AELANG_TYPE_U8:   return (int)result.u8_val;
+        case AELANG_TYPE_U16:  return (int)result.u16_val;
+        case AELANG_TYPE_U32:  return (int)result.u32_val;
+        case AELANG_TYPE_U64:  return (int)result.u64_val;  // Note: truncation for 32-bit
+        case AELANG_TYPE_CHAR: return (int)result.char_val;
+        case AELANG_TYPE_BOOL: return result.bool_val;
+        case AELANG_TYPE_F32:  
+        case AELANG_TYPE_F8:
+        case AELANG_TYPE_F16:
+            // Return the float bits as int - print function needs to decode
+            return *(int*)&result.f32_val;
+        case AELANG_TYPE_F64:  
+        case AELANG_TYPE_NUM:  
+            // For doubles, convert to float first, then return bits
+            float f = (float)result.f64_val;
+            return *(int*)&f;
+        default:
+            printf("Warning: Unknown type %d, returning 0\n", expected_type);
+            return 0;
+    }
 }

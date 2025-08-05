@@ -6,7 +6,7 @@ SRC = src
 INCLUDE = include
 BUILD = build
 
-OBJS = $(SRC)/lexer.o $(SRC)/parser.o $(SRC)/semantic.o $(SRC)/ir.o $(SRC)/optimizer.o $(SRC)/codegen.o $(SRC)/main.o
+OBJS = $(SRC)/lexer.o $(SRC)/parser.o $(SRC)/semantic.o $(SRC)/ir.o $(SRC)/optimizer.o $(SRC)/ir_codegen.o $(SRC)/main.o
 
 all: $(BUILD)/aelang
 
@@ -29,10 +29,10 @@ $(SRC)/ir.o: $(SRC)/ir.c $(INCLUDE)/ir.h $(INCLUDE)/semantic.h
 $(SRC)/optimizer.o: $(SRC)/optimizer.c $(INCLUDE)/optimizer.h $(INCLUDE)/ir.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(SRC)/codegen.o: $(SRC)/codegen.c $(INCLUDE)/codegen.h $(INCLUDE)/parser.h
+$(SRC)/ir_codegen.o: $(SRC)/ir_codegen.c $(INCLUDE)/ir_codegen.h $(INCLUDE)/ir.h $(INCLUDE)/parser.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(SRC)/main.o: $(SRC)/main.c $(INCLUDE)/lexer.h $(INCLUDE)/parser.h $(INCLUDE)/semantic.h $(INCLUDE)/ir.h $(INCLUDE)/optimizer.h $(INCLUDE)/codegen.h
+$(SRC)/main.o: $(SRC)/main.c $(INCLUDE)/lexer.h $(INCLUDE)/parser.h $(INCLUDE)/semantic.h $(INCLUDE)/ir.h $(INCLUDE)/optimizer.h $(INCLUDE)/ir_codegen.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:

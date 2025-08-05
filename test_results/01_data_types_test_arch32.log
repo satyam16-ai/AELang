@@ -1,0 +1,23 @@
+Semantic Error (line 10): Unary minus operator '-' requires numeric operand, got 1
+Semantic Error (line 10): Type mismatch in variable initialization: expected 0, got 18
+Semantic Error (line 20): Unary minus operator '-' requires numeric operand, got 3
+Semantic Error (line 20): Type mismatch in variable initialization: expected 2, got 18
+Semantic analysis failed with 4 errors
+[✓] ÆLang Enhanced Compiler Pipeline Starting...
+[1/7] Loading source code: tests/01_data_types_test.ae
+[2/7] Lexical Analysis (Tokenization)...
+  Generated 190 tokens
+  [0] TOKEN_EXTERN: 'extern'
+  [1] TOKEN_IDENT: 'print'
+  [2] TOKEN_LPAREN: '('
+  [3] TOKEN_IDENT: 'format'
+  [4] TOKEN_COLON: ':'
+[3/7] Syntax Analysis (Parsing)...
+  Generated AST with 3 nodes
+[4/7] Semantic Analysis...
+  Target Architecture: 32-bit
+  String Variables: Enabled
+  Character Operations: Enabled
+DEBUG: Created enhanced semantic context
+[Semantic Analysis] Completed with 4 errors, 0 warnings
+DEBUG: Semantic analysis function returned

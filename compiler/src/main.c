@@ -9,7 +9,7 @@
 #include "semantic.h"
 #include "ir.h"
 #include "optimizer.h"
-#include "codegen.h"
+#include "ir_codegen.h"
 
 int main(int argc, char **argv) {
     if (argc < 2) {
@@ -196,10 +196,8 @@ int main(int argc, char **argv) {
     printf("DEBUG: IR generation completed successfully\n");
 
     // DISABLED IR PRINTING TO PREVENT HANGING
-    // if (optimization_level > 0) {
-    //     printf("  Generated IR (before optimization):\n");
-    //     print_ir_program(ir_program);
-    // }
+    // printf("  Generated IR (before optimization):\n");
+    // print_ir_program(ir_program);
 
     printf("[6/7] Optimization (Level %d)...\n", optimization_level);
     // Optimize IR
@@ -219,10 +217,20 @@ int main(int argc, char **argv) {
         return 1;
     }
     
-    // For now, we'll still use the original codegen since we haven't 
-    // implemented IR-to-assembly yet. This is the final piece to complete.
-    generate_code(ast, out, &config);
+    // NEW: Use IR-based code generation instead of AST-based
+    bool codegen_success = generate_asm_from_ir(optimized_ir, out, &config);
     fclose(out);
+    
+    if (!codegen_success) {
+        fprintf(stderr, "IR-to-assembly generation failed\n");
+        free_ir_program(optimized_ir);
+        free_annotated_ast(annotated_ast);
+        free_semantic_context(sem_ctx);
+        free_ast(ast);
+        free_token_list(tokens);
+        free(source);
+        return 1;
+    }
 
     printf("[\u2713] Enhanced Compilation Complete!\n");
     printf("  Source: %s → Assembly: %s\n", input_path, output_path);

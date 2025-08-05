@@ -1,0 +1,7 @@
+extern print(format: str, ...);
+
+const PI: f32 = 3.14159;
+
+func main(): void {
+    print("PI value: %.5f\n", PI);
+}

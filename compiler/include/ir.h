@@ -4,6 +4,12 @@
 
 #include "semantic.h"
 #include <stddef.h>
+#include <stdbool.h>
+
+// Forward declarations
+struct IRProgram;
+struct IRFunction;  
+struct IRInstruction;
 
 // IR Instruction types (Three-Address Code)
 typedef enum {
@@ -90,6 +96,11 @@ typedef struct IRInstruction {
     IROperand *src1;        // First source operand (can be NULL)
     IROperand *src2;        // Second source operand (can be NULL)
     int line_number;        // For debugging
+    
+    // For function calls - store parameters directly
+    IROperand **params;     // Array of parameters (for IR_CALL instructions)
+    int param_count;        // Number of parameters
+    
     struct IRInstruction *next;
 } IRInstruction;
 
@@ -119,7 +130,7 @@ typedef struct IRFunction {
 } IRFunction;
 
 // IR Program
-typedef struct {
+typedef struct IRProgram {
     IRFunction *functions;
     IRInstruction *global_instructions;
     int temp_counter;
@@ -133,6 +144,7 @@ typedef struct {
     int temp_counter;
     int label_counter;
     IRInstruction **instruction_tail;  // For appending instructions
+    bool generating_parameters;        // Flag to prevent nested parameter generation
 } IRContext;
 
 // Public API

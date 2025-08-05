@@ -1,0 +1,56 @@
+ÆLang Compiler Test Report - Fri Aug  1 11:41:03 PM IST 2025
+======================================
+
+Test Summary:
+- Total tests: 14
+- Passed: 12
+- Failed: 2
+
+Key Fixes Verified:
+- Negative literal handling in semantic analyzer
+- Architecture-aware register allocation
+- IR code generation patterns
+- Multi-type variable declarations
+- Complex expression parsing
+
+Generated Files:
+total 332
+drwxrwxr-x  2 satyam satyam  4096 Aug  1 23:41 .
+drwxrwxr-x 18 satyam satyam 12288 Aug  1 23:40 ..
+-rw-rw-r--  1 satyam satyam  1002 Aug  1 23:33 01_data_types_test_arch32.log
+-rw-rw-r--  1 satyam satyam  1002 Aug  1 23:33 01_data_types_test_arch64.log
+-rw-rw-r--  1 satyam satyam  6628 Aug  1 23:38 01_data_types_test_fixed_32.asm
+-rw-rw-r--  1 satyam satyam  6628 Aug  1 23:41 01_data_types_test_fixed_arch32.asm
+-rw-rw-r--  1 satyam satyam  4653 Aug  1 23:41 01_data_types_test_fixed_arch32.log
+-rw-rw-r--  1 satyam satyam  7546 Aug  1 23:41 01_data_types_test_fixed_arch64.asm
+-rw-rw-r--  1 satyam satyam  4653 Aug  1 23:41 01_data_types_test_fixed_arch64.log
+-rw-rw-r--  1 satyam satyam 14562 Aug  1 23:41 02_operators_precedence_test_arch32.asm
+-rw-rw-r--  1 satyam satyam  5898 Aug  1 23:41 02_operators_precedence_test_arch32.log
+-rw-rw-r--  1 satyam satyam 16323 Aug  1 23:41 02_operators_precedence_test_arch64.asm
+-rw-rw-r--  1 satyam satyam  5898 Aug  1 23:41 02_operators_precedence_test_arch64.log
+-rw-rw-r--  1 satyam satyam   376 Aug  1 23:33 03_io_functions_test_arch32.log
+-rw-rw-r--  1 satyam satyam   376 Aug  1 23:33 03_io_functions_test_arch64.log
+-rw-rw-r--  1 satyam satyam 11010 Aug  1 23:39 03_io_functions_test_fixed_32.asm
+-rw-rw-r--  1 satyam satyam 11010 Aug  1 23:41 03_io_functions_test_fixed_arch32.asm
+-rw-rw-r--  1 satyam satyam  7549 Aug  1 23:41 03_io_functions_test_fixed_arch32.log
+-rw-rw-r--  1 satyam satyam 14624 Aug  1 23:41 03_io_functions_test_fixed_arch64.asm
+-rw-rw-r--  1 satyam satyam  7549 Aug  1 23:41 03_io_functions_test_fixed_arch64.log
+-rw-rw-r--  1 satyam satyam  1642 Aug  1 23:33 04_edge_cases_test_arch32.log
+-rw-rw-r--  1 satyam satyam  1642 Aug  1 23:33 04_edge_cases_test_arch64.log
+-rw-rw-r--  1 satyam satyam   976 Aug  1 23:41 04_edge_cases_test_fixed_arch32.log
+-rw-rw-r--  1 satyam satyam   976 Aug  1 23:41 04_edge_cases_test_fixed_arch64.log
+-rw-rw-r--  1 satyam satyam  1010 Aug  1 23:33 05_architecture_32bit_test_arch32.log
+-rw-rw-r--  1 satyam satyam 15947 Aug  1 23:41 05_architecture_32bit_test_fixed_arch32.asm
+-rw-rw-r--  1 satyam satyam  7653 Aug  1 23:41 05_architecture_32bit_test_fixed_arch32.log
+-rw-rw-r--  1 satyam satyam   840 Aug  1 23:33 06_architecture_64bit_test_arch64.log
+-rw-rw-r--  1 satyam satyam 18476 Aug  1 23:41 06_architecture_64bit_test_fixed_arch64.asm
+-rw-rw-r--  1 satyam satyam  7648 Aug  1 23:41 06_architecture_64bit_test_fixed_arch64.log
+-rw-rw-r--  1 satyam satyam 19790 Aug  1 23:41 07_ir_analysis_test_arch32.asm
+-rw-rw-r--  1 satyam satyam  7669 Aug  1 23:41 07_ir_analysis_test_arch32.log
+-rw-rw-r--  1 satyam satyam 22378 Aug  1 23:41 07_ir_analysis_test_arch64.asm
+-rw-rw-r--  1 satyam satyam  7669 Aug  1 23:41 07_ir_analysis_test_arch64.log
+-rw-rw-r--  1 satyam satyam  1126 Aug  1 23:41 arithmetic_test_arch32.asm
+-rw-rw-r--  1 satyam satyam  2072 Aug  1 23:41 arithmetic_test_arch32.log
+-rw-rw-r--  1 satyam satyam  1204 Aug  1 23:41 arithmetic_test_arch64.asm
+-rw-rw-r--  1 satyam satyam  2072 Aug  1 23:41 arithmetic_test_arch64.log
+-rw-rw-r--  1 satyam satyam   382 Aug  1 23:41 COMPREHENSIVE_TEST_REPORT.txt

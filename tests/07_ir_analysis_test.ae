@@ -1,0 +1,112 @@
+// IR Code Generation Analysis Test for ÆLang
+extern print(format: str, ...);
+
+func main(): void {
+    print("=== IR Code Generation Analysis Test ===\n");
+    print("This test is designed to analyze IR generation patterns\n\n");
+    
+    // ============ Simple Operations ============
+    print("=== Simple Operations for IR Analysis ===\n");
+    
+    // Single instruction tests
+    let simple_a: i32 = 10;
+    print("Simple assignment: %d\n", simple_a);
+    
+    let simple_b: i32 = 20;
+    let simple_sum: i32 = simple_a + simple_b;
+    print("Simple addition: %d + %d = %d\n", simple_a, simple_b, simple_sum);
+    
+    // ============ Complex Expressions ============
+    print("\n=== Complex Expressions for IR Analysis ===\n");
+    
+    // Multi-operation expression
+    let x: i32 = 5;
+    let y: i32 = 3;
+    let z: i32 = 2;
+    
+    // This should generate multiple IR instructions
+    let complex_result: i32 = x * y + z * (x - y);
+    print("Complex: %d * %d + %d * (%d - %d) = %d\n", x, y, z, x, y, complex_result);
+    
+    // ============ Nested Expressions ============
+    print("\n=== Nested Expressions for IR Analysis ===\n");
+    
+    // Deeply nested expression
+    let nested: i32 = ((x + y) * (z + 1)) - ((x - y) / z);
+    print("Nested: ((%d + %d) * (%d + 1)) - ((%d - %d) / %d) = %d\n", 
+          x, y, z, x, y, z, nested);
+    
+    // ============ Multiple Data Types ============
+    print("\n=== Multiple Data Types for IR Analysis ===\n");
+    
+    let int_val: i32 = 42;
+    let float_val: f32 = 3.14;
+    let char_val: char = 'A';
+    let bool_val: bool = true;
+    
+    print("Multi-type: int=%d, float=%.2f, char=%c, bool=%d\n", 
+          int_val, float_val, char_val, bool_val);
+    
+    // ============ Variable Reuse Test ============
+    print("\n=== Variable Reuse for IR Analysis ===\n");
+    
+    let reuse_var: i32 = 100;
+    print("Initial value: %d\n", reuse_var);
+    
+    reuse_var = reuse_var + 50;
+    print("After addition: %d\n", reuse_var);
+    
+    reuse_var = reuse_var * 2;
+    print("After multiplication: %d\n", reuse_var);
+    
+    // ============ Function Call Patterns ============
+    print("\n=== Function Call Patterns for IR Analysis ===\n");
+    
+    // Single parameter
+    print("Single param: %d\n", 123);
+    
+    // Multiple parameters
+    print("Multiple params: %d, %d, %d\n", 1, 2, 3);
+    
+    // Mixed parameter types
+    print("Mixed params: %d, %.2f, %c\n", 456, 7.89, 'Z');
+    
+    // ============ Memory Access Patterns ============
+    print("\n=== Memory Access Patterns for IR Analysis ===\n");
+    
+    // Sequential variable access
+    let mem_a: i32 = 10;
+    let mem_b: i32 = 20;
+    let mem_c: i32 = 30;
+    let mem_d: i32 = 40;
+    
+    // Access in different orders
+    let order1: i32 = mem_a + mem_b + mem_c + mem_d;
+    let order2: i32 = mem_d + mem_c + mem_b + mem_a;
+    let order3: i32 = mem_a + mem_c + mem_b + mem_d;
+    
+    print("Sequential access patterns:\n");
+    print("  Order 1: %d\n", order1);
+    print("  Order 2: %d\n", order2);
+    print("  Order 3: %d\n", order3);
+    
+    // ============ Optimization Test Cases ============
+    print("\n=== Optimization Test Cases ===\n");
+    
+    // Constant folding opportunities
+    let const_fold: i32 = 5 + 3 * 2;
+    print("Constant folding: 5 + 3 * 2 = %d\n", const_fold);
+    
+    // Dead code (unused variables)
+    let unused_var: i32 = 999;
+    let used_var: i32 = 888;
+    print("Used variable: %d\n", used_var);
+    
+    // Common subexpression
+    let common_a: i32 = x + y;
+    let common_b: i32 = (x + y) * 2;
+    print("Common subexpression: %d, %d\n", common_a, common_b);
+    
+    print("\n=== IR Analysis Test Complete ===\n");
+    print("Check generated assembly for IR patterns\n");
+}

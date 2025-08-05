@@ -1,0 +1,17 @@
+extern print(format: str, ...);
+
+func main(): void {
+    print("=== Simple AELang Test ===\n");
+    
+    let test_i32: i32 = 42;
+    let test_f32: f32 = 3.14;
+    let test_bool: bool = true;
+    let test_char: char = 'A';
+    
+    print("i32: %d\n", test_i32);
+    print("f32: %.2f\n", test_f32);
+    print("bool: %t\n", test_bool);
+    print("char: %c\n", test_char);
+    
+    print("Test complete!\n");
+}

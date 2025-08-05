@@ -1,0 +1,56 @@
+extern print(format: str, ...);
+
+func factorial(n: i32): i32 {
+    if (n <= 1) {
+        return 1;
+    } else {
+        return n * factorial(n - 1);
+    }
+}
+
+func fibonacci(n: i32): i32 {
+    if (n <= 1) {
+        return n;
+    } else {
+        return fibonacci(n - 1) + fibonacci(n - 2);
+    }
+}
+
+func test_arithmetic(a: i32, b: i32): void {
+    let sum: i32 = a + b;
+    let diff: i32 = a - b;
+    let prod: i32 = a * b;
+    let quot: i32 = a / b;
+    
+    print("Arithmetic test: %d + %d = %d\n", a, b, sum);
+    print("Arithmetic test: %d - %d = %d\n", a, b, diff);
+    print("Arithmetic test: %d * %d = %d\n", a, b, prod);
+    print("Arithmetic test: %d / %d = %d\n", a, b, quot);
+}
+
+func main(): void {
+    print("=== ÆLang Comprehensive Feature Test ===\n");
+    
+    // Test basic arithmetic
+    test_arithmetic(20, 4);
+    
+    // Test recursion with factorial
+    let fact5: i32 = factorial(5);
+    print("Factorial of 5: %d\n", fact5);
+    
+    // Test recursion with fibonacci
+    let fib8: i32 = fibonacci(8);
+    print("Fibonacci of 8: %d\n", fib8);
+    
+    // Test control flow
+    let x: i32 = 15;
+    if (x > 10) {
+        print("x (%d) is greater than 10\n", x);
+    } elif (x == 10) {
+        print("x is exactly 10\n");
+    } else {
+        print("x is less than 10\n");
+    }
+    
+    print("=== All tests completed successfully! ===\n");
+}

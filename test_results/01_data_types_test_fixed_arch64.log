@@ -1,0 +1,114 @@
+[✓] ÆLang Enhanced Compiler Pipeline Starting...
+[1/7] Loading source code: tests/01_data_types_test_fixed.ae
+[2/7] Lexical Analysis (Tokenization)...
+  Generated 217 tokens
+  [0] TOKEN_EXTERN: 'extern'
+  [1] TOKEN_IDENT: 'print'
+  [2] TOKEN_LPAREN: '('
+  [3] TOKEN_IDENT: 'format'
+  [4] TOKEN_COLON: ':'
+[3/7] Syntax Analysis (Parsing)...
+  Generated AST with 3 nodes
+[4/7] Semantic Analysis...
+  Target Architecture: 64-bit
+  String Variables: Enabled
+  Character Operations: Enabled
+DEBUG: Created enhanced semantic context
+[Semantic Analysis] Completed with 0 errors, 0 warnings
+DEBUG: Semantic analysis function returned
+DEBUG: Semantic analysis completed successfully
+  Semantic analysis completed (0 warnings)
+[5/7] IR Generation...
+DEBUG: About to call generate_ir
+[IR Debug] Processing statement type: 8
+[IR Debug] Processing statement type: 8
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: tiny_pos
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: tiny_neg
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: tiny_unsigned
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: small_pos
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: small_neg
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: small_unsigned
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: standard_pos
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: standard_neg
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: standard_unsigned
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: float_val
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: float_negative
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: char_val
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: string_val
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: bool_true
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 0
+[IR Debug] Variable declaration: bool_false
+[IR Debug] Generated STORE_VAR instruction
+[IR Debug] Processing statement type: 7
+[IR Debug] Ignored return value of function call
+[IR Generation] Generated IR with 1 functions and 97 instructions
+DEBUG: generate_ir returned
+DEBUG: IR generation completed successfully
+[6/7] Optimization (Level 1)...
+[Optimizer] Starting optimization level 1
+[Optimizer] Optimizing function 'main'
+[DCE] Starting dead code elimination
+[DCE] Allocated tracking for 56 temporaries (0-55)
+[DCE] First pass: marking used temporaries
+[DCE] Processed 97 instructions in first pass
+[DCE] Second pass: removing dead instructions
+[Optimizer] Optimization Statistics:
+  Constants folded: 0
+  Dead instructions removed: 11
+  Copies propagated: 0
+  Common subexpressions eliminated: 0
+  Algebraic simplifications: 0
+  Strength reductions: 0
+  Total optimizations: 11
+[7/7] Code Generation...
+[✓] Enhanced Compilation Complete!
+  Source: tests/01_data_types_test_fixed.ae → Assembly: test_results/01_data_types_test_fixed_arch64.asm
+  Optimization Level: 1

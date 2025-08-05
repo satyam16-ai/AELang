@@ -1,0 +1,74 @@
+// Comprehensive I/O Functions Test for ÆLang (Fixed)
+extern print(format: str, ...);
+extern read();
+
+func main(): void {
+    print("=== Input/Output Functions Test ===\n");
+    print("This test will verify print and read functions for all data types\n");
+    
+    // ============ Integer I/O Test ============
+    print("=== Integer I/O Test ===\n");
+    print("Enter an i32 integer: ");
+    let input_i32: i32 = read();
+    print("You entered i32: %d\n", input_i32);
+    
+    print("Enter an i16 integer: ");
+    let input_i16: i16 = read();
+    print("You entered i16: %d\n", input_i16);
+    
+    print("Enter an i8 integer: ");
+    let input_i8: i8 = read();
+    print("You entered i8: %d\n", input_i8);
+    
+    // ============ Unsigned Integer I/O Test ============
+    print("=== Unsigned Integer I/O Test ===\n");
+    print("Enter a u32 unsigned integer: ");
+    let input_u32: u32 = read();
+    print("You entered u32: %u\n", input_u32);
+    
+    print("Enter a u16 unsigned integer: ");
+    let input_u16: u16 = read();
+    print("You entered u16: %u\n", input_u16);
+    
+    print("Enter a u8 unsigned integer: ");
+    let input_u8: u8 = read();
+    print("You entered u8: %u\n", input_u8);
+    
+    // ============ Floating Point I/O Test ============
+    print("=== Floating Point I/O Test ===\n");
+    print("Enter a f32 floating point number: ");
+    let input_f32: f32 = read();
+    print("You entered f32: %.6f\n", input_f32);
+    
+    // ============ Character I/O Test ============
+    print("=== Character I/O Test ===\n");
+    print("Enter a single character: ");
+    let input_char: char = read();
+    print("You entered character: '%c'\n", input_char);
+    
+    // ============ String I/O Test ============
+    print("=== String I/O Test ===\n");
+    print("Enter a string: ");
+    let input_string: str = read();
+    print("You entered string: ");
+    print(input_string);
+    print("\n");
+    
+    // ============ Print Format Test ============
+    print("=== Print Format Specifiers Test ===\n");
+    let test_int: i32 = 42;
+    let test_float: f32 = 3.14159;
+    let test_char: char = 'Z';
+    let test_str: str = "Format Test";
+    
+    print("Integer (d): %d\n", test_int);
+    print("Integer (i): %i\n", test_int);
+    print("Unsigned (u): %u\n", test_int);
+    print("Float (f): %f\n", test_float);
+    print("Float (e): %e\n", test_float);
+    print("Float (g): %g\n", test_float);
+    print("Character (c): %c\n", test_char);
+    print("String (s): ");
+    print(test_str);
+    print("\n");
+}

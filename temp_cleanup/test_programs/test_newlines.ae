@@ -1,8 +1,0 @@
-extern print(format: str, ...);
-
-func main(): void {
-    print("Hello World!\n");
-    print("Line 1\n");
-    print("Line 2\n");
-    print("Number: %d\n", 42);
-}

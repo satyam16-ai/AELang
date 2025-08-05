@@ -1,16 +1,22 @@
 extern print(format: str, ...);
 extern read();
+
 func main(): void {
-   //take to input and perform all basic arthmatic 
-    print("Welcome to the AE Calculator!");
-    let input: i32 = read();
-    print("You entered: %d\n", input);
-    // Simple arithmetic operations
-    let a: f32 = 10.5;
-    let b: f32 = 2.5;
-    print("Addition: %f\n", a + b);
-    print("Subtraction: %f\n", a - b);
-    print("Multiplication: %f\n", a * b);
-    print("Division: %f\n", a / b);
-    print("Calculator operations complete!");
+    print("Enter first number: ");
+    let a: i32 = read();
+
+    print("Enter second number: ");
+    let b: i32 = read();
+
+    let sum: i32 = a + b;
+    let diff: i32 = a - b;
+    let prod: i32 = a * b;
+    let quot: i32 = a / b;
+    let modl: i32 = a % b;
+
+    print("Sum: %d + %d = %d\n", a, b, sum);
+    print("Difference: %d - %d = %d\n", a, b, diff);
+    print("Product: %d * %d = %d\n", a, b, prod);
+    print("Quotient: %d / %d = %d\n", a, b, quot);
+    print("Modulo: %d %% %d = %d\n", a, b, modl);
 }

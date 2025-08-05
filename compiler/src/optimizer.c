@@ -158,6 +158,15 @@ bool dead_code_elimination_pass(IRFunction *func, OptimizationStats *stats) {
             used_temps[instr->src2->value.temp_id] = true;
         }
         
+        // For CALL instructions, mark embedded parameters as used
+        if (instr->opcode == IR_CALL && instr->params && instr->param_count > 0) {
+            for (int i = 0; i < instr->param_count; i++) {
+                if (instr->params[i] && instr->params[i]->type == OPERAND_TEMP) {
+                    used_temps[instr->params[i]->value.temp_id] = true;
+                }
+            }
+        }
+        
         // Control flow and function calls have side effects
         if (instr->opcode == IR_CALL || instr->opcode == IR_RETURN || 
             instr->opcode == IR_GOTO || instr->opcode == IR_IF_GOTO ||

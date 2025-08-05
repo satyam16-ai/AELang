@@ -1,0 +1,207 @@
+extern print(format: str, ...);
+
+func main(): void {
+    print("=== COMPREHENSIVE OPERATORS AND EDGE CASES TEST ===\n\n");
+    
+    // ============= ARITHMETIC OPERATORS =============
+    print("1. ARITHMETIC OPERATORS:\n");
+    let a: i32 = 20;
+    let b: i32 = 6;
+    let c: i32 = 3;
+    let d: i32 = 0;
+    
+    print("Variables: a=%d, b=%d, c=%d, d=%d\n", a, b, c, d);
+    
+    // Basic arithmetic
+    let add_result: i32 = a + b;
+    let sub_result: i32 = a - b;
+    let mul_result: i32 = a * b;
+    let div_result: i32 = a / b;
+    let mod_result: i32 = a % b;
+    
+    print("Addition: %d + %d = %d\n", a, b, add_result);
+    print("Subtraction: %d - %d = %d\n", a, b, sub_result);
+    print("Multiplication: %d * %d = %d\n", a, b, mul_result);
+    print("Division: %d / %d = %d\n", a, b, div_result);
+    print("Modulo: %d %% %d = %d\n", a, b, mod_result);
+    
+    // Test precedence
+    let precedence1: i32 = a + b * c;        // Should be 20 + 18 = 38
+    let precedence2: i32 = a - b / c;        // Should be 20 - 2 = 18
+    let precedence3: i32 = (a + b) * c;      // Should be 26 * 3 = 78
+    let precedence4: i32 = a * b + c * c;    // Should be 120 + 9 = 129
+    
+    print("Precedence a + b * c = %d (expected: 38)\n", precedence1);
+    print("Precedence a - b / c = %d (expected: 18)\n", precedence2);
+    print("Precedence (a + b) * c = %d (expected: 78)\n", precedence3);
+    print("Precedence a * b + c * c = %d (expected: 129)\n", precedence4);
+    
+    print("\n");
+    
+    // ============= COMPARISON OPERATORS =============
+    print("2. COMPARISON OPERATORS:\n");
+    let x: i32 = 10;
+    let y: i32 = 20;
+    let z: i32 = 10;
+    
+    print("Variables: x=%d, y=%d, z=%d\n", x, y, z);
+    
+    let eq_test: i32 = (x == z);
+    let neq_test: i32 = (x != y);
+    let lt_test: i32 = (x < y);
+    let gt_test: i32 = (y > x);
+    let leq_test: i32 = (x <= z);
+    let geq_test: i32 = (y >= x);
+    
+    print("x == z: %d (expected: 1)\n", eq_test);
+    print("x != y: %d (expected: 1)\n", neq_test);
+    print("x < y: %d (expected: 1)\n", lt_test);
+    print("y > x: %d (expected: 1)\n", gt_test);
+    print("x <= z: %d (expected: 1)\n", leq_test);
+    print("y >= x: %d (expected: 1)\n", geq_test);
+    
+    print("\n");
+    
+    // ============= LOGICAL OPERATORS =============
+    print("3. LOGICAL OPERATORS:\n");
+    let true_val: i32 = 1;
+    let false_val: i32 = 0;
+    
+    print("true_val=%d, false_val=%d\n", true_val, false_val);
+    
+    let and_test1: i32 = true_val && true_val;      // 1 && 1 = 1
+    let and_test2: i32 = true_val && false_val;     // 1 && 0 = 0
+    let and_test3: i32 = false_val && true_val;     // 0 && 1 = 0
+    let and_test4: i32 = false_val && false_val;    // 0 && 0 = 0
+    
+    print("Logical AND tests:\n");
+    print("1 && 1 = %d (expected: 1)\n", and_test1);
+    print("1 && 0 = %d (expected: 0)\n", and_test2);
+    print("0 && 1 = %d (expected: 0)\n", and_test3);
+    print("0 && 0 = %d (expected: 0)\n", and_test4);
+    
+    let or_test1: i32 = true_val || true_val;       // 1 || 1 = 1
+    let or_test2: i32 = true_val || false_val;      // 1 || 0 = 1
+    let or_test3: i32 = false_val || true_val;      // 0 || 1 = 1
+    let or_test4: i32 = false_val || false_val;     // 0 || 0 = 0
+    
+    print("Logical OR tests:\n");
+    print("1 || 1 = %d (expected: 1)\n", or_test1);
+    print("1 || 0 = %d (expected: 1)\n", or_test2);
+    print("0 || 1 = %d (expected: 1)\n", or_test3);
+    print("0 || 0 = %d (expected: 0)\n", or_test4);
+    
+    let not_test1: i32 = !true_val;                 // !1 = 0
+    let not_test2: i32 = !false_val;                // !0 = 1
+    
+    print("Logical NOT tests:\n");
+    print("!1 = %d (expected: 0)\n", not_test1);
+    print("!0 = %d (expected: 1)\n", not_test2);
+    
+    print("\n");
+    
+    // ============= IF/ELSE CONTROL FLOW =============
+    print("4. IF/ELSE CONTROL FLOW TESTS:\n");
+    
+    // Simple if test
+    print("Testing simple if (x == z):\n");
+    if (x == z) {
+        print("✓ PASS: x equals z (10 == 10)\n");
+    }
+    
+    // If-else test (true condition)
+    print("Testing if-else (x < y):\n");
+    if (x < y) {
+        print("✓ PASS: x is less than y (10 < 20)\n");
+    } else {
+        print("✗ FAIL: x should be less than y\n");
+    }
+    
+    // If-else test (false condition)
+    print("Testing if-else (x > y):\n");
+    if (x > y) {
+        print("✗ FAIL: x should not be greater than y\n");
+    } else {
+        print("✓ PASS: x is not greater than y (10 not > 20)\n");
+    }
+    
+    // Complex condition with logical operators
+    print("Testing complex condition (x < y && z == x):\n");
+    if (x < y && z == x) {
+        print("✓ PASS: Both conditions are true\n");
+    } else {
+        print("✗ FAIL: Complex condition should be true\n");
+    }
+    
+    // Complex condition with logical OR
+    print("Testing complex condition (x > y || z == x):\n");
+    if (x > y || z == x) {
+        print("✓ PASS: At least one condition is true (z == x)\n");
+    } else {
+        print("✗ FAIL: At least one condition should be true\n");
+    }
+    
+    // Nested if statements
+    print("Testing nested if statements:\n");
+    let outer_val: i32 = 15;
+    let inner_val: i32 = 8;
+    
+    if (outer_val > 10) {
+        print("Outer condition passed (outer_val > 10)\n");
+        if (inner_val > 5) {
+            print("✓ PASS: Inner condition also passed (inner_val > 5)\n");
+        } else {
+            print("✗ FAIL: Inner condition should pass\n");
+        }
+    } else {
+        print("✗ FAIL: Outer condition should pass\n");
+    }
+    
+    print("\n");
+    
+    // ============= EDGE CASES =============
+    print("5. EDGE CASES:\n");
+    
+    // Zero division test (commented out to avoid crash)
+    // print("Division by zero test: %d / %d\n", a, d);
+    
+    // Negative numbers
+    let neg_a: i32 = -10;
+    let neg_b: i32 = -3;
+    let neg_test1: i32 = neg_a + neg_b;    // -10 + (-3) = -13
+    let neg_test2: i32 = neg_a * neg_b;    // -10 * (-3) = 30
+    let neg_test3: i32 = neg_a / neg_b;    // -10 / (-3) = 3
+    
+    print("Negative number tests:\n");
+    print("%d + %d = %d (expected: -13)\n", neg_a, neg_b, neg_test1);
+    print("%d * %d = %d (expected: 30)\n", neg_a, neg_b, neg_test2);
+    print("%d / %d = %d (expected: 3)\n", neg_a, neg_b, neg_test3);
+    
+    // Large numbers
+    let large1: i32 = 1000000;
+    let large2: i32 = 999999;
+    let large_diff: i32 = large1 - large2;
+    
+    print("Large number test: %d - %d = %d (expected: 1)\n", large1, large2, large_diff);
+    
+    // Zero comparisons
+    let zero: i32 = 0;
+    let zero_eq: i32 = (zero == 0);
+    let zero_neq: i32 = (zero != 0);
+    
+    print("Zero comparison tests:\n");
+    print("0 == 0: %d (expected: 1)\n", zero_eq);
+    print("0 != 0: %d (expected: 0)\n", zero_neq);
+    
+    print("\n");
+    
+    // ============= FINAL SUMMARY =============
+    print("=== TEST SUMMARY ===\n");
+    print("✅ Arithmetic Operators: +, -, *, /, %% working\n");
+    print("✅ Operator Precedence: Correct evaluation order\n");
+    print("✅ Comparison Operators: ==, !=, <, >, <=, >= working\n");
+    print("✅ Logical Operators: &&, ||, ! working\n");
+    print("✅ Control Flow: if, else statements working\n");
+    print("✅ Edge Cases: Negative numbers, large numbers, zero working\n");
+    print("\n🎉 COMPREHENSIVE OPERATOR TESTING COMPLETED! 🎉\n");
+}

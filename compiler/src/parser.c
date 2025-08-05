@@ -17,6 +17,7 @@ static ASTNode *parse_expression();
 static ASTNode *parse_statement();
 static ASTNode *parse_if_statement_with_condition(int line, ASTNode *condition);
 static ASTNode *parse_unary_expr();
+static ASTNode *parse_multiplicative_expr();
 static ASTNode *make_node(ASTNodeType type, int line);
 static void free_ast_node(ASTNode *node);
 
@@ -392,15 +393,43 @@ static ASTNode *parse_comparison_expr() {
     return left;
 }
 
-// Precedence level 5: Arithmetic operators 
-static ASTNode *parse_arithmetic_expr() {
+// Precedence level 5a: Multiplicative operators (*, /, %) - Higher precedence
+static ASTNode *parse_multiplicative_expr() {
     ASTNode *left = parse_unary_expr();
     if (!left) return NULL;
 
-    while (peek().type == TOKEN_PLUS || peek().type == TOKEN_MINUS ||
-           peek().type == TOKEN_MUL || peek().type == TOKEN_DIV || peek().type == TOKEN_MOD) {
+    while (peek().type == TOKEN_MUL || peek().type == TOKEN_DIV || peek().type == TOKEN_MOD) {
         Token op = advance();
         ASTNode *right = parse_unary_expr();
+        if (!right) {
+            free_ast_node(left);
+            return NULL;
+        }
+
+        ASTNode *bin = make_node(AST_BIN_OP, op.line);
+        if (!bin) {
+            free_ast_node(left);
+            free_ast_node(right);
+            return NULL;
+        }
+        
+        strcpy(bin->as.bin_op.op, op.text);
+        bin->as.bin_op.left = left;
+        bin->as.bin_op.right = right;
+        left = bin;
+    }
+
+    return left;
+}
+
+// Precedence level 5b: Additive operators (+, -) - Lower precedence
+static ASTNode *parse_arithmetic_expr() {
+    ASTNode *left = parse_multiplicative_expr();
+    if (!left) return NULL;
+
+    while (peek().type == TOKEN_PLUS || peek().type == TOKEN_MINUS) {
+        Token op = advance();
+        ASTNode *right = parse_multiplicative_expr();
         if (!right) {
             free_ast_node(left);
             return NULL;
@@ -547,7 +576,7 @@ static ASTNode *parse_statement() {
         expect(TOKEN_COLON, ":");
         Token type = expect_type_token("type");
         expect(TOKEN_EQUAL, "=");
-        ASTNode *value = parse_literal(advance());
+        ASTNode *value = parse_expression();  // Use parse_expression instead of parse_literal to handle unary minus
         match(TOKEN_SEMICOLON);
         node->as.var_decl.name = strdup(name.text);
         node->as.var_decl.type_name = strdup(type.text);

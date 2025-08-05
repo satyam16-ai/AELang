@@ -1,0 +1,68 @@
+extern print(format: str, ...);
+extern read();
+
+func main(): void {
+    print("=== ÆLang 64-bit Data Type Test ===\n");
+    
+    // Test 8-bit signed integer
+    print("Enter an i8 value (-128 to 127): ");
+    let val_i8: i8 = read();
+    print("You entered i8: %d\n", val_i8);
+    
+    // Test 16-bit signed integer  
+    print("Enter an i16 value (-32768 to 32767): ");
+    let val_i16: i16 = read();
+    print("You entered i16: %d\n", val_i16);
+    
+    // Test 32-bit signed integer
+    print("Enter an i32 value: ");
+    let val_i32: i32 = read();
+    print("You entered i32: %d\n", val_i32);
+    
+    // Test 64-bit signed integer
+    print("Enter an i64 value: ");
+    let val_i64: i64 = read();
+    print("You entered i64: %ld\n", val_i64);
+    
+    // Test 8-bit unsigned integer
+    print("Enter a u8 value (0 to 255): ");
+    let val_u8: u8 = read();
+    print("You entered u8: %d\n", val_u8);
+    
+    // Test 16-bit unsigned integer
+    print("Enter a u16 value (0 to 65535): ");
+    let val_u16: u16 = read();
+    print("You entered u16: %d\n", val_u16);
+    
+    // Test 32-bit unsigned integer
+    print("Enter a u32 value: ");
+    let val_u32: u32 = read();
+    print("You entered u32: %d\n", val_u32);
+    
+    // Test 64-bit unsigned integer
+    print("Enter a u64 value: ");
+    let val_u64: u64 = read();
+    print("You entered u64: %lu\n", val_u64);
+    
+    // Test floating point types
+    print("Enter an f32 value: ");
+    let val_f32: f32 = read();
+    print("You entered f32: %f\n", val_f32);
+    
+    // Test 64-bit floating point
+    print("Enter an f64 value: ");
+    let val_f64: f64 = read();
+    print("You entered f64: %lf\n", val_f64);
+    
+    // Test universal numeric type
+    print("Enter a num value: ");
+    let val_num: num = read();
+    print("You entered num: %f\n", val_num);
+    
+    // Test character type
+    print("Enter a character: ");
+    let val_char: char = read();
+    print("You entered char: %c\n", val_char);
+    
+    print("=== All 64-bit data types tested successfully! ===\n");
+}

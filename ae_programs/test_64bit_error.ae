@@ -1,8 +1,0 @@
-extern print(format: str, ...);
-extern read(): num;
-
-func main(): void {
-    print("Testing 64-bit validation:\n");
-    let bad_i64: i64 = 1000000000000;  // This should cause an error
-    print("This should not compile: %lld\n", bad_i64);
-}

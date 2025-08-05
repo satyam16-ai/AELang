@@ -1,6 +1,7 @@
 // ir.c - Intermediate Representation Generation for ÆLang
 #define _GNU_SOURCE  // For strdup
 #include "ir.h"
+#include "semantic.h"  // For Type enum
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -77,6 +78,8 @@ IRInstruction *create_instruction(IROpcode opcode, IROperand *dest,
     instr->src2 = src2;
     instr->line_number = line;
     instr->next = NULL;
+    instr->params = NULL;
+    instr->param_count = 0;
     return instr;
 }
 
@@ -115,7 +118,70 @@ static char *generate_label(IRContext *ctx, const char *prefix) {
 
 // Forward declarations
 static IROperand *generate_expression_ir(AnnotatedASTNode *node, IRContext *ctx);
+static IROperand *generate_expression_ir_with_type(AnnotatedASTNode *node, IRContext *ctx, SemanticType expected_type);
 static void generate_statement_ir(AnnotatedASTNode *node, IRContext *ctx);
+
+// Generate IR for expressions with type context
+static IROperand *generate_expression_ir_with_type(AnnotatedASTNode *node, IRContext *ctx, SemanticType expected_type) {
+    if (!node || !node->original_node) {
+        return NULL;
+    }
+    
+    ASTNode *ast_node = node->original_node;
+    
+    switch (ast_node->type) {
+        case AST_FUNC_CALL: {
+            // Generate parameter operands
+            IROperand **args = calloc(ast_node->as.func_call.arg_count, sizeof(IROperand*));
+            for (size_t i = 0; i < ast_node->as.func_call.arg_count; i++) {
+                args[i] = generate_expression_ir(node->children[i], ctx);
+            }
+            
+            // Special handling for unified read() function
+            if (strcmp(ast_node->as.func_call.name, "read") == 0 && ast_node->as.func_call.arg_count == 0) {
+                SemanticType target_type = expected_type != TYPE_UNKNOWN ? expected_type : node->resolved_type;
+                
+                // Create parameters array for read_with_type
+                IROperand **read_args = calloc(1, sizeof(IROperand*));
+                read_args[0] = create_const_int_operand((int)target_type);
+                
+                // Generate call to read_with_type instead of read
+                IROperand *result = create_temp_operand(ctx, target_type);
+                IROperand *func_op = calloc(1, sizeof(IROperand));
+                func_op->type = OPERAND_FUNCTION;
+                func_op->value.name = strdup("read_with_type");
+                
+                printf("[IR Debug] Transformed read() to read_with_type(%d) for expected type %d\n", (int)target_type, target_type);
+                
+                IRInstruction *call = create_instruction(IR_CALL, result, func_op, NULL, ast_node->line);
+                call->param_count = 1;
+                call->params = read_args;
+                append_instruction(ctx, call);
+                
+                free(args); // Free the empty args array
+                return result;
+            }
+            
+            // Regular function call handling
+            IROperand *result = create_temp_operand(ctx, expected_type != TYPE_UNKNOWN ? expected_type : node->resolved_type);
+            IROperand *func_op = calloc(1, sizeof(IROperand));
+            func_op->type = OPERAND_FUNCTION;
+            func_op->value.name = strdup(ast_node->as.func_call.name);
+            
+            printf("[IR Debug] Function call: %s with expected type %d\n", func_op->value.name, expected_type != TYPE_UNKNOWN ? expected_type : node->resolved_type);
+            
+            IRInstruction *call = create_instruction(IR_CALL, result, func_op, NULL, ast_node->line);
+            call->param_count = ast_node->as.func_call.arg_count;
+            call->params = args; // Transfer ownership of args array
+            append_instruction(ctx, call);
+            return result;
+        }
+        
+        default:
+            // For other expressions, fall back to regular generation
+            return generate_expression_ir(node, ctx);
+    }
+}
 
 // Generate IR for expressions
 static IROperand *generate_expression_ir(AnnotatedASTNode *node, IRContext *ctx) {
@@ -339,20 +405,74 @@ static IROperand *generate_expression_ir(AnnotatedASTNode *node, IRContext *ctx)
         }
         
         case AST_FUNC_CALL: {
-            // Generate parameter instructions
+            // Generate parameter operands
+            IROperand **args = calloc(ast_node->as.func_call.arg_count, sizeof(IROperand*));
             for (size_t i = 0; i < ast_node->as.func_call.arg_count; i++) {
-                IROperand *arg = generate_expression_ir(node->children[i], ctx);
-                IRInstruction *param = create_instruction(IR_PARAM, NULL, arg, NULL, ast_node->line);
-                append_instruction(ctx, param);
+                args[i] = generate_expression_ir(node->children[i], ctx);
             }
             
-            // Generate call instruction
+            // Generate call instruction with parameters embedded
             IROperand *result = create_temp_operand(ctx, node->resolved_type);
             IROperand *func_op = calloc(1, sizeof(IROperand));
             func_op->type = OPERAND_FUNCTION;
-            func_op->value.name = strdup(ast_node->as.func_call.name);
             
+            // Create call instruction
             IRInstruction *call = create_instruction(IR_CALL, result, func_op, NULL, ast_node->line);
+            
+            // Store parameters directly in the call instruction
+            call->param_count = ast_node->as.func_call.arg_count;
+            call->params = args; // Transfer ownership of args array to the instruction
+            
+            // Transform universal read() calls to type-specific calls based on resolved type
+            if (strcmp(ast_node->as.func_call.name, "read") == 0 && ast_node->as.func_call.arg_count == 0) {
+                switch (node->resolved_type) {
+                    case TYPE_I8:
+                        func_op->value.name = strdup("read_i8");
+                        break;
+                    case TYPE_I16:
+                        func_op->value.name = strdup("read_i16");
+                        break;
+                    case TYPE_I32:
+                        func_op->value.name = strdup("read_i32");
+                        break;
+                    case TYPE_I64:
+                        func_op->value.name = strdup("read_i64");
+                        break;
+                    case TYPE_U8:
+                        func_op->value.name = strdup("read_u8");
+                        break;
+                    case TYPE_U16:
+                        func_op->value.name = strdup("read_u16");
+                        break;
+                    case TYPE_U32:
+                        func_op->value.name = strdup("read_u32");
+                        break;
+                    case TYPE_U64:
+                        func_op->value.name = strdup("read_u64");
+                        break;
+                    case TYPE_F32:
+                        func_op->value.name = strdup("read_f32");
+                        break;
+                    case TYPE_F64:
+                        func_op->value.name = strdup("read_f64");
+                        break;
+                    case TYPE_NUM:
+                        func_op->value.name = strdup("read_num");
+                        break;
+                    case TYPE_CHAR:
+                        func_op->value.name = strdup("read_char");
+                        break;
+                    default:
+                        // Fall back to generic read for unknown types
+                        func_op->value.name = strdup("read");
+                        break;
+                }
+                printf("[IR Debug] Transformed read() to %s for type %d\n", func_op->value.name, node->resolved_type);
+            } else {
+                func_op->value.name = strdup(ast_node->as.func_call.name);
+            }
+            
+            // Append the call instruction (which already has parameters embedded)
             append_instruction(ctx, call);
             return result;
         }
@@ -378,13 +498,27 @@ static void generate_statement_ir(AnnotatedASTNode *node, IRContext *ctx) {
         case AST_VAR_DECL: {
             printf("[IR Debug] Variable declaration: %s\n", ast_node->as.var_decl.name);
             if (ast_node->as.var_decl.value) {
-                IROperand *value = generate_expression_ir(node->children[0], ctx);
+                // Pass the variable's declared type as context to the expression
+                IROperand *value = generate_expression_ir_with_type(node->children[0], ctx, node->resolved_type);
                 IROperand *var_op = create_var_operand(ast_node->as.var_decl.name, node->resolved_type);
                 IRInstruction *store = create_instruction(IR_STORE_VAR, NULL, var_op, value, ast_node->line);
                 append_instruction(ctx, store);
                 printf("[IR Debug] Generated STORE_VAR instruction\n");
             } else {
                 printf("[IR Debug] Variable declaration without initial value\n");
+            }
+            break;
+        }
+        
+        case AST_CONST_DECL: {
+            printf("[IR Debug] Constant declaration: %s\n", ast_node->as.var_decl.name);
+            if (ast_node->as.var_decl.value) {
+                // Constants are treated like variables in IR but marked as constant in semantic analysis
+                IROperand *value = generate_expression_ir_with_type(node->children[0], ctx, node->resolved_type);
+                IROperand *const_op = create_var_operand(ast_node->as.var_decl.name, node->resolved_type);
+                IRInstruction *store = create_instruction(IR_STORE_VAR, NULL, const_op, value, ast_node->line);
+                append_instruction(ctx, store);
+                printf("[IR Debug] Generated STORE_VAR instruction for constant\n");
             }
             break;
         }
@@ -406,7 +540,7 @@ static void generate_statement_ir(AnnotatedASTNode *node, IRContext *ctx) {
             
             // if !condition goto else_label
             IROperand *else_op = create_label_operand(else_label);
-            IRInstruction *if_false = create_instruction(IR_IF_FALSE_GOTO, NULL, condition, else_op, ast_node->line);
+            IRInstruction *if_false = create_instruction(IR_IF_FALSE_GOTO, else_op, condition, NULL, ast_node->line);
             append_instruction(ctx, if_false);
             printf("[IR Debug] Generated IF_FALSE_GOTO instruction\n");
             
@@ -419,7 +553,7 @@ static void generate_statement_ir(AnnotatedASTNode *node, IRContext *ctx) {
             
             // goto end_label
             IROperand *end_op = create_label_operand(end_label);
-            IRInstruction *goto_end = create_instruction(IR_GOTO, NULL, end_op, NULL, ast_node->line);
+            IRInstruction *goto_end = create_instruction(IR_GOTO, end_op, NULL, NULL, ast_node->line);
             append_instruction(ctx, goto_end);
             printf("[IR Debug] Generated GOTO instruction to end label\n");
             
@@ -486,6 +620,12 @@ static AnnotatedASTNode *create_annotated_node(ASTNode *ast_node) {
     
     switch (ast_node->type) {
         case AST_VAR_DECL:
+            if (ast_node->as.var_decl.value) {
+                child_count = 1;
+                child_nodes = &ast_node->as.var_decl.value;
+            }
+            break;
+        case AST_CONST_DECL:
             if (ast_node->as.var_decl.value) {
                 child_count = 1;
                 child_nodes = &ast_node->as.var_decl.value;

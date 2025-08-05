@@ -1,0 +1,88 @@
+// Architecture-Specific Test for ÆLang (64-bit) - Fixed
+extern print(format: str, ...);
+
+func main(): void {
+    print("=== Architecture-Specific Test (64-bit) ===\n");
+    
+    // ============ 64-bit Specific Data Types ============
+    print("=== 64-bit Specific Types ===\n");
+    
+    let i64_max: i64 = 9223372036854775807;
+    let i64_min: i64 = -9223372036854775808;
+    let u64_max: u64 = 18446744073709551615;
+    let f64_val: f64 = 123.456789012345;
+    
+    print("i64 max: %ld\n", i64_max);
+    print("i64 min: %ld\n", i64_min);
+    print("u64 max: %lu\n", u64_max);
+    print("f64 precision: %.12f\n", f64_val);
+    
+    // ============ 64-bit Arithmetic ============
+    print("=== 64-bit Arithmetic ===\n");
+    
+    let large_a: i64 = 1000000000000;
+    let large_b: i64 = 2000000000000;
+    
+    let large_sum: i64 = large_a + large_b;
+    let large_diff: i64 = large_b - large_a;
+    let large_product: i64 = large_a * 3;
+    let large_quotient: i64 = large_b / 2;
+    
+    print("Large number arithmetic:\n");
+    print("  %ld + %ld = %ld\n", large_a, large_b, large_sum);
+    print("  %ld - %ld = %ld\n", large_b, large_a, large_diff);
+    print("  %ld * 3 = %ld\n", large_a, large_product);
+    print("  %ld / 2 = %ld\n", large_b, large_quotient);
+    
+    // ============ Double Precision Floating Point ============
+    print("=== Double Precision Test ===\n");
+    
+    let precise_pi: f64 = 3.141592653589793;
+    let precise_e: f64 = 2.718281828459045;
+    
+    let precise_sum: f64 = precise_pi + precise_e;
+    let precise_product: f64 = precise_pi * precise_e;
+    
+    print("High precision constants:\n");
+    print("  PI = %.15f\n", precise_pi);
+    print("  E = %.15f\n", precise_e);
+    print("  PI + E = %.15f\n", precise_sum);
+    print("  PI * E = %.15f\n", precise_product);
+    
+    // ============ Mixed Architecture Types ============
+    print("=== Mixed Architecture Types ===\n");
+    
+    let small_int: i32 = 42;
+    let large_int: i64 = 1000000000000;
+    let small_float: f32 = 3.14;
+    let large_float: f64 = 3.141592653589793;
+    
+    print("Mixed types:\n");
+    print("  i32: %d, i64: %ld\n", small_int, large_int);
+    print("  f32: %.6f, f64: %.15f\n", small_float, large_float);
+    
+    // ============ Memory Intensive Test ============
+    print("=== Memory Intensive Test ===\n");
+    
+    // Allocate many 64-bit variables
+    let mem1: i64 = 1000000000001;
+    let mem2: i64 = 1000000000002;
+    let mem3: i64 = 1000000000003;
+    let mem4: i64 = 1000000000004;
+    let mem5: i64 = 1000000000005;
+    let mem6: i64 = 1000000000006;
+    let mem7: i64 = 1000000000007;
+    let mem8: i64 = 1000000000008;
+    
+    let mem_sum: i64 = mem1 + mem2 + mem3 + mem4 + mem5 + mem6 + mem7 + mem8;
+    print("Sum of 8 large numbers: %ld\n", mem_sum);
+    
+    // ============ 64-bit Register Test ============
+    print("=== 64-bit Register Usage Test ===\n");
+    
+    // Complex expression with 64-bit values
+    let complex_expr: i64 = (mem1 * 2) + (mem2 / 2) - (mem3 % 1000) + mem4;
+    print("Complex 64-bit expression result: %ld\n", complex_expr);
+    
+    print("=== 64-bit Architecture Test Complete ===\n");
+}

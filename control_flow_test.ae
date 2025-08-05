@@ -1,0 +1,110 @@
+extern print(format: str, ...);
+
+func main(): void {
+    print("=== CONTROL FLOW AND OPERATORS TEST ===\n\n");
+    
+    // ============= ARITHMETIC OPERATORS =============
+    print("1. ARITHMETIC OPERATORS:\n");
+    let a: i32 = 20;
+    let b: i32 = 6;
+    let c: i32 = 3;
+    
+    print("Variables: a=%d, b=%d, c=%d\n", a, b, c);
+    
+    // Test precedence
+    let precedence1: i32 = a + b * c;        // Should be 20 + 18 = 38
+    let precedence2: i32 = a - b / c;        // Should be 20 - 2 = 18
+    
+    print("Precedence a + b * c = %d (expected: 38)\n", precedence1);
+    print("Precedence a - b / c = %d (expected: 18)\n", precedence2);
+    
+    print("\n");
+    
+    // ============= COMPARISON AND CONTROL FLOW =============
+    print("2. COMPARISON AND IF/ELSE TESTS:\n");
+    let x: i32 = 10;
+    let y: i32 = 20;
+    let z: i32 = 10;
+    
+    print("Variables: x=%d, y=%d, z=%d\n", x, y, z);
+    
+    // Test simple if (should execute)
+    print("Testing if (x == z):\n");
+    if (x == z) {
+        print("✓ PASS: x equals z\n");
+    }
+    
+    // Test if-else (true condition)
+    print("Testing if-else (x < y):\n");
+    if (x < y) {
+        print("✓ PASS: x is less than y\n");
+    } else {
+        print("✗ FAIL: This should not print\n");
+    }
+    
+    // Test if-else (false condition)
+    print("Testing if-else (x > y):\n");
+    if (x > y) {
+        print("✗ FAIL: This should not print\n");
+    } else {
+        print("✓ PASS: x is not greater than y\n");
+    }
+    
+    print("\n");
+    
+    // ============= LOGICAL OPERATORS =============
+    print("3. LOGICAL OPERATORS:\n");
+    
+    // Test logical AND (both true)
+    print("Testing AND - both true (x == z && y > x):\n");
+    if (x == z && y > x) {
+        print("✓ PASS: Both conditions are true\n");
+    } else {
+        print("✗ FAIL: This should not print\n");
+    }
+    
+    // Test logical AND (one false)
+    print("Testing AND - one false (x == z && x > y):\n");
+    if (x == z && x > y) {
+        print("✗ FAIL: This should not print\n");
+    } else {
+        print("✓ PASS: One condition is false\n");
+    }
+    
+    // Test logical OR (one true)
+    print("Testing OR - one true (x > y || z == x):\n");
+    if (x > y || z == x) {
+        print("✓ PASS: At least one condition is true\n");
+    } else {
+        print("✗ FAIL: This should not print\n");
+    }
+    
+    // Test logical NOT
+    print("Testing NOT - !(x > y):\n");
+    if (!(x > y)) {
+        print("✓ PASS: NOT works correctly\n");
+    } else {
+        print("✗ FAIL: This should not print\n");
+    }
+    
+    print("\n");
+    
+    // ============= NESTED IF =============
+    print("4. NESTED IF TESTS:\n");
+    let outer_val: i32 = 15;
+    let inner_val: i32 = 8;
+    
+    print("Testing nested if statements:\n");
+    if (outer_val > 10) {
+        print("Outer condition passed\n");
+        if (inner_val > 5) {
+            print("✓ PASS: Inner condition also passed\n");
+        } else {
+            print("✗ FAIL: This should not print\n");
+        }
+    } else {
+        print("✗ FAIL: This should not print\n");
+    }
+    
+    print("\n=== ALL TESTS COMPLETED ===\n");
+}

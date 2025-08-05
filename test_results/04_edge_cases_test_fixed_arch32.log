@@ -1,0 +1,25 @@
+Semantic Error (line 98): Undefined identifier 's'
+Semantic Error (line 98): Undefined identifier 's'
+Semantic Error (line 99): Undefined identifier 's'
+Semantic Error (line 99): Undefined identifier 's'
+Semantic Error (line 100): Undefined identifier 's'
+Semantic Error (line 100): Undefined identifier 's'
+Semantic analysis failed with 6 errors
+[✓] ÆLang Enhanced Compiler Pipeline Starting...
+[1/7] Loading source code: tests/04_edge_cases_test_fixed.ae
+[2/7] Lexical Analysis (Tokenization)...
+  Generated 531 tokens
+  [0] TOKEN_EXTERN: 'extern'
+  [1] TOKEN_IDENT: 'print'
+  [2] TOKEN_LPAREN: '('
+  [3] TOKEN_IDENT: 'format'
+  [4] TOKEN_COLON: ':'
+[3/7] Syntax Analysis (Parsing)...
+  Generated AST with 2 nodes
+[4/7] Semantic Analysis...
+  Target Architecture: 32-bit
+  String Variables: Enabled
+  Character Operations: Enabled
+DEBUG: Created enhanced semantic context
+[Semantic Analysis] Completed with 6 errors, 0 warnings
+DEBUG: Semantic analysis function returned

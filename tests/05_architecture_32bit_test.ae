@@ -1,0 +1,86 @@
+// Architecture-Specific Test for ÆLang (32-bit compatible)
+extern print(format: str, ...);
+
+func main(): void {
+    print("=== Architecture-Specific Test (32-bit) ===\n");
+    
+    // ============ 32-bit Safe Data Types ============
+    print("=== 32-bit Compatible Types ===\n");
+    
+    let i8_val: i8 = -100;
+    let u8_val: u8 = 200;
+    let i16_val: i16 = -30000;
+    let u16_val: u16 = 60000;
+    let i32_val: i32 = -2000000000;
+    let u32_val: u32 = 4000000000;
+    let f32_val: f32 = 123.456;
+    let char_val: char = 'X';
+    let bool_val: bool = true;
+    
+    print("i8: %d, u8: %u\n", i8_val, u8_val);
+    print("i16: %d, u16: %u\n", i16_val, u16_val);
+    print("i32: %d, u32: %u\n", i32_val, u32_val);
+    print("f32: %.3f\n", f32_val);
+    print("char: %c, bool: %d\n", char_val, bool_val);
+    
+    // ============ Memory Layout Test ============
+    print("\n=== Memory Layout Test ===\n");
+    
+    // Test variable storage and retrieval
+    let array_like_a: i32 = 10;
+    let array_like_b: i32 = 20;
+    let array_like_c: i32 = 30;
+    let array_like_d: i32 = 40;
+    
+    print("Sequential variables: %d, %d, %d, %d\n", 
+          array_like_a, array_like_b, array_like_c, array_like_d);
+    
+    // ============ Arithmetic Stress Test ============
+    print("\n=== Arithmetic Stress Test ===\n");
+    
+    let stress_a: i32 = 1000;
+    let stress_b: i32 = 999;
+    
+    // Multiple operations
+    let result1: i32 = stress_a + stress_b;
+    let result2: i32 = stress_a - stress_b;
+    let result3: i32 = stress_a * 2;
+    let result4: i32 = stress_a / 10;
+    let result5: i32 = stress_a % 7;
+    
+    print("Stress test results:\n");
+    print("  %d + %d = %d\n", stress_a, stress_b, result1);
+    print("  %d - %d = %d\n", stress_a, stress_b, result2);
+    print("  %d * 2 = %d\n", stress_a, result3);
+    print("  %d / 10 = %d\n", stress_a, result4);
+    print("  %d %% 7 = %d\n", stress_a, result5);
+    
+    // ============ Register Usage Test ============
+    print("\n=== Register Usage Test ===\n");
+    
+    // Use many variables to test register allocation
+    let reg1: i32 = 1;
+    let reg2: i32 = 2;
+    let reg3: i32 = 3;
+    let reg4: i32 = 4;
+    let reg5: i32 = 5;
+    let reg6: i32 = 6;
+    let reg7: i32 = 7;
+    let reg8: i32 = 8;
+    
+    let reg_sum: i32 = reg1 + reg2 + reg3 + reg4 + reg5 + reg6 + reg7 + reg8;
+    print("Sum of 8 variables: %d (should be 36)\n", reg_sum);
+    
+    // ============ Function Call Stress Test ============
+    print("\n=== Function Call Stress Test ===\n");
+    
+    // Multiple print calls with different parameters
+    print("Call 1: %d\n", 100);
+    print("Call 2: %d, %d\n", 200, 201);
+    print("Call 3: %d, %d, %d\n", 300, 301, 302);
+    print("Call 4: %s\n", "String parameter");
+    print("Call 5: %c\n", 'C');
+    print("Call 6: %.2f\n", 123.45);
+    
+    print("\n=== Architecture Test Complete ===\n");
+}
