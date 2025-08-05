@@ -1,0 +1,11 @@
+// If-else control flow test
+extern print(format: str, ...);
+
+func main(): void {
+    let x: i32 = 10;
+    if (x > 5) {
+        print("x is greater than 5\n");
+    } else {
+        print("x is not greater than 5\n");
+    }
+}

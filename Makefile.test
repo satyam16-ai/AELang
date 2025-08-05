@@ -1,0 +1,125 @@
+# ÆLang Compiler Test Makefile
+
+.PHONY: test test-basic test-functions test-control-flow test-all clean install-deps
+
+# Default target
+test: test-all
+
+# Install Python dependencies
+install-deps:
+	@echo "Installing test dependencies..."
+	pip install colorama pytest pytest-html pytest-cov
+
+# Run all tests using the custom framework
+test-all:
+	@echo "Running all ÆLang compiler tests..."
+	./test_framework.py
+
+# Run tests by category
+test-basic:
+	@echo "Running basic tests..."
+	./test_framework.py --category basic
+
+test-functions:
+	@echo "Running function tests..."
+	./test_framework.py --category functions
+
+test-control-flow:
+	@echo "Running control flow tests..."
+	./test_framework.py --category control_flow
+
+test-arithmetic:
+	@echo "Running arithmetic tests..."
+	./test_framework.py --category arithmetic
+
+# Run pytest integration
+test-pytest:
+	@echo "Running pytest integration tests..."
+	python -m pytest test_pytest.py -v
+
+# Run tests with coverage
+test-coverage:
+	@echo "Running tests with coverage..."
+	python -m pytest test_pytest.py --cov=test_framework --cov-report=html
+
+# Generate test report
+test-report:
+	@echo "Generating test report..."
+	python -m pytest test_pytest.py --html=test_report.html --self-contained-html
+
+# Validate test files
+validate-tests:
+	@echo "Validating test file structure..."
+	@find tests -name "*.ae" | while read file; do \
+		echo "Checking $$file..."; \
+		if [ ! -f "$${file%.ae}.out" ]; then \
+			echo "  Warning: Missing .out file for $$file"; \
+		fi; \
+	done
+
+# Create a new test template
+new-test:
+	@read -p "Enter test category: " category; \
+	read -p "Enter test name: " name; \
+	mkdir -p tests/$$category; \
+	echo "// Test description" > tests/$$category/$$name.ae; \
+	echo "extern print(format: str, ...);" >> tests/$$category/$$name.ae; \
+	echo "" >> tests/$$category/$$name.ae; \
+	echo "func main(): void {" >> tests/$$category/$$name.ae; \
+	echo "    print(\"Hello from $$name test\\n\");" >> tests/$$category/$$name.ae; \
+	echo "}" >> tests/$$category/$$name.ae; \
+	echo "Hello from $$name test" > tests/$$category/$$name.out; \
+	echo "Created test template at tests/$$category/$$name.ae"
+
+# Clean up test artifacts
+clean:
+	@echo "Cleaning up test artifacts..."
+	rm -rf htmlcov/
+	rm -f test_report.html
+	rm -f .coverage
+	find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+	find . -name "*.pyc" -delete 2>/dev/null || true
+
+# Quick test for development
+quick-test:
+	@echo "Running quick smoke test..."
+	./test_framework.py --category basic
+
+# Continuous integration test
+ci-test:
+	@echo "Running CI tests..."
+	make install-deps
+	make test-all
+	make test-pytest
+
+# Show test statistics
+test-stats:
+	@echo "Test Statistics:"
+	@echo "================"
+	@echo "Total test files: $$(find tests -name "*.ae" | wc -l)"
+	@echo "Basic tests: $$(find tests/basic -name "*.ae" 2>/dev/null | wc -l)"
+	@echo "Function tests: $$(find tests/functions -name "*.ae" 2>/dev/null | wc -l)"
+	@echo "Control flow tests: $$(find tests/control_flow -name "*.ae" 2>/dev/null | wc -l)"
+	@echo "Arithmetic tests: $$(find tests/arithmetic -name "*.ae" 2>/dev/null | wc -l)"
+
+help:
+	@echo "ÆLang Compiler Test Framework"
+	@echo "============================="
+	@echo ""
+	@echo "Available targets:"
+	@echo "  test-all          Run all tests using custom framework"
+	@echo "  test-basic        Run basic tests only"
+	@echo "  test-functions    Run function tests only"
+	@echo "  test-control-flow Run control flow tests only"
+	@echo "  test-arithmetic   Run arithmetic tests only"
+	@echo "  test-pytest       Run pytest integration tests"
+	@echo "  test-coverage     Run tests with coverage report"
+	@echo "  test-report       Generate HTML test report"
+	@echo "  validate-tests    Check test file structure"
+	@echo "  new-test          Create a new test template"
+	@echo "  quick-test        Run smoke test for development"
+	@echo "  ci-test           Run full CI test suite"
+	@echo "  test-stats        Show test statistics"
+	@echo "  clean             Clean up test artifacts"
+	@echo "  install-deps      Install Python dependencies"
+	@echo "  help              Show this help message"

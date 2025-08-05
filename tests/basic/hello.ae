@@ -1,0 +1,6 @@
+// Basic hello world test
+extern print(format: str, ...);
+
+func main(): void {
+    print("Hello, ÆLang!\n");
+}

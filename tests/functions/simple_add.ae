@@ -1,0 +1,11 @@
+// Function parameter passing test
+extern print(format: str, ...);
+
+func add(a: i32, b: i32): i32 {
+    return a + b;
+}
+
+func main(): void {
+    let result: i32 = add(5, 3);
+    print("5 + 3 = %d\n", result);
+}

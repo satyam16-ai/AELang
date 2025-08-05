@@ -1,0 +1,5 @@
+TOKEN_EXTERN: 'extern'
+TOKEN_IDENT: 'print'
+TOKEN_LPAREN: '('
+TOKEN_IDENT: 'format'
+TOKEN_COLON: ':'
