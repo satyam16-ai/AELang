@@ -1,0 +1,45 @@
+extern print(format: str, ...);
+
+func main(): void {
+    print("🔥 AELang LLVM Backend Demo\n");
+    print("==========================\n");
+    
+    // Integer arithmetic
+    let a: i32 = 15;
+    let b: i32 = 7;
+    let sum: i32 = a + b;
+    let product: i32 = a * b;
+    let difference: i32 = a - b;
+    let quotient: i32 = a / b;
+    
+    print("Integer Operations:\n");
+    print("  %d + %d = %d\n", a, b, sum);
+    print("  %d * %d = %d\n", a, b, product);
+    print("  %d - %d = %d\n", a, b, difference);
+    print("  %d / %d = %d\n", a, b, quotient);
+    
+    // Floating point operations
+    let x: f32 = 3.14;
+    let y: f32 = 2.71;
+    let float_sum: f32 = x + y;
+    let float_product: f32 = x * y;
+    
+    print("\nFloating Point Operations:\n");
+    print("  %.2f + %.2f = %.2f\n", x, y, float_sum);
+    print("  %.2f * %.2f = %.2f\n", x, y, float_product);
+    
+    // Boolean operations
+    let flag1: bool = true;
+    let flag2: bool = false;
+    
+    print("\nBoolean Values:\n");
+    print("  flag1: %t\n", flag1);
+    print("  flag2: %t\n", flag2);
+    
+    // Character operations
+    let letter: char = 'Z';
+    print("\nCharacter Value:\n");
+    print("  letter: %c\n", letter);
+    
+    print("\n✅ LLVM Backend Demo Complete!\n");
+}

@@ -1,0 +1,11 @@
+extern print(format: str, ...);
+
+func main(): void {
+    print("=== Simple LLVM Test ===\n");
+    
+    let x: i32 = 10;
+    let y: i32 = 5;
+    let sum: i32 = x + y;
+    
+    print("x: %d, y: %d, sum: %d\n", x, y, sum);
+}

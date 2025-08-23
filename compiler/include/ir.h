@@ -29,10 +29,18 @@ typedef enum {
     IR_GEQ,         // t1 = t2 >= t3
     
     // Logical operations
-    IR_AND,         // t1 = t2 && t3
-    IR_OR,          // t1 = t2 || t3
+    IR_LOGICAL_AND, // t1 = t2 && t3
+    IR_LOGICAL_OR,  // t1 = t2 || t3
     IR_NOT,         // t1 = !t2
     IR_NEG,         // t1 = -t2
+    
+    // Bitwise operations
+    IR_BITWISE_AND, // t1 = t2 & t3
+    IR_BITWISE_OR,  // t1 = t2 | t3
+    IR_BITWISE_XOR, // t1 = t2 ^ t3
+    IR_BITWISE_NOT, // t1 = ~t2
+    IR_SHL,         // t1 = t2 << t3
+    IR_SHR,         // t1 = t2 >> t3
     
     // Assignment and movement
     IR_ASSIGN,      // t1 = t2

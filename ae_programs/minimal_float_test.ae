@@ -1,9 +1,0 @@
-// Minimal test - just read and print one float
-extern print(format: str, ...);
-extern read();
-
-func main(): void {
-    print("Enter a float: ");
-    let value: f32 = read();
-    print("You entered: %.6f\n", value);
-}

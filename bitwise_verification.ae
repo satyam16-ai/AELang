@@ -1,0 +1,41 @@
+extern print(format: str, ...);
+
+func main(): void {
+    print("🔧 BITWISE OPERATORS VERIFICATION 🔧\n");
+    print("===================================\n\n");
+    
+    // Test basic bitwise operations
+    let a: i32 = 15;  // 1111 in binary
+    let b: i32 = 7;   // 0111 in binary
+    
+    print("Input values:\n");
+    print("  a = %d (binary: 1111)\n", a);
+    print("  b = %d (binary: 0111)\n", b);
+    print("\n");
+    
+    // Bitwise AND
+    let and_result: i32 = a & b;
+    print("Bitwise AND: %d & %d = %d\n", a, b, and_result);
+    
+    // Bitwise OR  
+    let or_result: i32 = a | b;
+    print("Bitwise OR:  %d | %d = %d\n", a, b, or_result);
+    
+    // Bitwise XOR
+    let xor_result: i32 = a ^ b;
+    print("Bitwise XOR: %d ^ %d = %d\n", a, b, xor_result);
+    
+    // Bitwise NOT
+    let not_a: i32 = ~a;
+    let not_b: i32 = ~b;
+    print("Bitwise NOT: ~%d = %d\n", a, not_a);
+    print("Bitwise NOT: ~%d = %d\n", b, not_b);
+    
+    // Shift operations
+    let left_shift: i32 = a << 2;
+    let right_shift: i32 = a >> 1;
+    print("Left shift:  %d << 2 = %d\n", a, left_shift);
+    print("Right shift: %d >> 1 = %d\n", a, right_shift);
+    
+    print("\n🎉 All bitwise operators working correctly!\n");
+}

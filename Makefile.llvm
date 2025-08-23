@@ -1,0 +1,141 @@
+# Makefile for AELang Compiler with LLVM Backend
+# Supports both LLVM and legacy backends
+
+CC = gcc
+CFLAGS = -Wall -Wextra -std=c11 -g -Icompiler/include -I.
+LDFLAGS = 
+
+# LLVM Configuration
+LLVM_CONFIG = llvm-config
+LLVM_CFLAGS = $(shell $(LLVM_CONFIG) --cflags 2>/dev/null)
+LLVM_LDFLAGS = $(shell $(LLVM_CONFIG) --ldflags 2>/dev/null)
+LLVM_LIBS = $(shell $(LLVM_CONFIG) --libs core analysis codegen mc target transformutils scalaropts ipo vectorize instcombine object support x86 arm aarch64 webassembly riscv 2>/dev/null)
+LLVM_SYSLIBS = $(shell $(LLVM_CONFIG) --system-libs 2>/dev/null)
+
+# Check if LLVM is available
+LLVM_AVAILABLE = $(shell $(LLVM_CONFIG) --version 2>/dev/null)
+
+# Source files
+SRCDIR = compiler/src
+SOURCES = $(SRCDIR)/main.c \
+          $(SRCDIR)/lexer.c \
+          $(SRCDIR)/parser.c \
+          $(SRCDIR)/semantic.c \
+          $(SRCDIR)/ir.c \
+          $(SRCDIR)/optimizer.c \
+          $(SRCDIR)/ir_codegen.c
+
+# LLVM backend sources (only if LLVM is available)
+ifdef LLVM_AVAILABLE
+    SOURCES += $(SRCDIR)/llvm_backend.c $(SRCDIR)/llvm_integration.c
+    CFLAGS += $(LLVM_CFLAGS) -DHAVE_LLVM
+    LDFLAGS += $(LLVM_LDFLAGS)
+    LIBS = $(LLVM_LIBS) $(LLVM_SYSLIBS)
+    BACKEND_TYPE = LLVM
+else
+    CFLAGS += -DLEGACY_ONLY
+    LIBS = -lm
+    BACKEND_TYPE = Legacy
+endif
+
+OBJECTS = $(SOURCES:.c=.o)
+TARGET = aelang
+RUNTIME_LIB = std_libs/aelang_unified_io.c
+
+.PHONY: all clean install test help check-llvm
+
+all: check-llvm $(TARGET)
+	@echo "✅ AELang Compiler built successfully with $(BACKEND_TYPE) backend!"
+	@echo "📊 Backend: $(BACKEND_TYPE)"
+ifdef LLVM_AVAILABLE
+	@echo "🔥 LLVM Version: $(LLVM_AVAILABLE)"
+endif
+
+check-llvm:
+ifdef LLVM_AVAILABLE
+	@echo "🔥 Building with LLVM backend (version $(LLVM_AVAILABLE))"
+else
+	@echo "⚠️  LLVM not found - building with legacy backend only"
+	@echo "💡 To enable LLVM backend:"
+	@echo "   - Ubuntu/Debian: sudo apt install llvm-dev libllvm-dev"
+	@echo "   - Fedora/RHEL: sudo dnf install llvm-devel"
+	@echo "   - Arch: sudo pacman -S llvm"
+	@echo "   - macOS: brew install llvm"
+endif
+
+$(TARGET): $(OBJECTS)
+	@echo "🔗 Linking $(TARGET)..."
+	$(CC) $(OBJECTS) -o $(TARGET) $(LDFLAGS) $(LIBS)
+
+%.o: %.c
+	@echo "🔨 Compiling $<..."
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	@echo "🧹 Cleaning build files..."
+	rm -f $(OBJECTS) $(TARGET)
+	rm -f *.o *.asm *.ll *.bc *.s
+	rm -f test_*
+
+install: $(TARGET)
+	@echo "📦 Installing AELang compiler..."
+	mkdir -p /usr/local/bin /usr/local/lib/aelang
+	cp $(TARGET) /usr/local/bin/
+	cp $(RUNTIME_LIB) /usr/local/lib/aelang/
+	@echo "✅ Installation complete!"
+	@echo "   Compiler: /usr/local/bin/$(TARGET)"
+	@echo "   Runtime: /usr/local/lib/aelang/"
+
+test: $(TARGET)
+	@echo "🧪 Running basic compiler test..."
+	@echo 'func main(): void { print("Hello, LLVM!\\n"); }' > test_hello.ae
+ifdef LLVM_AVAILABLE
+	./$(TARGET) test_hello.ae --arch32 -O1
+	@if [ -f test_hello ]; then \
+		echo "✅ Test executable created successfully!"; \
+		echo "🚀 Running test..."; \
+		./test_hello; \
+	else \
+		echo "❌ Test failed - no executable created"; \
+	fi
+else
+	./$(TARGET) test_hello.ae --arch32 --legacy-backend -o test_hello.asm
+	@if [ -f test_hello.asm ]; then \
+		echo "✅ Test assembly created successfully!"; \
+	else \
+		echo "❌ Test failed - no assembly created"; \
+	fi
+endif
+	@rm -f test_hello.ae
+
+help:
+	@echo "🔥 AELang Compiler Build System"
+	@echo ""
+	@echo "📋 Available targets:"
+	@echo "  all       - Build the compiler (default)"
+	@echo "  clean     - Remove build files"
+	@echo "  install   - Install to system (/usr/local/bin)"
+	@echo "  test      - Run basic compiler test"
+	@echo "  help      - Show this help"
+	@echo ""
+	@echo "🎯 Build Configuration:"
+ifdef LLVM_AVAILABLE
+	@echo "  Backend: LLVM (version $(LLVM_AVAILABLE))"
+	@echo "  Features: Full cross-compilation, optimizations, multiple output formats"
+else
+	@echo "  Backend: Legacy (ASM only)"
+	@echo "  Features: Basic compilation to assembly"
+	@echo "  Note: Install LLVM development libraries for full functionality"
+endif
+	@echo ""
+	@echo "💡 Examples:"
+	@echo "  make              # Build compiler"
+	@echo "  make test         # Test the build"
+	@echo "  make install      # System-wide install"
+	@echo "  make clean        # Clean build files"
+
+# Dependency tracking
+-include $(OBJECTS:.o=.d)
+
+%.d: %.c
+	@$(CC) $(CFLAGS) -MM $< | sed 's|$*\.o[ :]*|$*.o $@ : |g' > $@

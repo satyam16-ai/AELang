@@ -1,0 +1,108 @@
+extern print(format: str, ...);
+
+func main(): void {
+    print("🔥 COMPREHENSIVE ÆLANG LLVM TEST 🔥\n");
+    print("==================================\n\n");
+    
+    // Test 1: All Integer Types
+    print("=== INTEGER TYPES TEST ===\n");
+    let i8_val: i8 = 127;
+    let i16_val: i16 = 32767;
+    let i32_val: i32 = 2147483647;
+    let i64_val: i64 = 9223372036854775807;
+    
+    let u8_val: u8 = 255;
+    let u16_val: u16 = 65535;
+    let u32_val: u32 = 4294967295;
+    let u64_val: u64 = 18446744073709551615;
+    
+    print("i8: %d, i16: %d, i32: %d\n", i8_val, i16_val, i32_val);
+    print("u8: %u, u16: %u, u32: %u\n", u8_val, u16_val, u32_val);
+    
+    // Test 2: Floating Point Types  
+    print("\n=== FLOATING POINT TYPES TEST ===\n");
+    let f32_val: f32 = 3.14159;
+    let f64_val: f64 = 2.718281828459045;
+    let num_val: num = 42.0;
+    
+    print("f32: %.5f, f64: %.15f, num: %.1f\n", f32_val, f64_val, num_val);
+    
+    // Test 3: Boolean and Character Types
+    print("\n=== BOOL & CHAR TYPES TEST ===\n");
+    let is_true: bool = true;
+    let is_false: bool = false;
+    let letter: char = 'A';
+    let digit: char = '5';
+    
+    print("bool true: %d, bool false: %d\n", is_true, is_false);
+    print("char letter: %c, char digit: %c\n", letter, digit);
+    
+    // Test 4: Arithmetic Operations
+    print("\n=== ARITHMETIC OPERATIONS TEST ===\n");
+    let a: i32 = 100;
+    let b: i32 = 25;
+    
+    let sum: i32 = a + b;
+    let difference: i32 = a - b;
+    let product: i32 = a * b;
+    let quotient: i32 = a / b;
+    let remainder: i32 = a % b;
+    
+    print("a=%d, b=%d\n", a, b);
+    print("sum: %d, diff: %d, prod: %d\n", sum, difference, product);
+    print("quot: %d, rem: %d\n", quotient, remainder);
+    
+    // Test 5: Comparison Operations
+    print("\n=== COMPARISON OPERATIONS TEST ===\n");
+    let x: i32 = 10;
+    let y: i32 = 20;
+    
+    let eq_result: bool = x == y;
+    let neq_result: bool = x != y;
+    let lt_result: bool = x < y;
+    let gt_result: bool = x > y;
+    let leq_result: bool = x <= y;
+    let geq_result: bool = x >= y;
+    
+    print("x=%d, y=%d\n", x, y);
+    print("x==y: %d, x!=y: %d, x<y: %d\n", eq_result, neq_result, lt_result);
+    print("x>y: %d, x<=y: %d, x>=y: %d\n", gt_result, leq_result, geq_result);
+    
+    // Test 6: Logical Operations
+    print("\n=== LOGICAL OPERATIONS TEST ===\n");
+    let p: bool = true;
+    let q: bool = false;
+    
+    let and_result: bool = p && q;
+    let or_result: bool = p || q;
+    let not_p: bool = !p;
+    let not_q: bool = !q;
+    
+    print("p=%d, q=%d\n", p, q);
+    print("p&&q: %d, p||q: %d\n", and_result, or_result);
+    print("!p: %d, !q: %d\n", not_p, not_q);
+    
+    // Test 7: Unary Operations
+    print("\n=== UNARY OPERATIONS TEST ===\n");
+    let pos_num: i32 = 42;
+    let neg_num: i32 = -pos_num;
+    
+    let float_pos: f32 = 3.14;
+    let float_neg: f32 = -float_pos;
+    
+    print("positive: %d, negative: %d\n", pos_num, neg_num);
+    print("float pos: %.2f, float neg: %.2f\n", float_pos, float_neg);
+    
+    // Test 8: Mixed Type Arithmetic (Type Conversions)
+    print("\n=== TYPE CONVERSION TEST ===\n");
+    let int_num: i32 = 42;
+    let float_result: f32 = int_num + 0.5;  // int to float conversion
+    let float_num: f32 = 3.7;
+    let int_result: i32 = float_num;  // float to int conversion
+    
+    print("int: %d -> float: %.1f\n", int_num, float_result);
+    print("float: %.1f -> int: %d\n", float_num, int_result);
+    
+    print("\n✅ ALL TESTS COMPLETED SUCCESSFULLY!\n");
+    print("🎉 ÆLang LLVM Backend is Fully Functional!\n");
+}

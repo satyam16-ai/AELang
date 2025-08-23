@@ -1,5 +1,4 @@
 // lexer.c - Fixed version
-#define _GNU_SOURCE
 #include <string.h>
 
 #include "lexer.h"
@@ -27,6 +26,8 @@ static void add_token(TokenList *list, Token token) {
 }
 
 static int match_keyword(const char *word) {
+    if (!word) return -1;  // Safety check for NULL word
+    
     struct { const char *word; TokenType type; } keywords[] = {
         {"let", TOKEN_LET}, {"const", TOKEN_CONST}, {"func", TOKEN_FUNC},
         {"extern", TOKEN_EXTERN}, {"return", TOKEN_RETURN},
@@ -74,6 +75,10 @@ TokenList *lex(const char *source) {
         if (isalpha(*source) || *source == '_' || *source == '@') {
             while (isalnum(*source) || *source == '_' || *source == '@') source++;
             char *word = strndup(token_start, source - token_start);
+            if (!word) {
+                fprintf(stderr, "Error: Memory allocation failed in lexer\n");
+                exit(1);
+            }
             int kw = match_keyword(word);
             add_token(list, make_token(kw != -1 ? kw : TOKEN_IDENT, word, line));
             free(word);
@@ -178,6 +183,7 @@ TokenList *lex(const char *source) {
                 else { add_token(list, make_token(TOKEN_OR, "|", line)); source++; }
                 break;
             case '^': add_token(list, make_token(TOKEN_XOR, "^", line)); source++; break;
+            case '~': add_token(list, make_token(TOKEN_BITWISE_NOT, "~", line)); source++; break;
             default: source++; break;
         }
     }
@@ -212,7 +218,7 @@ const char *token_type_to_str(TokenType type) {
         CASE(TOKEN_EQUAL); CASE(TOKEN_LBRACKET); CASE(TOKEN_RBRACKET);
         CASE(TOKEN_PLUS); CASE(TOKEN_MINUS); CASE(TOKEN_MUL); CASE(TOKEN_DIV); CASE(TOKEN_MOD);
         CASE(TOKEN_AND); CASE(TOKEN_OR); CASE(TOKEN_XOR); CASE(TOKEN_SHL); CASE(TOKEN_SHR);
-        CASE(TOKEN_LOGICAL_AND); CASE(TOKEN_LOGICAL_OR); CASE(TOKEN_LOGICAL_NOT);
+        CASE(TOKEN_LOGICAL_AND); CASE(TOKEN_LOGICAL_OR); CASE(TOKEN_LOGICAL_NOT); CASE(TOKEN_BITWISE_NOT);
         CASE(TOKEN_EQ); CASE(TOKEN_NEQ); CASE(TOKEN_LT); CASE(TOKEN_GT); CASE(TOKEN_LEQ); CASE(TOKEN_GEQ);
         CASE(TOKEN_IDENT); CASE(TOKEN_INT); CASE(TOKEN_STRING); CASE(TOKEN_BOOL); CASE(TOKEN_CHAR); CASE(TOKEN_FLOAT);
         CASE(TOKEN_TYPE_I8); CASE(TOKEN_TYPE_I16); CASE(TOKEN_TYPE_I32); CASE(TOKEN_TYPE_I64);

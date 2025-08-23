@@ -1,0 +1,16 @@
+extern print(format: str, ...);
+
+func main(): void {
+    print("🔧 SIMPLE BITWISE TEST 🔧\n");
+    
+    let a: i32 = 15;
+    let b: i32 = 7;
+    
+    print("a = %d, b = %d\n", a, b);
+    
+    let c: i32 = a + b;
+    print("a + b = %d\n", c);
+    
+    let d: i32 = a & b;
+    print("a & b = %d\n", d);
+}

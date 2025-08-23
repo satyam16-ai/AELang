@@ -1,5 +1,4 @@
 // optimizer.c - Optimization Passes Implementation for ÆLang
-#define _GNU_SOURCE  // For strdup
 #include "optimizer.h"
 #include <stdio.h>
 #include <stdlib.h>

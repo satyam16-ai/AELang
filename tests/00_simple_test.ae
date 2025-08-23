@@ -1,9 +1,0 @@
-extern print(format: str, ...);
-
-func main(): void {
-    print("Hello from ÆLang!\n");
-    let x: i32 = 42;
-    let y: i32 = 7;
-    let sum: i32 = x + y;
-    print("Sum: %d + %d = %d\n", x, y, sum);
-}

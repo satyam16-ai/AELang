@@ -1,5 +1,4 @@
 // parser.c (Expanded Parser for ÆLang)
-#define _GNU_SOURCE
 #include <string.h>
 
 #include "parser.h"
@@ -264,9 +263,12 @@ static ASTNode *parse_primary_expr() {
 
 // Forward declarations for precedence levels
 static ASTNode *parse_logical_or_expr();
-static ASTNode *parse_logical_xor_expr();
 static ASTNode *parse_logical_and_expr();
+static ASTNode *parse_bitwise_or_expr();
+static ASTNode *parse_bitwise_xor_expr();
+static ASTNode *parse_bitwise_and_expr();
 static ASTNode *parse_comparison_expr();
+static ASTNode *parse_shift_expr();
 static ASTNode *parse_arithmetic_expr();
 
 static ASTNode *parse_binary_expr() {
@@ -275,12 +277,12 @@ static ASTNode *parse_binary_expr() {
 
 // Precedence level 1: Logical OR (lowest precedence)
 static ASTNode *parse_logical_or_expr() {
-    ASTNode *left = parse_logical_xor_expr();
+    ASTNode *left = parse_logical_and_expr();
     if (!left) return NULL;
 
     while (peek().type == TOKEN_LOGICAL_OR) {
         Token op = advance();
-        ASTNode *right = parse_logical_xor_expr();
+        ASTNode *right = parse_logical_and_expr();
         if (!right) {
             free_ast_node(left);
             return NULL;
@@ -301,42 +303,14 @@ static ASTNode *parse_logical_or_expr() {
     return left;
 }
 
-// Precedence level 2: Logical XOR
-static ASTNode *parse_logical_xor_expr() {
-    ASTNode *left = parse_logical_and_expr();
-    if (!left) return NULL;
-
-    while (peek().type == TOKEN_XOR) {
-        Token op = advance();
-        ASTNode *right = parse_logical_and_expr();
-        if (!right) {
-            free_ast_node(left);
-            return NULL;
-        }
-
-        ASTNode *bin = make_node(AST_BIN_OP, op.line);
-        if (!bin) {
-            free_ast_node(left);
-            free_ast_node(right);
-            return NULL;
-        }
-        
-        strcpy(bin->as.bin_op.op, "^^");
-        bin->as.bin_op.left = left;
-        bin->as.bin_op.right = right;
-        left = bin;
-    }
-    return left;
-}
-
-// Precedence level 3: Logical AND
+// Precedence level 2: Logical AND
 static ASTNode *parse_logical_and_expr() {
-    ASTNode *left = parse_comparison_expr();
+    ASTNode *left = parse_bitwise_or_expr();
     if (!left) return NULL;
 
     while (peek().type == TOKEN_LOGICAL_AND) {
         Token op = advance();
-        ASTNode *right = parse_comparison_expr();
+        ASTNode *right = parse_bitwise_or_expr();
         if (!right) {
             free_ast_node(left);
             return NULL;
@@ -357,16 +331,100 @@ static ASTNode *parse_logical_and_expr() {
     return left;
 }
 
-// Precedence level 4: Comparison operators
+// Precedence level 3: Bitwise OR
+static ASTNode *parse_bitwise_or_expr() {
+    ASTNode *left = parse_bitwise_xor_expr();
+    if (!left) return NULL;
+
+    while (peek().type == TOKEN_OR) {
+        Token op = advance();
+        ASTNode *right = parse_bitwise_xor_expr();
+        if (!right) {
+            free_ast_node(left);
+            return NULL;
+        }
+
+        ASTNode *bin = make_node(AST_BIN_OP, op.line);
+        if (!bin) {
+            free_ast_node(left);
+            free_ast_node(right);
+            return NULL;
+        }
+        
+        strcpy(bin->as.bin_op.op, "|");
+        bin->as.bin_op.left = left;
+        bin->as.bin_op.right = right;
+        left = bin;
+    }
+    return left;
+}
+
+// Precedence level 4: Bitwise XOR
+static ASTNode *parse_bitwise_xor_expr() {
+    ASTNode *left = parse_bitwise_and_expr();
+    if (!left) return NULL;
+
+    while (peek().type == TOKEN_XOR) {
+        Token op = advance();
+        ASTNode *right = parse_bitwise_and_expr();
+        if (!right) {
+            free_ast_node(left);
+            return NULL;
+        }
+
+        ASTNode *bin = make_node(AST_BIN_OP, op.line);
+        if (!bin) {
+            free_ast_node(left);
+            free_ast_node(right);
+            return NULL;
+        }
+        
+        strcpy(bin->as.bin_op.op, "^");
+        bin->as.bin_op.left = left;
+        bin->as.bin_op.right = right;
+        left = bin;
+    }
+    return left;
+}
+
+// Precedence level 5: Bitwise AND
+static ASTNode *parse_bitwise_and_expr() {
+    ASTNode *left = parse_comparison_expr();
+    if (!left) return NULL;
+
+    while (peek().type == TOKEN_AND) {
+        Token op = advance();
+        ASTNode *right = parse_comparison_expr();
+        if (!right) {
+            free_ast_node(left);
+            return NULL;
+        }
+
+        ASTNode *bin = make_node(AST_BIN_OP, op.line);
+        if (!bin) {
+            free_ast_node(left);
+            free_ast_node(right);
+            return NULL;
+        }
+        
+        strcpy(bin->as.bin_op.op, "&");
+        bin->as.bin_op.left = left;
+        bin->as.bin_op.right = right;
+        left = bin;
+    }
+    return left;
+}
+
+// Precedence level 6: Comparison operators
 static ASTNode *parse_comparison_expr() {
-    ASTNode *left = parse_arithmetic_expr();
+    ASTNode *left = parse_shift_expr();
     if (!left) return NULL;
 
     while (peek().type == TOKEN_EQ || peek().type == TOKEN_NEQ ||
            peek().type == TOKEN_LT || peek().type == TOKEN_GT ||
            peek().type == TOKEN_LEQ || peek().type == TOKEN_GEQ) {
         Token op = advance();
-        ASTNode *right = parse_arithmetic_expr();
+        ASTNode *right = parse_shift_expr();
         if (!right) {
             free_ast_node(left);
             return NULL;
@@ -386,6 +444,34 @@ static ASTNode *parse_comparison_expr() {
             strncpy(bin->as.bin_op.op, op.text, 2);
             bin->as.bin_op.op[2] = '\0';
         }
+        bin->as.bin_op.left = left;
+        bin->as.bin_op.right = right;
+        left = bin;
+    }
+    return left;
+}
+
+// Precedence level 7: Shift operators
+static ASTNode *parse_shift_expr() {
+    ASTNode *left = parse_arithmetic_expr();
+    if (!left) return NULL;
+
+    while (peek().type == TOKEN_SHL || peek().type == TOKEN_SHR) {
+        Token op = advance();
+        ASTNode *right = parse_arithmetic_expr();
+        if (!right) {
+            free_ast_node(left);
+            return NULL;
+        }
+
+        ASTNode *bin = make_node(AST_BIN_OP, op.line);
+        if (!bin) {
+            free_ast_node(left);
+            free_ast_node(right);
+            return NULL;
+        }
+        
+        strcpy(bin->as.bin_op.op, op.text);
         bin->as.bin_op.left = left;
         bin->as.bin_op.right = right;
         left = bin;
@@ -451,7 +537,7 @@ static ASTNode *parse_arithmetic_expr() {
     return left;
 }
 
-// Precedence level 6: Unary operators (higher precedence than binary)
+// Precedence level 10: Unary operators (highest precedence)
 static ASTNode *parse_unary_expr() {
     Token tok = peek();
     
@@ -469,6 +555,24 @@ static ASTNode *parse_unary_expr() {
             return NULL;
         }
         unary->as.unary_op.op = '!';
+        unary->as.unary_op.expr = operand;
+        return unary;
+    }
+    
+    // Handle bitwise NOT operator
+    if (tok.type == TOKEN_BITWISE_NOT) {
+        advance(); // consume '~'
+        ASTNode *operand = parse_unary_expr();
+        if (!operand) {
+            fprintf(stderr, "Error: Expected expression after '~'\n");
+            return NULL;
+        }
+        ASTNode *unary = make_node(AST_UNARY_OP, tok.line);
+        if (!unary) {
+            free_ast_node(operand);
+            return NULL;
+        }
+        unary->as.unary_op.op = '~';
         unary->as.unary_op.expr = operand;
         return unary;
     }

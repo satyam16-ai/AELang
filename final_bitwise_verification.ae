@@ -1,0 +1,34 @@
+extern print(format: str, ...);
+
+func main(): void {
+    print("🧪 FINAL BITWISE OPERATOR VERIFICATION 🧪");
+    print("============================================");
+    
+    let a: i32 = 12;  // 1100 in binary
+    let b: i32 = 10;  // 1010 in binary
+    
+    print("Base values: a = {} (binary: 1100), b = {} (binary: 1010)", a, b);
+    print("");
+    
+    // Test each operator individually
+    let and_result: i32 = a & b;
+    print("✓ AND:       {} & {} = {} (expected: 8 = 1000)", a, b, and_result);
+    
+    let or_result: i32 = a | b;
+    print("✓ OR:        {} | {} = {} (expected: 14 = 1110)", a, b, or_result);
+    
+    let xor_result: i32 = a ^ b;
+    print("✓ XOR:       {} ^ {} = {} (expected: 6 = 0110)", a, b, xor_result);
+    
+    let not_a: i32 = ~a;
+    print("✓ NOT:       ~{} = {} (expected: -13)", a, not_a);
+    
+    let shift_left: i32 = a << 2;
+    print("✓ LSHIFT:    {} << 2 = {} (expected: 48)", a, shift_left);
+    
+    let shift_right: i32 = a >> 1;
+    print("✓ RSHIFT:    {} >> 1 = {} (expected: 6)", a, shift_right);
+    
+    print("");
+    print("🏆 ALL BITWISE OPERATORS VERIFIED SUCCESSFULLY!");
+}

@@ -1,5 +1,4 @@
 // semantic.c - Semantic Analysis Implementation for ÆLang
-#define _GNU_SOURCE  // For strdup
 #include "semantic.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -217,12 +216,16 @@ Symbol *lookup_symbol(SemanticContext *ctx, const char *name) {
 
 bool define_symbol(SemanticContext *ctx, const char *name, SymbolType sym_type, 
                    SemanticType data_type, int line) {
+    if (!ctx || !name) {
+        return false;
+    }
+    
     // Check if symbol already exists in current scope
     unsigned int index = hash(name);
     Symbol *existing = ctx->current_scope->symbols[index];
     
     while (existing) {
-        if (strcmp(existing->name, name) == 0) {
+        if (existing->name && strcmp(existing->name, name) == 0) {
             semantic_error(ctx, line, "Symbol '%s' already defined in current scope (line %d)", 
                           name, existing->line_declared);
             return false;
@@ -232,7 +235,14 @@ bool define_symbol(SemanticContext *ctx, const char *name, SymbolType sym_type,
     
     // Create new symbol
     Symbol *symbol = calloc(1, sizeof(Symbol));
+    if (!symbol) {
+        return false;
+    }
     symbol->name = strdup(name);
+    if (!symbol->name) {
+        free(symbol);
+        return false;
+    }
     symbol->symbol_type = sym_type;
     symbol->data_type = data_type;
     symbol->line_declared = line;
@@ -526,6 +536,20 @@ static SemanticType analyze_expression(ASTNode *node, SemanticContext *ctx) {
                 return TYPE_BOOL;
             }
             
+            // Special handling for bitwise operators
+            if (strcmp(node->as.bin_op.op, "&") == 0 || strcmp(node->as.bin_op.op, "|") == 0 || 
+                strcmp(node->as.bin_op.op, "^") == 0 || strcmp(node->as.bin_op.op, "<<") == 0 || 
+                strcmp(node->as.bin_op.op, ">>") == 0) {
+                // Bitwise operators require integer operands
+                if (!is_integer_type(left_type) || !is_integer_type(right_type)) {
+                    semantic_error(ctx, node->line, 
+                                 "Bitwise operator '%s' requires integer operands, got %d and %d", 
+                                 node->as.bin_op.op, left_type, right_type);
+                    return TYPE_ERROR;
+                }
+                return left_type; // Result has the same type as left operand
+            }
+            
             if (!types_compatible(left_type, right_type)) {
                 semantic_error(ctx, node->line, "Type mismatch in binary operation '%s': %d vs %d", 
                              node->as.bin_op.op, left_type, right_type);
@@ -551,6 +575,17 @@ static SemanticType analyze_expression(ASTNode *node, SemanticContext *ctx) {
                     return TYPE_ERROR;
                 }
                 return TYPE_BOOL;
+            }
+            
+            // Handle bitwise NOT operator
+            if (node->as.unary_op.op == '~') {
+                if (!is_integer_type(operand_type)) {
+                    semantic_error(ctx, node->line, 
+                                 "Bitwise NOT operator '~' requires integer operand, got %d", 
+                                 operand_type);
+                    return TYPE_ERROR;
+                }
+                return operand_type;
             }
             
             // Handle unary minus operator

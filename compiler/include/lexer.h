@@ -50,6 +50,7 @@ typedef enum {
     TOKEN_LOGICAL_AND,  // &&
     TOKEN_LOGICAL_OR,   // ||
     TOKEN_LOGICAL_NOT,  // !
+    TOKEN_BITWISE_NOT,  // ~
 
     // Literals
     TOKEN_FLOAT,

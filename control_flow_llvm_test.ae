@@ -1,0 +1,133 @@
+extern print(format: str, ...);
+
+func add(a: i32, b: i32): i32 {
+    return a + b;
+}
+
+func multiply(x: f32, y: f32): f32 {
+    return x * y;
+}
+
+func is_even(n: i32): bool {
+    let remainder: i32 = n % 2;
+    return remainder == 0;
+}
+
+func factorial(n: i32): i32 {
+    if (n <= 1) {
+        return 1;
+    } else {
+        let prev: i32 = factorial(n - 1);
+        return n * prev;
+    }
+}
+
+func main(): void {
+    print("🚀 CONTROL FLOW & FUNCTIONS TEST 🚀\n");
+    print("===================================\n\n");
+    
+    // Test 1: Function Calls
+    print("=== FUNCTION CALLS TEST ===\n");
+    let num1: i32 = 15;
+    let num2: i32 = 25;
+    let sum_result: i32 = add(num1, num2);
+    
+    let float1: f32 = 3.5;
+    let float2: f32 = 2.0;
+    let mul_result: f32 = multiply(float1, float2);
+    
+    print("add(%d, %d) = %d\n", num1, num2, sum_result);
+    print("multiply(%.1f, %.1f) = %.1f\n", float1, float2, mul_result);
+    
+    // Test 2: Boolean Function
+    print("\n=== BOOLEAN FUNCTION TEST ===\n");
+    let test_num: i32 = 42;
+    let even_result: bool = is_even(test_num);
+    print("is_even(%d) = %s\n", test_num, even_result ? "true" : "false");
+    
+    let odd_num: i32 = 17;
+    let odd_result: bool = is_even(odd_num);
+    print("is_even(%d) = %s\n", odd_num, odd_result ? "true" : "false");
+    
+    // Test 3: Conditional Statements
+    print("\n=== CONDITIONAL STATEMENTS TEST ===\n");
+    let score: i32 = 85;
+    
+    if (score >= 90) {
+        print("Grade: A (Excellent!)\n");
+    } else if (score >= 80) {
+        print("Grade: B (Good!)\n");
+    } else if (score >= 70) {
+        print("Grade: C (Satisfactory)\n");
+    } else {
+        print("Grade: F (Needs improvement)\n");
+    }
+    
+    // Test 4: Loop Constructs
+    print("\n=== LOOP CONSTRUCTS TEST ===\n");
+    print("Counting from 1 to 5:\n");
+    
+    let counter: i32 = 1;
+    while (counter <= 5) {
+        print("Count: %d\n", counter);
+        counter = counter + 1;
+    }
+    
+    // Test 5: For Loop
+    print("\nFor loop from 0 to 4:\n");
+    for (let i: i32 = 0; i < 5; i = i + 1) {
+        let square: i32 = i * i;
+        print("i=%d, i²=%d\n", i, square);
+    }
+    
+    // Test 6: Recursive Function
+    print("\n=== RECURSIVE FUNCTION TEST ===\n");
+    let fact_input: i32 = 5;
+    let fact_result: i32 = factorial(fact_input);
+    print("factorial(%d) = %d\n", fact_input, fact_result);
+    
+    // Test 7: Complex Expressions
+    print("\n=== COMPLEX EXPRESSIONS TEST ===\n");
+    let a: i32 = 5;
+    let b: i32 = 3;
+    let c: i32 = 2;
+    
+    let complex1: i32 = a * b + c;
+    let complex2: i32 = a * (b + c);
+    let complex3: bool = (a > b) && (b > c);
+    let complex4: bool = (a < b) || (c < a);
+    
+    print("a=%d, b=%d, c=%d\n", a, b, c);
+    print("a*b+c = %d\n", complex1);
+    print("a*(b+c) = %d\n", complex2);
+    print("(a>b)&&(b>c) = %s\n", complex3 ? "true" : "false");
+    print("(a<b)||(c<a) = %s\n", complex4 ? "true" : "false");
+    
+    // Test 8: Switch Statement (if supported)
+    print("\n=== SWITCH STATEMENT TEST ===\n");
+    let day: i32 = 3;
+    
+    switch (day) {
+        case 1:
+            print("Monday\n");
+            break;
+        case 2:
+            print("Tuesday\n");
+            break;
+        case 3:
+            print("Wednesday\n");
+            break;
+        case 4:
+            print("Thursday\n");
+            break;
+        case 5:
+            print("Friday\n");
+            break;
+        default:
+            print("Weekend\n");
+            break;
+    }
+    
+    print("\n✅ CONTROL FLOW & FUNCTIONS TEST COMPLETED!\n");
+    print("🎯 All advanced features working correctly!\n");
+}

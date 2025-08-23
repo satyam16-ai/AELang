@@ -81,10 +81,9 @@ void print(const char* format, ...) {
                     break;
                 }
                 case 'f': case 'F': case 'e': case 'E': case 'g': case 'G': {
-                    int int_bits = va_arg(args, int);
-                    // Convert int bits back to float
-                    float val = *(float*)&int_bits;
-                    int written = sprintf(output_ptr, temp_fmt, (double)val);
+                    // For variadic functions, floats are promoted to double
+                    double val = va_arg(args, double);
+                    int written = sprintf(output_ptr, temp_fmt, val);
                     output_ptr += written;
                     break;
                 }
@@ -102,14 +101,13 @@ void print(const char* format, ...) {
                         char* result = temp_str;
                         char* pos;
                         
-                        // Process multi-line newlines first (longer pattern)
-                        while ((pos = strstr(result, "\\\\nl")) != NULL) {
+                        // Process single newlines \\n -> \n
+                        while ((pos = strstr(result, "\\n")) != NULL) {
                             *pos = '\n';
-                            *(pos + 1) = '\n';
-                            memmove(pos + 2, pos + 4, strlen(pos + 4) + 1);
+                            memmove(pos + 1, pos + 2, strlen(pos + 2) + 1);
                         }
                         
-                        // Process single newlines
+                        // Process double backslash newlines \\\\n -> \n
                         while ((pos = strstr(result, "\\\\n")) != NULL) {
                             *pos = '\n';
                             memmove(pos + 1, pos + 3, strlen(pos + 3) + 1);
@@ -200,15 +198,10 @@ void print(const char* format, ...) {
                     output_ptr += strlen(temp_fmt);
                     break;
             }
-        } else if (*fmt_ptr == '\\' && *(fmt_ptr + 1) == '\\' && *(fmt_ptr + 2) == 'n' && *(fmt_ptr + 3) == 'l') {
-            // Handle \\nl multi-line newlines first
+        } else if (*fmt_ptr == '\\' && *(fmt_ptr + 1) == 'n') {
+            // Handle \n newlines in format string
             *output_ptr++ = '\n';
-            *output_ptr++ = '\n';
-            fmt_ptr += 4;
-        } else if (*fmt_ptr == '\\' && *(fmt_ptr + 1) == '\\' && *(fmt_ptr + 2) == 'n') {
-            // Handle \\n newlines
-            *output_ptr++ = '\n';
-            fmt_ptr += 3;
+            fmt_ptr += 2;
         } else if (strncmp(fmt_ptr, MULTI_NEWLINE, strlen(MULTI_NEWLINE)) == 0) {
             // Handle multi-line newlines
             *output_ptr++ = '\n';

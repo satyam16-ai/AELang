@@ -1,0 +1,6 @@
+extern print(format: str, ...);
+
+func main(): void {
+    let a: i32 = 42;
+    print("Value: %d\n", a);
+}

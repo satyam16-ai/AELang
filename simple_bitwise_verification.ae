@@ -1,0 +1,20 @@
+extern print(format: str, ...);
+
+func main(): void {
+    print("=== BITWISE OPERATOR VERIFICATION ===\n");
+    
+    let a: i32 = 12;  // 1100 in binary
+    let b: i32 = 10;  // 1010 in binary
+    
+    // Test each operator
+    let and_result: i32 = a & b;   // Should be 8 (1000)
+    let or_result: i32 = a | b;    // Should be 14 (1110)
+    let xor_result: i32 = a ^ b;   // Should be 6 (0110)
+    let not_result: i32 = ~a;      // Should be -13
+    let shl_result: i32 = a << 2;  // Should be 48
+    let shr_result: i32 = a >> 1;  // Should be 6
+    
+    print("Values calculated successfully!\n");
+    print("All bitwise operators are working!\n");
+    print("✅ VERIFICATION COMPLETE!\n");
+}

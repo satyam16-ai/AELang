@@ -1,5 +1,0 @@
-extern print(format: str, ...);
-
-func main(): void {
-    print("Hello World\n");
-}

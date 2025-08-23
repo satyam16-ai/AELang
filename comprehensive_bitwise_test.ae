@@ -1,0 +1,76 @@
+extern print(format: str, ...);
+
+func main(): void {
+    print("🔧 COMPREHENSIVE BITWISE & VARIABLE TEST 🔧\n");
+    print("=============================================\n\n");
+    
+        // Test 1: Variable declarations with let and const
+    print("=== VARIABLE DECLARATION TEST ===
+");
+    let a: i32 = 15;
+    let b: i32 = 7;
+    const c: i32 = 255;
+    
+    print("let a = %d, let b = %d, const c = %d
+", a, b, c);
+    
+    // Test 2: Basic bitwise operations
+    print("\n=== BASIC BITWISE OPERATIONS ===\n");
+    print("a = %d (binary: 1111), b = %d (binary: 0111)\n", a, b);
+    
+    // Bitwise AND
+    let and_result: i32 = a & b;
+    print("a & b = %d & %d = %d (binary: 0111)\n", a, b, and_result);
+    
+    // Bitwise OR
+    let or_result: i32 = a | b;
+    print("a | b = %d | %d = %d (binary: 1111)\n", a, b, or_result);
+    
+    // Bitwise XOR
+    let xor_result: i32 = a ^ b;
+    print("a ^ b = %d ^ %d = %d (binary: 1000)\n", a, b, xor_result);
+    
+    // Test 3: Shift operations
+    print("\n=== SHIFT OPERATIONS ===\n");
+    let shl_result: i32 = a << 2;
+    print("a << 2 = %d << 2 = %d (multiply by 4)\n", a, shl_result);
+    
+    let shr_result: i32 = a >> 1;
+    print("a >> 1 = %d >> 1 = %d (divide by 2)\n", a, shr_result);
+    
+    // Test 4: Bitwise NOT operation
+    print("\n=== BITWISE NOT OPERATION ===\n");
+    let not_result: i32 = ~b;
+    print("~b = ~%d = %d (flip all bits)\n", b, not_result);
+    
+    // Test 5: Complex bitwise expressions
+    print("\n=== COMPLEX BITWISE EXPRESSIONS ===\n");
+    let complex1: i32 = (a & b) | (a ^ b);
+    print("(a & b) | (a ^ b) = (%d & %d) | (%d ^ %d) = %d\n", a, b, a, b, complex1);
+    
+    let complex2: i32 = ~(a & b) & (a | b);
+    print("~(a & b) & (a | b) = ~(%d & %d) & (%d | %d) = %d\n", a, b, a, b, complex2);
+    
+    // Test 6: Mixed operations with different types
+    print("\n=== MIXED TYPE BITWISE OPERATIONS ===\n");
+    let x: u8 = 170;  // 10101010 in binary
+    let y: u8 = 85;   // 01010101 in binary
+    
+    let mixed_and: u8 = x & y;
+    let mixed_or: u8 = x | y;
+    let mixed_xor: u8 = x ^ y;
+    
+    print("u8: x = %d, y = %d\n", x, y);
+    print("x & y = %d, x | y = %d, x ^ y = %d\n", mixed_and, mixed_or, mixed_xor);
+    
+    // Test 7: Power of 2 calculations
+    print("\n=== POWER OF 2 CALCULATIONS ===\n");
+    let power1: i32 = 1 << 0;  // 2^0 = 1
+    let power2: i32 = 1 << 1;  // 2^1 = 2
+    let power3: i32 = 1 << 2;  // 2^2 = 4
+    let power4: i32 = 1 << 3;  // 2^3 = 8
+    
+    print("Powers of 2: %d %d %d %d\n", power1, power2, power3, power4);
+    
+    print("\n✅ ALL BITWISE TESTS COMPLETED!\n");
+}
