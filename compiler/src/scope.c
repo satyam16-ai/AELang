@@ -19,6 +19,7 @@ ScopeManager *create_scope_manager(void) {
     manager->current_scope = global;
     manager->global_scope = global;
     manager->global_var_count = 0;
+    manager->in_global_scope = true;
     
     return manager;
 }
@@ -47,6 +48,11 @@ void enter_scope(ScopeManager *manager, ScopeType type, const char *function_nam
     new_scope->function_name = function_name ? strdup(function_name) : NULL;
     
     manager->current_scope = new_scope;
+    
+    // Update global scope tracking
+    if (type != SCOPE_GLOBAL) {
+        manager->in_global_scope = false;
+    }
 }
 
 // Exit current scope
@@ -55,6 +61,11 @@ void exit_scope(ScopeManager *manager) {
     
     Scope *old_scope = manager->current_scope;
     manager->current_scope = old_scope->parent;
+    
+    // Update global scope tracking
+    if (manager->current_scope == manager->global_scope) {
+        manager->in_global_scope = true;
+    }
     
     // Free variables in this scope
     Variable *var = old_scope->variables;
@@ -135,6 +146,21 @@ Variable *lookup_variable(ScopeManager *manager, const char *name) {
     }
     
     return NULL; // Not found
+}
+
+// Lookup variable in global scope only (for :: operator)
+Variable *lookup_global_variable(ScopeManager *manager, const char *name) {
+    if (!manager || !name || !manager->global_scope) return NULL;
+    
+    Variable *var = manager->global_scope->variables;
+    while (var) {
+        if (strcmp(var->name, name) == 0) {
+            return var;
+        }
+        var = var->next;
+    }
+    
+    return NULL; // Not found in global scope
 }
 
 // Set variable constant value

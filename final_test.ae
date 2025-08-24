@@ -1,0 +1,24 @@
+extern print(format: str, ...);
+
+func main(): void {
+    print("🧮 ÆLang Final Calculator Test 🧮\n");
+    
+    let a: i32 = 15;
+    let b: i32 = 7;
+    
+    print("\n📊 Testing with a = %d, b = %d\n", a, b);
+    
+    // Arithmetic operations
+    print("➕ a + b = %d\n", a + b);
+    print("➖ a - b = %d\n", a - b);
+    print("✖️  a * b = %d\n", a * b);
+    
+    // Bitwise operations  
+    print("🔧 a & b = %d\n", a & b);
+    print("🔧 a | b = %d\n", a | b);
+    print("🔧 a ^ b = %d\n", a ^ b);
+    print("🔧 a << 2 = %d\n", a << 2);
+    print("🔧 a >> 1 = %d\n", a >> 1);
+    
+    print("\n✅ All operations working perfectly!\n");
+}

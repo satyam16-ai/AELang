@@ -1,0 +1,1 @@
+func main(): void {    let a: u8 = 5;    let b: u8 = 3;    let result: u8 = a & b;}

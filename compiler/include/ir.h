@@ -47,6 +47,8 @@ typedef enum {
     IR_LOAD_CONST,  // t1 = constant
     IR_LOAD_VAR,    // t1 = variable
     IR_STORE_VAR,   // variable = t1
+    IR_LOAD_GLOBAL, // t1 = global_variable (for :: access)
+    IR_STORE_GLOBAL, // global_variable = t1
     
     // Type conversions
     IR_INT_TO_FLOAT,  // t1 = (float)t2

@@ -111,6 +111,7 @@ typedef struct ASTNode ASTNode;
 struct ASTNode {
     ASTNodeType type;
     int line;
+    bool is_global_access;  // For :: global access operator
 
     union {
         // Variable/Const Declaration

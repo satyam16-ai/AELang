@@ -42,6 +42,7 @@ typedef struct ScopeManager {
     Scope *global_scope;
     int global_var_count;
     Variable *global_vars[1000];
+    bool in_global_scope;
 } ScopeManager;
 
 // Function prototypes
@@ -51,6 +52,7 @@ void enter_scope(ScopeManager *manager, ScopeType type, const char *function_nam
 void exit_scope(ScopeManager *manager);
 Variable *declare_variable(ScopeManager *manager, const char *name, SemanticType type, bool is_constant);
 Variable *lookup_variable(ScopeManager *manager, const char *name);
+Variable *lookup_global_variable(ScopeManager *manager, const char *name);
 void set_variable_value(Variable *var, int int_val, float float_val, const char *str_val);
 
 #endif // SCOPE_H

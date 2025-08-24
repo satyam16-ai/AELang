@@ -46,6 +46,16 @@ static void init_dynamic_tables() {
     }
 }
 
+// Helper functions for type checking
+static bool is_integer_semantic_type(SemanticType type) {
+    return type == TYPE_I8 || type == TYPE_I16 || type == TYPE_I32 || type == TYPE_I64 ||
+           type == TYPE_U8 || type == TYPE_U16 || type == TYPE_U32 || type == TYPE_U64;
+}
+
+static bool is_float_semantic_type(SemanticType type) {
+    return type == TYPE_F8 || type == TYPE_F16 || type == TYPE_F32 || type == TYPE_F64;
+}
+
 // Expand variable table if needed
 static void expand_variable_table() {
     if (variable_count >= variable_capacity) {
@@ -104,6 +114,70 @@ static LLVMValueRef get_or_create_variable(LLVMBackend* backend, const char* nam
     
     printf("[LLVM Debug] Created variable allocation for '%s' with type %d\n", name, type);
     return alloca;
+}
+
+// Global variable table for managing global variables
+static struct {
+    char *name;
+    LLVMValueRef global;
+    SemanticType type;
+} *global_variable_table = NULL;
+static int global_variable_count = 0;
+static int global_variable_capacity = 0;
+
+static void expand_global_variable_table(void) {
+    if (global_variable_count >= global_variable_capacity) {
+        global_variable_capacity = global_variable_capacity ? global_variable_capacity * 2 : 16;
+        global_variable_table = realloc(global_variable_table, 
+                                       global_variable_capacity * sizeof(*global_variable_table));
+    }
+}
+
+static LLVMValueRef get_or_create_global_variable(LLVMBackend* backend, const char* name, SemanticType type) {
+    // First, try to find existing global variable
+    for (int i = 0; i < global_variable_count; i++) {
+        if (global_variable_table[i].name && strcmp(global_variable_table[i].name, name) == 0) {
+            return global_variable_table[i].global;
+        }
+    }
+    
+    // Create new global variable
+    expand_global_variable_table();
+    
+    LLVMTypeRef llvm_type = semantic_type_to_llvm(backend, type);
+    LLVMValueRef global_var = LLVMAddGlobal(backend->module, llvm_type, name);
+    
+    // Set default initializer based on type (will be updated if explicit value provided)
+    LLVMValueRef initializer;
+    if (is_integer_semantic_type(type)) {
+        initializer = LLVMConstInt(llvm_type, 0, 0);
+    } else if (is_float_semantic_type(type)) {
+        initializer = LLVMConstReal(llvm_type, 0.0);
+    } else {
+        initializer = LLVMConstNull(llvm_type);
+    }
+    LLVMSetInitializer(global_var, initializer);
+    LLVMSetLinkage(global_var, LLVMInternalLinkage);
+    
+    global_variable_table[global_variable_count].name = strdup(name);
+    global_variable_table[global_variable_count].global = global_var;
+    global_variable_table[global_variable_count].type = type;
+    global_variable_count++;
+    
+    printf("[LLVM Debug] Created global variable '%s' with type %d\n", name, type);
+    return global_var;
+}
+
+// New function to set global variable initializer
+static void set_global_variable_initializer(__attribute__((unused)) LLVMBackend* backend, const char* name, LLVMValueRef initial_value) {
+    for (int i = 0; i < global_variable_count; i++) {
+        if (global_variable_table[i].name && strcmp(global_variable_table[i].name, name) == 0) {
+            LLVMSetInitializer(global_variable_table[i].global, initial_value);
+            printf("[LLVM Debug] Set initializer for global variable '%s'\n", name);
+            return;
+        }
+    }
+    printf("[LLVM Error] Could not find global variable '%s' to set initializer\n", name);
 }
 
 // Create LLVM backend
@@ -479,12 +553,24 @@ static void translate_ir_instruction(LLVMBackend* backend, IRInstruction* instr)
     LLVMValueRef result = NULL;
     
     // Debug: Print IR instruction being processed
-    printf("[LLVM Debug] Processing IR instruction: opcode=%d\n", instr->opcode);
+    printf("[LLVM Debug] Processing IR instruction: opcode=%d", instr->opcode);
+    switch (instr->opcode) {
+        case IR_STORE_GLOBAL: printf(" (IR_STORE_GLOBAL)"); break;
+        case IR_LOAD_CONST: printf(" (IR_LOAD_CONST)"); break;
+        case IR_STORE_VAR: printf(" (IR_STORE_VAR)"); break;
+        case IR_LOAD_VAR: printf(" (IR_LOAD_VAR)"); break;
+        case IR_CALL: printf(" (IR_CALL)"); break;
+        default: printf(" (other)"); break;
+    }
+    printf("\n");
     if (instr->dest) {
         printf("[LLVM Debug]   dest: type=%d\n", instr->dest->type);
     }
     if (instr->src1) {
         printf("[LLVM Debug]   src1: type=%d\n", instr->src1->type);
+    }
+    if (instr->src2) {
+        printf("[LLVM Debug]   src2: type=%d\n", instr->src2->type);
     }
     
     switch (instr->opcode) {
@@ -1003,6 +1089,84 @@ static void translate_ir_instruction(LLVMBackend* backend, IRInstruction* instr)
             break;
         }
         
+        case IR_LOAD_GLOBAL: {
+            // Load global variable src1 into dest
+            if (instr->src1 && instr->src1->type == OPERAND_VAR && instr->dest && instr->dest->type == OPERAND_TEMP) {
+                LLVMValueRef global_var = get_or_create_global_variable(backend, instr->src1->value.name, instr->src1->data_type);
+                if (global_var) {
+                    LLVMValueRef loaded_value = LLVMBuildLoad2(backend->builder,
+                                                              semantic_type_to_llvm(backend, instr->src1->data_type),
+                                                              global_var, "global_load");
+                    
+                    // Store loaded value into destination temp
+                    int dest_id = instr->dest->value.temp_id;
+                    store_to_temp_typed(backend, loaded_value, dest_id, instr->src1->data_type);
+                    printf("[LLVM Debug] Loaded global variable '%s' into temp%d\n", instr->src1->value.name, dest_id);
+                }
+            }
+            break;
+        }
+        
+        case IR_STORE_GLOBAL: {
+            // Initialize global variable with constant value during compilation
+            if (instr->src1 && instr->src1->type == OPERAND_VAR && instr->src2) {
+                LLVMValueRef global_var = get_or_create_global_variable(backend, instr->src1->value.name, instr->src1->data_type);
+                
+                // Convert the source operand to a constant value for global initialization
+                LLVMValueRef constant_value = NULL;
+                
+                if (instr->src2->type == OPERAND_CONST_INT || 
+                    instr->src2->type == OPERAND_CONST_FLOAT || 
+                    instr->src2->type == OPERAND_CONST_STR) {
+                    // Handle literal constants
+                    SemanticType src_type = instr->src2->data_type;
+                    LLVMTypeRef llvm_type = semantic_type_to_llvm(backend, src_type);
+                    
+                    switch (instr->src2->type) {
+                        case OPERAND_CONST_INT:
+                            if (src_type == TYPE_BOOL) {
+                                constant_value = LLVMConstInt(llvm_type, instr->src2->value.int_val ? 1 : 0, 0);
+                            } else if (is_integer_semantic_type(src_type)) {
+                                // Determine if signed or unsigned
+                                int is_signed = (src_type == TYPE_I8 || src_type == TYPE_I16 || 
+                                               src_type == TYPE_I32 || src_type == TYPE_I64);
+                                constant_value = LLVMConstInt(llvm_type, instr->src2->value.int_val, is_signed);
+                            }
+                            break;
+                        case OPERAND_CONST_FLOAT:
+                            constant_value = LLVMConstReal(llvm_type, instr->src2->value.float_val);
+                            break;
+                        case OPERAND_CONST_STR:
+                            if (instr->src2->value.str_val) {
+                                constant_value = LLVMConstStringInContext(LLVMGetGlobalContext(), 
+                                                                        instr->src2->value.str_val, 
+                                                                        strlen(instr->src2->value.str_val), 
+                                                                        0);
+                            } else {
+                                constant_value = LLVMConstNull(llvm_type);
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                } else {
+                    // For non-literal values, we might need to handle them differently
+                    // For now, fall back to runtime initialization
+                    LLVMValueRef value = operand_to_llvm_value(backend, instr->src2);
+                    if (global_var && value) {
+                        LLVMBuildStore(backend->builder, value, global_var);
+                        printf("[LLVM Debug] Runtime stored value to global variable '%s'\n", instr->src1->value.name);
+                    }
+                    break;
+                }
+                
+                if (constant_value) {
+                    set_global_variable_initializer(backend, instr->src1->value.name, constant_value);
+                }
+            }
+            break;
+        }
+        
         case IR_INT_TO_FLOAT: {
             LLVMValueRef operand = operand_to_llvm_value(backend, instr->src1);
             
@@ -1328,6 +1492,21 @@ bool llvm_generate_from_ir(LLVMBackend* backend, IRProgram* program) {
     if (!backend || !program) {
         fprintf(stderr, "Invalid parameters for LLVM generation\n");
         return false;
+    }
+    
+    // Process global instructions first (global variable initializations)
+    if (program->global_instructions) {
+        printf("[LLVM Debug] Processing global instructions...\n");
+        
+        // Initialize minimal context for global instruction processing
+        init_dynamic_tables();
+        
+        for (IRInstruction* instr = program->global_instructions; instr; instr = instr->next) {
+            // Only process IR_STORE_GLOBAL instructions at global level
+            if (instr->opcode == IR_STORE_GLOBAL) {
+                translate_ir_instruction(backend, instr);
+            }
+        }
     }
     
     // Generate functions

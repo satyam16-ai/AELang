@@ -1,0 +1,7 @@
+extern print(format: str, ...);
+
+let global test_var: i32 = 42;
+
+func main(): void {
+    print("Test: %d\n", test_var);
+}

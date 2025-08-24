@@ -1,0 +1,9 @@
+fn void test_function() {
+    print("Hello from test function!\n");
+}
+
+fn void main() {
+    print("Main function start\n");
+    test_function();
+    print("Main function end\n");
+}

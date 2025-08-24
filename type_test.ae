@@ -1,0 +1,33 @@
+extern print(format: str, ...);
+
+// Test global variable with correct type
+global version: i32 = 1;
+global name: str = "Test";
+
+func main(): void {
+    print("🔍 Type Checking Test 🔍\n");
+    
+    // Test 1: Correct type assignments
+    let a: i32 = 42;
+    let b: f32 = 3.14;
+    let c: str = "Hello";
+    
+    print("Test 1 - Correct assignments:\n");
+    print("a = %d, b = %f, c = %s\n", a, b, c);
+    
+    // Test 2: Global variable access
+    print("Global version = %d\n", version);
+    print("Global name = %s\n", name);
+    
+    // Test 3: Global access with :: operator
+    let x: i32 = 10;
+    print("Local x = %d\n", x);
+    print("Global version = %d\n", ::version);
+    
+    // Test 4: Type-compatible assignments
+    let small: i8 = 100;
+    let large: i32 = small;  // Widening conversion should work
+    print("Widening: i8 %d -> i32 %d\n", small, large);
+    
+    print("✅ All type-safe operations completed!\n");
+}

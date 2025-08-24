@@ -1,0 +1,23 @@
+extern print(format: str, ...);
+
+func main(): void {
+    print("🔍 Comprehensive Type Error Test 🔍\n");
+    
+    // Test 1: Float to int assignment
+    let a: i32 = 3.14;  // Should be ERROR
+    
+    // Test 2: Int to string assignment  
+    let b: str = 42;    // Should be ERROR
+    
+    // Test 3: String to int assignment
+    let c: i32 = "hello";  // Should be ERROR
+    
+    // Test 4: Boolean to int assignment
+    let d: i32 = true;  // Should be ERROR
+    
+    // Test 5: Large to small narrowing conversion
+    let large_val: i64 = 1000000000000;
+    let small_val: i8 = large_val;  // Should be ERROR
+    
+    print("This should not compile!\n");
+}

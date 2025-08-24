@@ -1,0 +1,29 @@
+extern print(format: str, ...);
+extern read(format: str, ...): i32;
+
+func main(): void {
+    print("🧮 ÆLang Calculator Test 🧮\n");
+    
+    print("Enter first number: ");
+    let a: i32 = read("%d");
+    
+    print("Enter second number: ");
+    let b: i32 = read("%d");
+    
+    print("\n📊 Results:\n");
+    print("a = %d, b = %d\n", a, b);
+    
+    // Arithmetic operations
+    print("a + b = %d\n", a + b);
+    print("a - b = %d\n", a - b);
+    print("a * b = %d\n", a * b);
+    
+    // Bitwise operations
+    print("a & b = %d\n", a & b);
+    print("a | b = %d\n", a | b);
+    print("a ^ b = %d\n", a ^ b);
+    print("a << 2 = %d\n", a << 2);
+    print("a >> 1 = %d\n", a >> 1);
+    
+    print("\n✅ Calculator test completed!\n");
+}

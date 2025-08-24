@@ -87,6 +87,7 @@ typedef struct {
     int error_count;
     int warning_count;
     ASTNode *current_function;
+    bool in_global_scope;           // Track if we're in global scope
 } SemanticContext;
 
 // Annotated AST node (extends original AST)
@@ -96,6 +97,7 @@ typedef struct AnnotatedASTNode {
     Symbol *symbol_ref;
     bool is_lvalue;
     bool is_constant;
+    bool is_global_declaration;     // True if this is a global variable declaration
     struct AnnotatedASTNode **children;
     size_t child_count;
 } AnnotatedASTNode;
@@ -116,6 +118,7 @@ void free_annotated_ast(AnnotatedAST *ast);
 
 // Symbol table operations
 Symbol *lookup_symbol(SemanticContext *ctx, const char *name);
+Symbol *lookup_global_symbol(SemanticContext *ctx, const char *name);
 bool define_symbol(SemanticContext *ctx, const char *name, SymbolType sym_type, 
                    SemanticType data_type, int line);
 void enter_scope(SemanticContext *ctx);

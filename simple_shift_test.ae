@@ -1,0 +1,10 @@
+func main(): void {
+    let val1: u8 = 5;
+    let val2: u8 = 2;
+    
+    print("val1 = %u\n", val1);
+    print("val2 = %u\n", val2);
+    
+    print("left shift: %u << %u = %u\n", val1, val2, val1 << val2);
+    print("right shift: %u >> %u = %u\n", val1, val2, val1 >> val2);
+}

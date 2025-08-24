@@ -209,6 +209,17 @@ static void convert_literal_to_num(ASTNode *literal) {
 static ASTNode *parse_primary_expr() {
     Token tok = peek();
     
+    // Handle global access operator :: followed by identifier
+    if (tok.type == TOKEN_GLOBAL_ACCESS) {
+        advance(); // consume '::'
+        Token ident = expect(TOKEN_IDENT, "identifier after '::'");
+        ASTNode *id = make_node(AST_IDENTIFIER, ident.line);
+        id->as.ident = strdup(ident.text);
+        // Mark this as a global access
+        id->is_global_access = true;
+        return id;
+    }
+    
     // Handle parentheses for expression grouping
     if (tok.type == TOKEN_LPAREN) {
         advance(); // consume '('
@@ -648,47 +659,133 @@ static ASTNode *parse_statement() {
     Token tok = peek();
 
     if (match(TOKEN_LET)) {
-        ASTNode *node = make_node(AST_VAR_DECL, tok.line);
-        if (!node) {
-            fprintf(stderr, "Error: Failed to create AST_VAR_DECL node\n");
-            return NULL;
+        // Check if this is a global let declaration
+        if (match(TOKEN_GLOBAL)) {
+            // Global let variable declaration: let global variable_name: type = value;
+            ASTNode *node = make_node(AST_VAR_DECL, tok.line);
+            if (!node) {
+                fprintf(stderr, "Error: Failed to create AST_VAR_DECL node for global let\n");
+                return NULL;
+            }
+            
+            Token name = expect(TOKEN_IDENT, "identifier");
+            expect(TOKEN_COLON, ":");
+            Token type = expect_type_token("type");
+            expect(TOKEN_EQUAL, "=");
+            ASTNode *value = parse_expression();
+            if (!value) {
+                fprintf(stderr, "Error: Failed to parse expression for global let variable\n");
+                free_ast_node(node);
+                return NULL;
+            }
+            match(TOKEN_SEMICOLON);
+            
+            node->as.var_decl.name = strdup(name.text);
+            node->as.var_decl.type_name = strdup(type.text);
+            node->as.var_decl.value = value;
+            // Note: Global declarations are detected by semantic analysis based on scope
+            
+            // Convert to num type if variable is declared as num
+            if (strcmp(type.text, "num") == 0) {
+                convert_literal_to_num(value);
+            }
+            
+            return node;
+        } else {
+            // Regular local let declaration
+            ASTNode *node = make_node(AST_VAR_DECL, tok.line);
+            if (!node) {
+                fprintf(stderr, "Error: Failed to create AST_VAR_DECL node\n");
+                return NULL;
+            }
+            Token name = expect(TOKEN_IDENT, "identifier");
+            expect(TOKEN_COLON, ":");
+            Token type = expect_type_token("type");
+            expect(TOKEN_EQUAL, "=");
+            ASTNode *value = parse_expression();
+            if (!value) {
+                fprintf(stderr, "Error: Failed to parse expression for variable\n");
+                free_ast_node(node);
+                return NULL;
+            }
+            match(TOKEN_SEMICOLON);
+            node->as.var_decl.name = strdup(name.text);
+            node->as.var_decl.type_name = strdup(type.text);
+            node->as.var_decl.value = value;
+            
+            // Convert to num type if variable is declared as num
+            if (strcmp(type.text, "num") == 0) {
+                convert_literal_to_num(value);
+            }
+            
+            return node;
         }
-        Token name = expect(TOKEN_IDENT, "identifier");
-        expect(TOKEN_COLON, ":");
-        Token type = expect_type_token("type");
-        expect(TOKEN_EQUAL, "=");
-        ASTNode *value = parse_expression();
-        if (!value) {
-            fprintf(stderr, "Error: Failed to parse expression for variable\n");
-            free_ast_node(node);
-            return NULL;
-        }
-        match(TOKEN_SEMICOLON);
-        node->as.var_decl.name = strdup(name.text);
-        node->as.var_decl.type_name = strdup(type.text);
-        node->as.var_decl.value = value;
-        
-        // Convert to num type if variable is declared as num
-        if (strcmp(type.text, "num") == 0) {
-            convert_literal_to_num(value);
-        }
-        
-        return node;
     } else if (match(TOKEN_CONST)) {
-        ASTNode *node = make_node(AST_CONST_DECL, tok.line);
-        Token name = expect(TOKEN_IDENT, "identifier");
-        expect(TOKEN_COLON, ":");
-        Token type = expect_type_token("type");
-        expect(TOKEN_EQUAL, "=");
-        ASTNode *value = parse_expression();  // Use parse_expression instead of parse_literal to handle unary minus
-        match(TOKEN_SEMICOLON);
-        node->as.var_decl.name = strdup(name.text);
-        node->as.var_decl.type_name = strdup(type.text);
-        node->as.var_decl.value = value;
-        return node;
+        // Check if this is a global const declaration
+        if (match(TOKEN_GLOBAL)) {
+            // Global const variable declaration: const global variable_name: type = value;
+            ASTNode *node = make_node(AST_CONST_DECL, tok.line);
+            if (!node) {
+                fprintf(stderr, "Error: Failed to create AST_CONST_DECL node for global const\n");
+                return NULL;
+            }
+            
+            Token name = expect(TOKEN_IDENT, "identifier");
+            expect(TOKEN_COLON, ":");
+            Token type = expect_type_token("type");
+            expect(TOKEN_EQUAL, "=");
+            ASTNode *value = parse_expression();
+            if (!value) {
+                fprintf(stderr, "Error: Failed to parse expression for global const variable\n");
+                free_ast_node(node);
+                return NULL;
+            }
+            match(TOKEN_SEMICOLON);
+            
+            node->as.var_decl.name = strdup(name.text);
+            node->as.var_decl.type_name = strdup(type.text);
+            node->as.var_decl.value = value;
+            // Note: Global declarations are detected by semantic analysis based on scope
+            
+            // Convert to num type if variable is declared as num
+            if (strcmp(type.text, "num") == 0) {
+                convert_literal_to_num(value);
+            }
+            
+            return node;
+        } else {
+            // Regular local const declaration
+            ASTNode *node = make_node(AST_CONST_DECL, tok.line);
+            Token name = expect(TOKEN_IDENT, "identifier");
+            expect(TOKEN_COLON, ":");
+            Token type = expect_type_token("type");
+            expect(TOKEN_EQUAL, "=");
+            ASTNode *value = parse_expression();  // Use parse_expression instead of parse_literal to handle unary minus
+            match(TOKEN_SEMICOLON);
+            node->as.var_decl.name = strdup(name.text);
+            node->as.var_decl.type_name = strdup(type.text);
+            node->as.var_decl.value = value;
+            return node;
+        }
+    } else if (match(TOKEN_GLOBAL)) {
+        // Legacy global syntax is no longer supported
+        fprintf(stderr, "Error at line %d: Legacy global syntax 'global variable_name: type = value;' is deprecated.\n", tok.line);
+        fprintf(stderr, "Use the new syntax instead:\n");
+        fprintf(stderr, "  - For mutable globals: 'let global variable_name: type = value;'\n");
+        fprintf(stderr, "  - For immutable globals: 'const global variable_name: type = value;'\n");
+        return NULL;
     } else if (peek().type == TOKEN_IDENT) {
         Token ident = advance();
-        if (match(TOKEN_EQUAL)) {
+        if (match(TOKEN_COLON)) {
+            // Variable declaration without let/const is not allowed
+            fprintf(stderr, "Error at line %d: Variable declaration '%s' must use 'let' or 'const' keyword.\n", ident.line, ident.text);
+            fprintf(stderr, "Valid syntax:\n");
+            fprintf(stderr, "  - For local variables: 'let %s: type = value;'\n", ident.text);
+            fprintf(stderr, "  - For constants: 'const %s: type = value;'\n", ident.text);
+            fprintf(stderr, "  - For global variables: 'let global %s: type = value;'\n", ident.text);
+            fprintf(stderr, "  - For global constants: 'const global %s: type = value;'\n", ident.text);
+            return NULL;
+        } else if (match(TOKEN_EQUAL)) {
             ASTNode *node = make_node(AST_ASSIGN, ident.line);
             node->as.assign.target = strdup(ident.text);
             node->as.assign.value = parse_expression();

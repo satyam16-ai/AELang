@@ -1,0 +1,21 @@
+extern print(format: str, ...);
+
+// Test global variable type mismatch
+global version: i32 = "invalid";  // ERROR: string assigned to i32
+
+func main(): void {
+    print("🚨 Type Error Test 🚨\n");
+    
+    // Test 1: Type mismatch in variable declaration
+    let a: i32 = 3.14;  // ERROR: float assigned to i32
+    
+    // Test 2: Type mismatch in assignment
+    let b: str = "hello";
+    b = 42;  // ERROR: int assigned to string
+    
+    // Test 3: Narrowing conversion (should be caught in strict mode)
+    let large: i64 = 1000000;
+    let small: i8 = large;  // ERROR: potential data loss
+    
+    print("This should not compile due to type errors!\n");
+}

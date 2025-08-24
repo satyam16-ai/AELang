@@ -46,6 +46,7 @@ SemanticContext *create_semantic_context_with_config(CompilationConfig *config) 
     ctx->error_count = 0;
     ctx->warning_count = 0;
     ctx->current_function = NULL;
+    ctx->in_global_scope = true;
     
     // Add built-in functions to global scope (enhanced for all types)
     define_symbol(ctx, "print", SYMBOL_FUNCTION, TYPE_VOID, 0);
@@ -214,6 +215,25 @@ Symbol *lookup_symbol(SemanticContext *ctx, const char *name) {
     return NULL;
 }
 
+// Lookup symbol in global scope only (for :: operator)
+Symbol *lookup_global_symbol(SemanticContext *ctx, const char *name) {
+    if (!ctx || !ctx->global_scope || !name) {
+        return NULL;
+    }
+    
+    unsigned int index = hash(name);
+    Symbol *symbol = ctx->global_scope->symbols[index];
+    
+    while (symbol) {
+        if (strcmp(symbol->name, name) == 0) {
+            symbol->is_used = true;
+            return symbol;
+        }
+        symbol = symbol->next;
+    }
+    return NULL;
+}
+
 bool define_symbol(SemanticContext *ctx, const char *name, SymbolType sym_type, 
                    SemanticType data_type, int line) {
     if (!ctx || !name) {
@@ -261,6 +281,7 @@ void enter_scope(SemanticContext *ctx) {
     new_scope->parent = ctx->current_scope;
     new_scope->scope_level = ctx->scope_counter++;
     ctx->current_scope = new_scope;
+    ctx->in_global_scope = false;  // We're no longer in global scope
 }
 
 void exit_scope(SemanticContext *ctx) {
@@ -270,6 +291,11 @@ void exit_scope(SemanticContext *ctx) {
     
     Scope *old_scope = ctx->current_scope;
     ctx->current_scope = old_scope->parent;
+    
+    // Check if we're back to global scope
+    if (ctx->current_scope == ctx->global_scope) {
+        ctx->in_global_scope = true;
+    }
     
     // Check for unused variables
     for (int i = 0; i < 256; i++) {
@@ -293,6 +319,10 @@ void exit_scope(SemanticContext *ctx) {
 bool is_integer_type(SemanticType type) {
     return type == TYPE_I8 || type == TYPE_I16 || type == TYPE_I32 || type == TYPE_I64 ||
            type == TYPE_U8 || type == TYPE_U16 || type == TYPE_U32 || type == TYPE_U64;
+}
+
+bool is_integer_semantic_type(SemanticType type) {
+    return is_integer_type(type);
 }
 
 bool is_unsigned_type(SemanticType type) {
@@ -384,6 +414,128 @@ bool types_compatible(SemanticType left, SemanticType right) {
         return true;
     }
     
+    return false;
+}
+
+// Strict type compatibility checking with detailed error reporting
+bool types_strictly_compatible(SemanticType target_type, SemanticType source_type, const char **error_msg) {
+    static char error_buffer[256];
+    
+    if (target_type == source_type) {
+        return true;
+    }
+    
+    // UNIFIED READ SYSTEM: TYPE_UNKNOWN (from read()) is compatible with any assignment target
+    if (source_type == TYPE_UNKNOWN) {
+        return true;  // read() can be assigned to any type
+    }
+    
+    // Special compatibility rules for NUM type
+    if (target_type == TYPE_NUM && is_numeric_type(source_type)) {
+        return true; // Any numeric type can be assigned to num
+    }
+    if (source_type == TYPE_NUM && is_numeric_type(target_type)) {
+        return true; // num can be assigned to any numeric type
+    }
+    
+    // Integer types - strict checking
+    if (is_integer_type(target_type) && is_integer_type(source_type)) {
+        // Check size compatibility
+        int target_size = get_type_size_bits(target_type);
+        int source_size = get_type_size_bits(source_type);
+        
+        // Allow same-size conversions
+        if (target_size == source_size) {
+            if (is_signed_type(target_type) != is_signed_type(source_type)) {
+                snprintf(error_buffer, sizeof(error_buffer), 
+                        "potential data loss: converting between signed and unsigned types of same size");
+                if (error_msg) *error_msg = error_buffer;
+                return true; // Allow with warning
+            }
+            return true;
+        }
+        
+        // Allow widening conversions
+        if (target_size > source_size) {
+            return true;
+        }
+        
+        // Narrowing conversions are potentially dangerous
+        if (target_size < source_size) {
+            snprintf(error_buffer, sizeof(error_buffer), 
+                    "potential data loss: narrowing conversion from %d-bit to %d-bit integer",
+                    source_size, target_size);
+            if (error_msg) *error_msg = error_buffer;
+            return false; // Strict mode: disallow narrowing
+        }
+    }
+    
+    // Floating point types - allow widening only
+    if (is_floating_type(target_type) && is_floating_type(source_type)) {
+        int target_size = get_type_size_bits(target_type);
+        int source_size = get_type_size_bits(source_type);
+        
+        if (target_size >= source_size) {
+            return true; // Allow same size or widening
+        } else {
+            snprintf(error_buffer, sizeof(error_buffer), 
+                    "potential precision loss: narrowing floating-point conversion");
+            if (error_msg) *error_msg = error_buffer;
+            return false; // Disallow narrowing
+        }
+    }
+    
+    // Integer to floating point - check for potential precision loss
+    if (is_floating_type(target_type) && is_integer_type(source_type)) {
+        int target_size = get_type_size_bits(target_type);
+        int source_size = get_type_size_bits(source_type);
+        
+        // f32 can accurately represent integers up to 24 bits
+        // f64 can accurately represent integers up to 53 bits
+        if ((target_type == TYPE_F32 && source_size <= 24) ||
+            (target_type == TYPE_F64 && source_size <= 53) ||
+            (target_size > source_size)) {
+            return true;
+        } else {
+            snprintf(error_buffer, sizeof(error_buffer), 
+                    "potential precision loss: converting large integer to floating-point");
+            if (error_msg) *error_msg = error_buffer;
+            return false;
+        }
+    }
+    
+    // Floating point to integer - always potentially lossy
+    if (is_integer_type(target_type) && is_floating_type(source_type)) {
+        snprintf(error_buffer, sizeof(error_buffer), 
+                "potential data loss: converting floating-point to integer (fractional part will be lost)");
+        if (error_msg) *error_msg = error_buffer;
+        return false; // Require explicit cast
+    }
+    
+    // Character type compatibility
+    if (target_type == TYPE_CHAR && source_type == TYPE_U8) {
+        return true; // u8 to char is safe
+    }
+    if (target_type == TYPE_U8 && source_type == TYPE_CHAR) {
+        return true; // char to u8 is safe
+    }
+    
+    // String type compatibility
+    if (target_type == TYPE_STR && source_type == TYPE_STR) {
+        return true;
+    }
+    
+    // Boolean type compatibility
+    if (target_type == TYPE_BOOL && source_type == TYPE_BOOL) {
+        return true;
+    }
+    
+    // No other conversions allowed in strict mode
+    snprintf(error_buffer, sizeof(error_buffer), 
+            "incompatible types: cannot convert %s to %s",
+            semantic_type_to_string(source_type),
+            semantic_type_to_string(target_type));
+    if (error_msg) *error_msg = error_buffer;
     return false;
 }
 
@@ -504,11 +656,23 @@ static SemanticType analyze_expression(ASTNode *node, SemanticContext *ctx) {
             return literal_to_semantic_type(&node->as.literal);
             
         case AST_IDENTIFIER: {
-            Symbol *symbol = lookup_symbol(ctx, node->as.ident);
-            if (!symbol) {
-                semantic_error(ctx, node->line, "Undefined identifier '%s'", node->as.ident);
-                return TYPE_ERROR;
+            Symbol *symbol;
+            
+            // Check if this is a global access (::variable)
+            if (node->is_global_access) {
+                symbol = lookup_global_symbol(ctx, node->as.ident);
+                if (!symbol) {
+                    semantic_error(ctx, node->line, "Undefined global identifier '%s'", node->as.ident);
+                    return TYPE_ERROR;
+                }
+            } else {
+                symbol = lookup_symbol(ctx, node->as.ident);
+                if (!symbol) {
+                    semantic_error(ctx, node->line, "Undefined identifier '%s'", node->as.ident);
+                    return TYPE_ERROR;
+                }
             }
+            
             if (symbol->symbol_type == SYMBOL_VARIABLE && !symbol->is_initialized) {
                 semantic_warning(ctx, node->line, "Variable '%s' used before initialization", 
                                node->as.ident);
@@ -688,12 +852,26 @@ static AnnotatedASTNode *analyze_node(ASTNode *node, SemanticContext *ctx) {
                 }
                 
                 SemanticType init_type = analyze_expression(node->as.var_decl.value, ctx);
-                if (!types_compatible(var_type, init_type)) {
-                    semantic_error(ctx, node->line, 
-                                 "Type mismatch in variable initialization: expected %d, got %d", 
-                                 var_type, init_type);
+                
+                // Use strict type checking for better error detection
+                const char *error_msg = NULL;
+                if (!types_strictly_compatible(var_type, init_type, &error_msg)) {
+                    if (error_msg) {
+                        semantic_error(ctx, node->line, 
+                                     "Type mismatch in variable initialization: %s", error_msg);
+                    } else {
+                        semantic_error(ctx, node->line, 
+                                     "Type mismatch in variable initialization: cannot assign %s to variable '%s' of type %s", 
+                                     semantic_type_to_string(init_type),
+                                     node->as.var_decl.name,
+                                     semantic_type_to_string(var_type));
+                    }
                     annotated->resolved_type = TYPE_ERROR;
                     break;
+                } else if (error_msg) {
+                    // Warning for potentially problematic but allowed conversions
+                    semantic_warning(ctx, node->line, 
+                                   "Potentially unsafe conversion in variable initialization: %s", error_msg);
                 }
                 
                 // Store the initializer as a child
@@ -707,6 +885,7 @@ static AnnotatedASTNode *analyze_node(ASTNode *node, SemanticContext *ctx) {
             }
             
             annotated->resolved_type = var_type;
+            annotated->is_global_declaration = ctx->in_global_scope;  // Mark if declared in global scope
             break;
         }
         
@@ -759,10 +938,13 @@ static AnnotatedASTNode *analyze_node(ASTNode *node, SemanticContext *ctx) {
             annotated->children[0] = analyze_node(node->as.var_decl.value, ctx);
             annotated->child_count = 1;
             
+            // Mark if declared in global scope
+            annotated->is_global_declaration = ctx->in_global_scope;
+            
             // Mark constant as initialized
             Symbol *symbol = lookup_symbol(ctx, node->as.var_decl.name);
             if (symbol) symbol->is_initialized = true;
-            
+
             annotated->resolved_type = const_type;
             break;
         }
@@ -798,12 +980,26 @@ static AnnotatedASTNode *analyze_node(ASTNode *node, SemanticContext *ctx) {
             }
             
             SemanticType value_type = analyze_expression(node->as.assign.value, ctx);
-            if (!types_compatible(symbol->data_type, value_type)) {
-                semantic_error(ctx, node->line, 
-                             "Type mismatch in assignment: expected %d, got %d", 
-                             symbol->data_type, value_type);
+            
+            // Use strict type checking for assignments
+            const char *error_msg = NULL;
+            if (!types_strictly_compatible(symbol->data_type, value_type, &error_msg)) {
+                if (error_msg) {
+                    semantic_error(ctx, node->line, 
+                                 "Type mismatch in assignment: %s", error_msg);
+                } else {
+                    semantic_error(ctx, node->line, 
+                                 "Type mismatch in assignment: cannot assign %s to variable '%s' of type %s", 
+                                 semantic_type_to_string(value_type),
+                                 node->as.assign.target,
+                                 semantic_type_to_string(symbol->data_type));
+                }
                 annotated->resolved_type = TYPE_ERROR;
                 break;
+            } else if (error_msg) {
+                // Warning for potentially problematic but allowed conversions
+                semantic_warning(ctx, node->line, 
+                               "Potentially unsafe conversion in assignment: %s", error_msg);
             }
             
             // Store the value as a child
@@ -960,15 +1156,31 @@ static AnnotatedASTNode *analyze_node(ASTNode *node, SemanticContext *ctx) {
         
         case AST_IDENTIFIER: {
             // Check if identifier exists
-            Symbol *symbol = lookup_symbol(ctx, node->as.ident);
-            if (!symbol) {
-                semantic_error(ctx, node->line, "Undefined identifier '%s'", node->as.ident);
-                annotated->resolved_type = TYPE_ERROR;
+            Symbol *symbol;
+            
+            // Check if this is a global access (::variable)
+            if (node->is_global_access) {
+                symbol = lookup_global_symbol(ctx, node->as.ident);
+                if (!symbol) {
+                    semantic_error(ctx, node->line, "Undefined global identifier '%s'", node->as.ident);
+                    annotated->resolved_type = TYPE_ERROR;
+                } else {
+                    annotated->resolved_type = symbol->data_type;
+                    annotated->symbol_ref = symbol;
+                    annotated->is_lvalue = (symbol->symbol_type == SYMBOL_VARIABLE);
+                    annotated->is_constant = (symbol->symbol_type == SYMBOL_CONSTANT);
+                }
             } else {
-                annotated->resolved_type = symbol->data_type;
-                annotated->symbol_ref = symbol;
-                annotated->is_lvalue = (symbol->symbol_type == SYMBOL_VARIABLE);
-                annotated->is_constant = (symbol->symbol_type == SYMBOL_CONSTANT);
+                symbol = lookup_symbol(ctx, node->as.ident);
+                if (!symbol) {
+                    semantic_error(ctx, node->line, "Undefined identifier '%s'", node->as.ident);
+                    annotated->resolved_type = TYPE_ERROR;
+                } else {
+                    annotated->resolved_type = symbol->data_type;
+                    annotated->symbol_ref = symbol;
+                    annotated->is_lvalue = (symbol->symbol_type == SYMBOL_VARIABLE);
+                    annotated->is_constant = (symbol->symbol_type == SYMBOL_CONSTANT);
+                }
             }
             break;
         }

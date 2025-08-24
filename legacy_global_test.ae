@@ -1,0 +1,7 @@
+extern print(format: str, ...);
+
+global test_var: i32 = 42;
+
+func main(): void {
+    print("Legacy global test: %d\n", test_var);
+}

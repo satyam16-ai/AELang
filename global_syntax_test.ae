@@ -1,0 +1,29 @@
+extern print(format: str, ...);
+
+// Test different global variable declaration syntaxes
+global old_style: i32 = 42;                    // Old style: global variable_name: type = value
+let global new_let_style: str = "Hello";       // New style: let global variable_name: type = value  
+const global new_const_style: f64 = 3.14159;  // New style: const global variable_name: type = value
+
+func main(): void {
+    print("🔧 Testing Global Variable Syntax & Initialization 🔧\n");
+    
+    // Test 1: Access global variables to verify initialization
+    print("=== Global Variable Values ===\n");
+    print("old_style (global syntax): %d\n", old_style);
+    print("new_let_style (let global syntax): %s\n", new_let_style);
+    print("new_const_style (const global syntax): %f\n", new_const_style);
+    
+    // Test 2: Local shadowing with global access
+    print("\n=== Local Shadowing Test ===\n");
+    let old_style: i32 = 999;  // Shadow global
+    print("Local old_style: %d\n", old_style);
+    print("Global old_style: %d\n", ::old_style);
+    
+    // Test 3: Verify const behavior
+    print("\n=== Const Behavior Test ===\n");
+    print("Const global value: %f\n", ::new_const_style);
+    // Note: Assignment to const should be caught by semantic analysis
+    
+    print("\n✅ Global variable syntax and initialization tests completed!\n");
+}

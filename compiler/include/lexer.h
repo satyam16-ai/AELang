@@ -8,6 +8,7 @@ typedef enum {
     TOKEN_EOF,
     TOKEN_LET,
     TOKEN_CONST,
+    TOKEN_GLOBAL,
     TOKEN_FUNC,
     TOKEN_EXTERN,
     TOKEN_RETURN,
@@ -33,6 +34,7 @@ typedef enum {
     TOKEN_EQUAL,
     TOKEN_LBRACKET,
     TOKEN_RBRACKET,
+    TOKEN_GLOBAL_ACCESS,  // :: for global access
 
     // Operators
     TOKEN_PLUS,

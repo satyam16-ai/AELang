@@ -29,7 +29,7 @@ static int match_keyword(const char *word) {
     if (!word) return -1;  // Safety check for NULL word
     
     struct { const char *word; TokenType type; } keywords[] = {
-        {"let", TOKEN_LET}, {"const", TOKEN_CONST}, {"func", TOKEN_FUNC},
+        {"let", TOKEN_LET}, {"const", TOKEN_CONST}, {"global", TOKEN_GLOBAL}, {"func", TOKEN_FUNC},
         {"extern", TOKEN_EXTERN}, {"return", TOKEN_RETURN},
         {"if", TOKEN_IF}, {"else", TOKEN_ELSE}, {"elif", TOKEN_ELIF}, {"goto", TOKEN_GOTO}, {"asm", TOKEN_ASM},
         {"halt", TOKEN_HALT}, {"in", TOKEN_IN}, {"out", TOKEN_OUT},
@@ -142,7 +142,10 @@ TokenList *lex(const char *source) {
         }
 
         switch (*source) {
-            case ':': add_token(list, make_token(TOKEN_COLON, ":", line)); source++; break;
+            case ':': 
+                if (*(source + 1) == ':') { add_token(list, make_token(TOKEN_GLOBAL_ACCESS, "::", line)); source += 2; }
+                else { add_token(list, make_token(TOKEN_COLON, ":", line)); source++; }
+                break;
             case ';': add_token(list, make_token(TOKEN_SEMICOLON, ";", line)); source++; break;
             case ',': add_token(list, make_token(TOKEN_COMMA, ",", line)); source++; break;
             case '(': add_token(list, make_token(TOKEN_LPAREN, "(", line)); source++; break;
@@ -210,12 +213,12 @@ void free_token_list(TokenList *list) {
 const char *token_type_to_str(TokenType type) {
     #define CASE(t) case t: return #t
     switch (type) {
-        CASE(TOKEN_EOF); CASE(TOKEN_LET); CASE(TOKEN_CONST); CASE(TOKEN_FUNC); CASE(TOKEN_EXTERN);
+        CASE(TOKEN_EOF); CASE(TOKEN_LET); CASE(TOKEN_CONST); CASE(TOKEN_GLOBAL); CASE(TOKEN_FUNC); CASE(TOKEN_EXTERN);
         CASE(TOKEN_RETURN); CASE(TOKEN_IF); CASE(TOKEN_ELSE); CASE(TOKEN_ELIF); CASE(TOKEN_GOTO); CASE(TOKEN_ASM); CASE(TOKEN_HALT);
         CASE(TOKEN_IN); CASE(TOKEN_OUT); CASE(TOKEN_LOAD); CASE(TOKEN_STORE);
         CASE(TOKEN_COLON); CASE(TOKEN_SEMICOLON); CASE(TOKEN_COMMA);
         CASE(TOKEN_LPAREN); CASE(TOKEN_RPAREN); CASE(TOKEN_LBRACE); CASE(TOKEN_RBRACE);
-        CASE(TOKEN_EQUAL); CASE(TOKEN_LBRACKET); CASE(TOKEN_RBRACKET);
+        CASE(TOKEN_EQUAL); CASE(TOKEN_LBRACKET); CASE(TOKEN_RBRACKET); CASE(TOKEN_GLOBAL_ACCESS);
         CASE(TOKEN_PLUS); CASE(TOKEN_MINUS); CASE(TOKEN_MUL); CASE(TOKEN_DIV); CASE(TOKEN_MOD);
         CASE(TOKEN_AND); CASE(TOKEN_OR); CASE(TOKEN_XOR); CASE(TOKEN_SHL); CASE(TOKEN_SHR);
         CASE(TOKEN_LOGICAL_AND); CASE(TOKEN_LOGICAL_OR); CASE(TOKEN_LOGICAL_NOT); CASE(TOKEN_BITWISE_NOT);

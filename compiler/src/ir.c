@@ -120,7 +120,53 @@ static IROperand *generate_expression_ir(AnnotatedASTNode *node, IRContext *ctx)
 static IROperand *generate_expression_ir_with_type(AnnotatedASTNode *node, IRContext *ctx, SemanticType expected_type);
 static void generate_statement_ir(AnnotatedASTNode *node, IRContext *ctx);
 
-// Generate IR for expressions with type context
+// Generate constant operand directly from a literal (for global variables)
+static IROperand *generate_constant_operand(AnnotatedASTNode *node) {
+    if (!node || !node->original_node) {
+        return NULL;
+    }
+    
+    ASTNode *ast_node = node->original_node;
+    
+    if (ast_node->type == AST_LITERAL) {
+        switch (ast_node->as.literal.type) {
+            case VALUE_INT:
+                return create_const_int_operand(ast_node->as.literal.as.int_val);
+            case VALUE_FLOAT:
+                return create_const_float_operand(ast_node->as.literal.as.float_val);
+            case VALUE_BOOL:
+                return create_const_int_operand(ast_node->as.literal.as.bool_val);
+            case VALUE_STRING:
+                return create_const_str_operand(ast_node->as.literal.as.str_val);
+            case VALUE_CHAR:
+                return create_const_int_operand(ast_node->as.literal.as.char_val);
+            case VALUE_NUM:
+                if (ast_node->as.literal.as.num_val.is_float) {
+                    return create_const_float_operand(ast_node->as.literal.as.num_val.value.float_val);
+                } else {
+                    return create_const_int_operand(ast_node->as.literal.as.num_val.value.int_val);
+                }
+            // Handle all integer types
+            case VALUE_I8:
+            case VALUE_I16:
+            case VALUE_I64:
+            case VALUE_U8:
+            case VALUE_U16:
+            case VALUE_U32:
+            case VALUE_U64:
+                return create_const_int_operand(ast_node->as.literal.as.int_val);
+            // Handle all float types
+            case VALUE_F8:
+            case VALUE_F16:
+            case VALUE_F64:
+                return create_const_float_operand(ast_node->as.literal.as.float_val);
+        }
+    }
+    
+    return NULL; // Not a simple literal
+}
+
+// Generate IR for expressions with expected type handling
 static IROperand *generate_expression_ir_with_type(AnnotatedASTNode *node, IRContext *ctx, SemanticType expected_type) {
     if (!node || !node->original_node) {
         return NULL;
@@ -332,7 +378,11 @@ static IROperand *generate_expression_ir(AnnotatedASTNode *node, IRContext *ctx)
         case AST_IDENTIFIER: {
             IROperand *temp = create_temp_operand(ctx, node->resolved_type);
             IROperand *var_op = create_var_operand(ast_node->as.ident, node->resolved_type);
-            IRInstruction *instr = create_instruction(IR_LOAD_VAR, temp, var_op, NULL, ast_node->line);
+            
+            // Check if this is a global access (::variable)
+            IROpcode load_opcode = ast_node->is_global_access ? IR_LOAD_GLOBAL : IR_LOAD_VAR;
+            
+            IRInstruction *instr = create_instruction(load_opcode, temp, var_op, NULL, ast_node->line);
             append_instruction(ctx, instr);
             return temp;
         }
@@ -520,12 +570,29 @@ static void generate_statement_ir(AnnotatedASTNode *node, IRContext *ctx) {
         case AST_VAR_DECL: {
             printf("[IR Debug] Variable declaration: %s\n", ast_node->as.var_decl.name);
             if (ast_node->as.var_decl.value) {
-                // Pass the variable's declared type as context to the expression
-                IROperand *value = generate_expression_ir_with_type(node->children[0], ctx, node->resolved_type);
+                IROperand *value;
+                
+                // For global variables, try to generate constant operands directly
+                if (node->is_global_declaration) {
+                    value = generate_constant_operand(node->children[0]);
+                    if (!value) {
+                        // Fall back to expression generation for complex expressions
+                        value = generate_expression_ir_with_type(node->children[0], ctx, node->resolved_type);
+                    }
+                } else {
+                    // For local variables, use normal expression generation
+                    value = generate_expression_ir_with_type(node->children[0], ctx, node->resolved_type);
+                }
+                
                 IROperand *var_op = create_var_operand(ast_node->as.var_decl.name, node->resolved_type);
-                IRInstruction *store = create_instruction(IR_STORE_VAR, NULL, var_op, value, ast_node->line);
+                
+                // Check if this is a global variable declaration
+                IROpcode store_opcode = node->is_global_declaration ? IR_STORE_GLOBAL : IR_STORE_VAR;
+                
+                IRInstruction *store = create_instruction(store_opcode, NULL, var_op, value, ast_node->line);
                 append_instruction(ctx, store);
-                printf("[IR Debug] Generated STORE_VAR instruction\n");
+                printf("[IR Debug] Generated %s instruction\n", 
+                       node->is_global_declaration ? "STORE_GLOBAL" : "STORE_VAR");
             } else {
                 printf("[IR Debug] Variable declaration without initial value\n");
             }
@@ -535,12 +602,29 @@ static void generate_statement_ir(AnnotatedASTNode *node, IRContext *ctx) {
         case AST_CONST_DECL: {
             printf("[IR Debug] Constant declaration: %s\n", ast_node->as.var_decl.name);
             if (ast_node->as.var_decl.value) {
-                // Constants are treated like variables in IR but marked as constant in semantic analysis
-                IROperand *value = generate_expression_ir_with_type(node->children[0], ctx, node->resolved_type);
+                IROperand *value;
+                
+                // For global constants, try to generate constant operands directly
+                if (node->is_global_declaration) {
+                    value = generate_constant_operand(node->children[0]);
+                    if (!value) {
+                        // Fall back to expression generation for complex expressions
+                        value = generate_expression_ir_with_type(node->children[0], ctx, node->resolved_type);
+                    }
+                } else {
+                    // For local constants, use normal expression generation
+                    value = generate_expression_ir_with_type(node->children[0], ctx, node->resolved_type);
+                }
+                
                 IROperand *const_op = create_var_operand(ast_node->as.var_decl.name, node->resolved_type);
-                IRInstruction *store = create_instruction(IR_STORE_VAR, NULL, const_op, value, ast_node->line);
+                
+                // Check if this is a global constant declaration
+                IROpcode store_opcode = node->is_global_declaration ? IR_STORE_GLOBAL : IR_STORE_VAR;
+                
+                IRInstruction *store = create_instruction(store_opcode, NULL, const_op, value, ast_node->line);
                 append_instruction(ctx, store);
-                printf("[IR Debug] Generated STORE_VAR instruction for constant\n");
+                printf("[IR Debug] Generated %s instruction for constant\n",
+                       node->is_global_declaration ? "STORE_GLOBAL" : "STORE_VAR");
             }
             break;
         }
@@ -725,7 +809,21 @@ IRProgram *generate_ir(AnnotatedAST *ast, SemanticContext *sem_ctx) {
     
     IRContext *ctx = create_ir_context();
     
-    // Process all top-level nodes
+    // Phase 1: Process all global variable declarations first
+    for (size_t i = 0; i < ast->count; i++) {
+        AnnotatedASTNode *node = ast->nodes[i];
+        if (!node || !node->original_node) continue;
+        
+        ASTNode *original = node->original_node;
+        
+        // Only process global variable declarations in this phase
+        if ((original->type == AST_VAR_DECL || original->type == AST_CONST_DECL) && 
+            node->is_global_declaration) {
+            generate_statement_ir(node, ctx);
+        }
+    }
+    
+    // Phase 2: Process all function definitions and other statements
     for (size_t i = 0; i < ast->count; i++) {
         AnnotatedASTNode *node = ast->nodes[i];
         if (!node || !node->original_node) continue;
@@ -770,8 +868,9 @@ IRProgram *generate_ir(AnnotatedAST *ast, SemanticContext *sem_ctx) {
             ctx->program->functions = func;
             
             ctx->current_function = prev_func;
-        } else {
-            // Global statement - use the existing annotated node from semantic analysis
+        } else if (!((original->type == AST_VAR_DECL || original->type == AST_CONST_DECL) && 
+                     node->is_global_declaration)) {
+            // Global statement (but not global variable declarations, which were already processed)
             generate_statement_ir(node, ctx);
         }
     }
